@@ -3,50 +3,54 @@ import random
 
 import numpy as np
 
-
-def set_bit(bb, square):
-    """Set the bit at 'square' in bitboard 'bb'."""
-    return bb | (1 << square)
-
-
-def clear_bit(bb, square):
-    """Clear the bit at 'square' in bitboard 'bb'."""
-    return bb & ~(1 << square)
+class BitboardManipulations:
+    @staticmethod
+    def set_bit(bb, square):
+        """Set the bit at 'square' in bitboard 'bb'."""
+        return bb | (1 << square)
 
 
-def is_bit_set(bb, square):
-    """Check if a bit at 'square' is set in 'bb'."""
-    return (bb & (1 << square)) != 0
+    @staticmethod
+    def clear_bit(bb, square):
+        """Clear the bit at 'square' in bitboard 'bb'."""
+        return bb & ~(1 << square)
 
 
-def bit_scan(bitboard: int):
-    """
-    Generator that yields the indices of set bits (1s) in the bitboard.
-    (Least-significant bit first.)
+    @staticmethod
+    def is_bit_set(bb, square):
+        """Check if a bit at 'square' is set in 'bb'."""
+        return (bb & (1 << square)) != 0
 
-    UNOPTIMIZED!
-    while bitboard: # Loops while there are still set bits (1s) in the bitboard
-        lsb = bitboard & -bitboard # Isolates the rightmost 1 while setting all other bits to 0
-        square = lsb.bit_length() - 1
-        # bit_length() returns the index of the highest bit set (1-based).
-        # Subtracting 1 makes it 0-based.
-        yield square
-        bitboard &= bitboard - 1 # Clearing the Processed Bit
-        # bitboard - 1 flips all bits after the rightmost 1 (including the 1 itself).
-        # bitboard &= bitboard - 1 effectively removes the lowest set bit.
-        ###EXAMPLE##
-        # Iteration ==> 1
-        # bitboard (Binary) ==> 10010100 (148)
-        # lsb = bitboard & -bitboard ==> 00000100 (4)
-        # square = lsb.bit_length() - 1 ==> 2
-        # New bitboard ==> 10010000 (144)
-    """
-    # math.log2(x) is implemented efficiently in hardware (single CPU instruction in many cases).
-    # This avoids the need for bit_length() and subtraction.
-    while bitboard:
-        square = int(math.log2(bitboard & -bitboard))
-        yield square
-        bitboard &= bitboard - 1  # Clear the least significant bit
+
+    @staticmethod
+    def bit_scan(bitboard: int):
+        """
+        Generator that yields the indices of set bits (1s) in the bitboard.
+        (Least-significant bit first.)
+
+        UNOPTIMIZED!
+        while bitboard: # Loops while there are still set bits (1s) in the bitboard
+            lsb = bitboard & -bitboard # Isolates the rightmost 1 while setting all other bits to 0
+            square = lsb.bit_length() - 1
+            # bit_length() returns the index of the highest bit set (1-based).
+            # Subtracting 1 makes it 0-based.
+            yield square
+            bitboard &= bitboard - 1 # Clearing the Processed Bit
+            # bitboard - 1 flips all bits after the rightmost 1 (including the 1 itself).
+            # bitboard &= bitboard - 1 effectively removes the lowest set bit.
+            ###EXAMPLE##
+            # Iteration ==> 1
+            # bitboard (Binary) ==> 10010100 (148)
+            # lsb = bitboard & -bitboard ==> 00000100 (4)
+            # square = lsb.bit_length() - 1 ==> 2
+            # New bitboard ==> 10010000 (144)
+        """
+        # math.log2(x) is implemented efficiently in hardware (single CPU instruction in many cases).
+        # This avoids the need for bit_length() and subtraction.
+        while bitboard:
+            square = int(math.log2(bitboard & -bitboard))
+            yield square
+            bitboard &= bitboard - 1  # Clear the least significant bit
 
 
 def generate_occupancy_subsets(mask):
@@ -120,3 +124,19 @@ def save_data(magics_fn, attacks_fn, shifts_fn, masks_fn, magics, attacks, shift
     np.savez_compressed(os.path.join(attacks_dir, attacks_fn), **attack_dict)
 
     print("Data saved successfully in separate directories.")
+
+#
+# def generate_attack_table(square, magic, relevant_bits, mask, generate_attacks):
+#     """
+#     Generic function to build an attack table for either rooks or bishops.
+#     """
+#     size = 1 << relevant_bits
+#     attacks_array = [0] * size
+#
+#     # Precompute occupancy -> index -> attacks
+#     for occ in generate_occupancy_subsets(mask):
+#         index = ((occ * magic) & 0xFFFFFFFFFFFFFFFF) >> (64 - relevant_bits)
+#         # Compute the actual attacks given 'occ'
+#         attacks_array[index] = generate_attacks(square, occ)
+#
+#     return attacks_array

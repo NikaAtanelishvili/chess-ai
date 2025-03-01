@@ -5,21 +5,19 @@ import numpy as np
 
 class BitboardManipulations:
     @staticmethod
-    def set_bit(bb, square):
+    def set_bit(bb: np.uint64, square: int) -> np.uint64:
         """Set the bit at 'square' in bitboard 'bb'."""
-        return bb | (1 << square)
-
+        return bb | np.uint64(1) << np.uint64(square)
 
     @staticmethod
-    def clear_bit(bb, square):
+    def clear_bit(bb: np.uint64, square: int) -> np.uint64:
         """Clear the bit at 'square' in bitboard 'bb'."""
-        return bb & ~(1 << square)
-
+        return bb & ~(np.uint64(1) << np.uint64(square))
 
     @staticmethod
-    def is_bit_set(bb, square):
+    def is_bit_set(bb: np.uint64, square: int) -> bool:
         """Check if a bit at 'square' is set in 'bb'."""
-        return (bb & (1 << square)) != 0
+        return (bb & (np.uint64(1) << np.uint64(square))) != np.uint64(0)
 
 
     @staticmethod
@@ -48,9 +46,9 @@ class BitboardManipulations:
         # math.log2(x) is implemented efficiently in hardware (single CPU instruction in many cases).
         # This avoids the need for bit_length() and subtraction.
         while bitboard:
-            square = int(math.log2(bitboard & -bitboard))
+            square = int(np.log2(bitboard & -bitboard))  # Compute least significant bit index
             yield square
-            bitboard &= bitboard - 1  # Clear the least significant bit
+            bitboard &= bitboard - np.uint64(1)  # Clear the least significant bit
 
 
 def generate_occupancy_subsets(mask):

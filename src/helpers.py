@@ -19,7 +19,6 @@ class BitboardManipulations:
         """Check if a bit at 'square' is set in 'bb'."""
         return (bb & (np.uint64(1) << np.uint64(square))) != np.uint64(0)
 
-
     @staticmethod
     def bit_scan(bitboard: int):
         """
@@ -138,3 +137,6 @@ def save_data(magics_fn, attacks_fn, shifts_fn, masks_fn, magics, attacks, shift
 #         attacks_array[index] = generate_attacks(square, occ)
 #
 #     return attacks_array
+
+
+

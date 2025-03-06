@@ -258,9 +258,9 @@ def load_data():
 
 paths = {
     'magics': 'data/magics/rook_magic_numbers.npy',
-    'shifts': 'data/magics/rook_shifts.npy',
-    'masks': 'data/magics/rook_masks.npy',
-    'attacks': 'data/magics/rook_attack_table.npz',
+    'shifts': 'data/shifts/rook_shifts.npy',
+    'masks': 'data/masks/rook_masks.npy',
+    'attacks': 'data/attacks/rook_attack_table.npz',
 }
 
 # Check if any required file is missing
@@ -273,6 +273,7 @@ if missing_files:
 else:
     # If all files are found, load the data
     load_data()
+    print(ROOK_SHIFTS)
 
 # ---------------------------------------------------------------------
 # 8) Usage Example

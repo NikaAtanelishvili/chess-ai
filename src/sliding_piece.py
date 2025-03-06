@@ -1,5 +1,7 @@
+import ctypes
 import os
 import random
+import time
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Generator
 
@@ -13,6 +15,17 @@ PRINT_ATTACKS_INIT_DETAILS = True
 PRINT_MAGICS_INIT_DETAILS = True
 PRINT_SHIFTS_INIT_DETAILS = True
 PRINT_MASKS_INIT_DETAILS = True
+
+# Load the C library
+lib = ctypes.CDLL("./libbitscan.so")  # Use "bitscan.dll" on Windows
+lib.bit_scan.argtypes = [ctypes.c_uint64, ctypes.POINTER(ctypes.c_int)]
+lib.bit_scan.restype = ctypes.c_int
+
+def bit_scan(bitboard):
+    """Wrapper for C bit_scan function."""
+    squares = (ctypes.c_int * 64)()  # Array to hold up to 64 squares
+    count = lib.bit_scan(ctypes.c_uint64(bitboard), squares)
+    return [squares[i] for i in range(count)]
 
 
 class SlidingPiece(ABC):
@@ -132,7 +145,8 @@ class SlidingPiece(ABC):
             if magic & np.uint64(0xFF00000000000000) == np.uint64(0): # isolates the top 8 bits and checks if the top 8 bits of magic are all zeros
                 continue
 
-            used = np.full(size, -1, dtype=np.int64)
+            sentinel = np.uint64(0xFFFFFFFFFFFFFFFF)
+            used = np.full(size, sentinel, dtype=np.uint64)
             fail = False
 
             # Test the magic number for collisions
@@ -152,7 +166,7 @@ class SlidingPiece(ABC):
                 # Why does this work?
                 # Multiplying by magic spreads bits unpredictably, and extracting the top relevant_bits ensures that
                 # different occupancies map to unique indices.
-                if used[index] == np.uint64(-1):
+                if used[index] == sentinel:
                     used[index] = attacks_table[i]
                 elif used[index] != attacks_table[i]:
                     fail = True
@@ -227,30 +241,31 @@ class SlidingPiece(ABC):
 
         # Determine the piece type based on self.piece_type
         piece_type = chess.ROOK if self.piece_type == "rook" else chess.BISHOP
-        pieces = np.uint64(int(board.pieces(piece_type, color)))
+        pieces = board.pieces(piece_type, color)
 
         # 2) Occupancy bitboards
-        occupancy = np.uint64(int(board.occupied))  # all pieces
-        own_occ = np.uint64(int(board.occupied_co[color]))  # own pieces only
+        occupancy = np.uint64(board.occupied)  # all pieces
+        own_occ = np.uint64(board.occupied_co[color])  # own pieces only
 
-        for square in BitboardManipulations.bit_scan(pieces):
+        for square in bit_scan(pieces):
             # Compute relevant occupancy
             relevant_occ = occupancy & self.MASKS[square]
 
             # Multiply by magic number and shift
             magic = self.MAGICS[square]
             shift = self.SHIFTS[square]
-            index = (relevant_occ * magic) >> np.uint64(shift)
+            index = (relevant_occ * magic) >> shift
 
             # Look up attacked squares
             attacks = self.ATTACKS[square][index]
-            print_bitboard(attacks)
             # Remove squares occupied by own pieces
             valid_attacks = attacks & ~own_occ
 
             # Convert to moves
-            for target in BitboardManipulations.bit_scan(valid_attacks):
-                moves.append(chess.Move(square, target)) # for now
+            for target in bit_scan(valid_attacks):
+                moves.append(target) # for now
+
+
         return moves
 
 
@@ -446,19 +461,27 @@ def print_bitboard(bitboard):
         print(row.replace('0', '.').replace('1', 'X'))  # Replace 1s with 'X' for visibility
 
 
-
 if __name__ == '__main__':
     rook = Rook()
     # bishop = Bishop()
     # bishop.load_data()
-    PRINT_DETAILS = True
+    # PRINT_DETAILS = True
     rook.load_data()
+
+
+
     board = chess.Board()
     board.set_fen("8/8/8/3R4/8/8/8/8 w - - 0 1")  # Rook on d5
+    start = time.time()
     moves = rook.generate_move(board, True)
+    end = time.time()
+
     # bishop_attacks = bishop.generate_attacks(27, 0)
     for move in moves:
         print(move)
+
+
+    print(f'{end - start:.6f} seconds')
 
 # def generate_occupancy_mask(self, square: int) -> int:
 #     """

@@ -1,6 +1,8 @@
+import os
 import random
 
 import chess
+import numpy as np
 
 from src.helpers import set_bit, is_bit_set, generate_occupancy_subsets, save_data, bit_scan
 
@@ -14,7 +16,7 @@ def generate_bishop_attacks(square, blockers):
     Compute bishop attacks for 'square' given a bitboard 'blockers'
     that marks occupied squares on the board.
 
-    function returns a bitboard where set bits (1s) represent squares the rook can attack.
+    function returns a bitboard where set bits (1s) represent squares the bishop can attack.
     """
     attacks = 0
     rank, file = divmod(square, 8)
@@ -123,9 +125,9 @@ def find_magic_number(square, relevant_bits, mask):
 
     # 1) Build all occupancies for this mask and store their attacks
     for occ in generate_occupancy_subsets(mask):
-        rook_att = generate_bishop_attacks(square, occ)
+        bishop_att = generate_bishop_attacks(square, occ)
         occupancies.append(occ)
-        attacks_table.append(rook_att)
+        attacks_table.append(bishop_att)
 
     # 2) Try random 64-bit numbers until we find a collision-free magic
     while True:
@@ -161,14 +163,17 @@ def find_magic_number(square, relevant_bits, mask):
                 break
 
         if not fail:
+            print(magic)
             return magic
 
 # ---------------------------------------------------------------------
-# 5) Generating the Attack table (Move table) for the rook
+# 5) Generating the Attack table (Move table) for the bishop
 # ---------------------------------------------------------------------
 def generate_bishop_attack_table(square, magic, relevant_bits, mask):
     """
     Build the actual 'ROOK_ATTACKS[square]' table using the found magic.
+
+
     """
     size = 1 << relevant_bits
     attacks_array = [0] * size
@@ -176,7 +181,7 @@ def generate_bishop_attack_table(square, magic, relevant_bits, mask):
     # Precompute occupancy -> index -> attacks
     for occ in generate_occupancy_subsets(mask):
         index = ((occ * magic) & 0xFFFFFFFFFFFFFFFF) >> (64 - relevant_bits)
-        # Compute the actual rook attacks given 'occ'
+        # Compute the actual bishop attacks given 'occ'
         attacks_array[index] = generate_bishop_attacks(square, occ)
 
     return attacks_array
@@ -188,6 +193,7 @@ def initialize_bishop_data():
     """
     initialize the bishop's data: magic numbers, attacks table, shifts and masks.
     """
+    print('cuh')
     for square in range(64):
         # 1) Compute the relevant mask for this square
         mask = generate_bishop_occupancy_mask(square)
@@ -217,14 +223,14 @@ def initialize_bishop_data():
 def generate_bishop_moves(board: chess.Board, color: bool):
     moves = []
 
-    # 1) All rooks for this color
-    rooks = int(board.pieces(chess.ROOK, color))
+    # 1) All bishops for this color
+    bishops = int(board.pieces(chess.ROOK, color))
 
     # 2) Occupancy bitboards
     occupancy = int(board.occupied)              # all pieces
     own_occ = int(board.occupied_co[color])      # own pieces only
 
-    for square in bit_scan(rooks):
+    for square in bit_scan(bishops):
         # 3) Compute relevant occupancy
         relevant_occ = occupancy & BISHOP_MASKS[square]
 
@@ -245,20 +251,56 @@ def generate_bishop_moves(board: chess.Board, color: bool):
 
     return moves
 
-def print_bitboard(bitboard: int):
-    """Prints a 64-bit bitboard as an 8x8 chessboard."""
-    bit_string = format(bitboard & 0xFFFFFFFFFFFFFFFF, '064b')
-    print(bit_string)
+def load_data():
+    """Loads magic numbers and attack tables from the appropriate directories."""
+    global BISHOP_MAGICS, BISHOP_ATTACKS, BISHOP_SHIFTS, BISHOP_MASKS
 
-    # Reverse the order to match a chessboard layout
-    for rank in range(7, -1, -1):  # Start from rank 7 (top) down to rank 0 (bottom)
-        row = bit_string[rank * 8 : (rank + 1) * 8]  # Extract 8 bits per rank
-        print(row.replace('0', '.').replace('1', 'X'))  # Replace 1s with 'X' for visibility
+    # Define the directories for each type of data
+    magics_dir = 'data/magics'
+    attacks_dir = 'data/attacks'
+    shifts_dir = 'data/shifts'
+    masks_dir = 'data/masks'
+
+    # Load magic numbers
+    BISHOP_MAGICS = np.load(os.path.join(magics_dir, "bishop_magic_numbers.npy"))
+
+    # Load shifts
+    BISHOP_ATTACKS = np.load(os.path.join(shifts_dir, "bishop_shifts.npy"))
+
+    # Load masks
+    BISHOP_SHIFTS = np.load(os.path.join(masks_dir, "bishop_masks.npy"))
+
+    # Load attack tables from .npz
+    attack_data = np.load(os.path.join(attacks_dir, "bishop_attack_table.npz"))
+    BISHOP_MASKS = {int(sq.split("_")[1]): attack_data[sq] for sq in attack_data.files}
+
+    print("Magic data loaded successfully.")
+
+paths = {
+    'magics': 'data/magics/bishop_magic_numbers.npy',
+    'shifts': 'data/shifts/bishop_shifts.npy',
+    'masks': 'data/masks/bishop_masks.npy',
+    'attacks': 'data/attacks/bishop_attack_table.npz',
+}
+
+# Check if any required file is missing
+missing_files = [name for name, path in paths.items() if not os.path.exists(path)]
+
+if missing_files:
+    # If there are missing files, initialize bishop data and raise an error
+    print('initializing the data')
+    initialize_bishop_data()
+else:
+    # If all files are found, load the data
+    load_data()
+    print(BISHOP_MASKS)
+
+
 
 
 
 if '__main__' == __name__:
-    # Example Usage
-    res = generate_bishop_occupancy_mask(27)  # Example bitboard generation
-    print_bitboard(res)
+    initialize_bishop_data()
+    board = chess.Board()
+    generate_bishop_moves(board, True)
 

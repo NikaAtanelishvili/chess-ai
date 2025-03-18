@@ -1,6 +1,7 @@
 import ctypes
 import os
 import random
+import sys
 import time
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Generator
@@ -10,6 +11,13 @@ import numpy as np
 from tqdm import tqdm
 
 from helpers import BitboardManipulations
+from src.sliding_moves import generate_moves_wrapper
+
+relative_path = './sliding_piece'
+absolute_path = os.path.abspath(relative_path)
+
+sys.path.append(absolute_path)
+
 
 PRINT_ATTACKS_INIT_DETAILS = True
 PRINT_MAGICS_INIT_DETAILS = True
@@ -236,35 +244,25 @@ class SlidingPiece(ABC):
         self.save_data()
 
 
-    def generate_move(self, board: chess.Board, color: bool):
-        moves = []
-
+    def generate_move(self, board: chess.Board, color: bool, piece_type):
         # Determine the piece type based on self.piece_type
-        piece_type = chess.ROOK if self.piece_type == "rook" else chess.BISHOP
+        # piece_type = chess.ROOK if self.piece_type == "rook" else chess.BISHOP
         pieces = board.pieces(piece_type, color)
 
         # 2) Occupancy bitboards
         occupancy = np.uint64(board.occupied)  # all pieces
         own_occ = np.uint64(board.occupied_co[color])  # own pieces only
 
-        for square in bit_scan(pieces):
-            # Compute relevant occupancy
-            relevant_occ = occupancy & self.MASKS[square]
+        raw_moves = generate_moves_wrapper(pieces, occupancy, own_occ, self.MAGICS, self.MASKS, self.SHIFTS, self.ATTACKS)
 
-            # Multiply by magic number and shift
-            magic = self.MAGICS[square]
-            shift = self.SHIFTS[square]
-            index = (relevant_occ * magic) >> shift
-
-            # Look up attacked squares
-            attacks = self.ATTACKS[square][index]
-            # Remove squares occupied by own pieces
-            valid_attacks = attacks & ~own_occ
-
-            # Convert to moves
-            for target in bit_scan(valid_attacks):
-                moves.append(target) # for now
-
+        # Convert raw moves to chess.Move objects and filter for legality
+        moves = []
+        for move in raw_moves:
+            from_square = (move >> 6) & 63  # Extract from_square (bits 6-11)
+            to_square = move & 63  # Extract to_square (bits 0-5)
+            chess_move = chess.Move(from_square, to_square)
+            if board.is_legal(chess_move):  # Filter pseudo-legal to legal moves
+                moves.append(chess_move)
 
         return moves
 
@@ -348,12 +346,17 @@ class SlidingPiece(ABC):
 
         # Load attack tables from .npz using a context manager
         try:
+
             with np.load(data_files["attack_table"]) as attack_data:
-                self.ATTACKS = {
+                attacks_dict = {
                     int(key.split("_")[1]): attack_data[key].astype(np.uint64) for key in attack_data.files
                 }
+                max_len = max(arr.shape[0] for arr in attacks_dict.values())
+                self.ATTACKS = np.zeros((64, max_len), dtype=np.uint64)
+                for i in range(64):
+                    arr = attacks_dict[i]
+                    self.ATTACKS[i, :len(arr)] = arr
             print("Attacks loaded")
-            print(type(self.ATTACKS[0][0]))
         except Exception as e:
             print(f"Failed to load attack tables: {e}")
 
@@ -361,7 +364,7 @@ class SlidingPiece(ABC):
 class Rook(SlidingPiece):
     # Directions: up, down, right, left
     def __init__(self):
-        super().__init__("rook", [(1, 0), (-1, 0), (0, 1), (0, -1)])
+        super().__init__('rook', [(1, 0), (-1, 0), (0, 1), (0, -1)])
 
 
     def generate_occupancy_mask(self, square):
@@ -473,7 +476,7 @@ if __name__ == '__main__':
     board = chess.Board()
     board.set_fen("8/8/8/3R4/8/8/8/8 w - - 0 1")  # Rook on d5
     start = time.time()
-    moves = rook.generate_move(board, True)
+    moves = rook.generate_move(board, True, chess.ROOK)
     end = time.time()
 
     # bishop_attacks = bishop.generate_attacks(27, 0)

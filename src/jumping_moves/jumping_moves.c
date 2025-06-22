@@ -4,7 +4,9 @@
 {
     "distutils": {
         "depends": [
-            "sliding_moves_impl.h"
+            "king_moves.h",
+            "knight_moves.h",
+            "pawn_moves.h"
         ],
         "extra_compile_args": [
             "-O3",
@@ -22,13 +24,15 @@
             "/usr/include/python3.12",
             "."
         ],
-        "name": "sliding_moves",
+        "name": "jumping_moves",
         "sources": [
-            "sliding_moves.pyx",
-            "sliding_moves_impl.c"
+            "jumping_moves.pyx",
+            "king_moves.c",
+            "knight_moves.c",
+            "pawn_moves.c"
         ]
     },
-    "module_name": "sliding_moves"
+    "module_name": "jumping_moves"
 }
 END: Cython Metadata */
 
@@ -1248,11 +1252,13 @@ static CYTHON_INLINE float __PYX_NAN() {
   #endif
 #endif
 
-#define __PYX_HAVE__sliding_moves
-#define __PYX_HAVE_API__sliding_moves
+#define __PYX_HAVE__jumping_moves
+#define __PYX_HAVE_API__jumping_moves
 /* Early includes */
 #include <stdint.h>
-#include "sliding_moves_impl.h"
+#include "pawn_moves.h"
+#include "king_moves.h"
+#include "knight_moves.h"
 #include "pythread.h"
 #include <string.h>
 #include <stdlib.h>
@@ -1504,7 +1510,7 @@ static const char *__pyx_filename;
 /* #### Code section: filename_table ### */
 
 static const char *__pyx_f[] = {
-  "sliding_moves.pyx",
+  "jumping_moves.pyx",
   "<stringsource>",
 };
 /* #### Code section: utility_code_proto_before_types ### */
@@ -2652,9 +2658,6 @@ static int __Pyx_ValidateAndInit_memviewslice(
 /* ObjectToMemviewSlice.proto */
 static CYTHON_INLINE __Pyx_memviewslice __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(PyObject *, int writable_flag);
 
-/* ObjectToMemviewSlice.proto */
-static CYTHON_INLINE __Pyx_memviewslice __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint8_t(PyObject *, int writable_flag);
-
 /* MemviewSliceCopyTemplate.proto */
 static __Pyx_memviewslice
 __pyx_memoryview_copy_new_contig(const __Pyx_memviewslice *from_mvs,
@@ -2693,14 +2696,17 @@ static CYTHON_INLINE uint64_t __Pyx_PyInt_As_uint64_t(PyObject *);
 /* CIntFromPy.proto */
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
 
-/* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
+/* CIntFromPy.proto */
+static CYTHON_INLINE size_t __Pyx_PyInt_As_size_t(PyObject *);
 
 /* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_uint16_t(uint16_t value);
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_uint32_t(uint32_t value);
 
 /* CIntFromPy.proto */
 static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
+
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
 
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
@@ -2744,7 +2750,7 @@ static PyObject *__pyx_memoryviewslice__get_base(struct __pyx_memoryviewslice_ob
 
 /* Module declarations from "libc.stdint" */
 
-/* Module declarations from "sliding_moves" */
+/* Module declarations from "jumping_moves" */
 static PyObject *__pyx_collections_abc_Sequence = 0;
 static PyObject *generic = 0;
 static PyObject *strided = 0;
@@ -2789,13 +2795,12 @@ static void __pyx_memoryview__slice_assign_scalar(char *, Py_ssize_t *, Py_ssize
 static PyObject *__pyx_unpickle_Enum__set_state(struct __pyx_MemviewEnum_obj *, PyObject *); /*proto*/
 /* #### Code section: typeinfo ### */
 static __Pyx_TypeInfo __Pyx_TypeInfo_nn_uint64_t = { "uint64_t", NULL, sizeof(uint64_t), { 0 }, 0, __PYX_IS_UNSIGNED(uint64_t) ? 'U' : 'I', __PYX_IS_UNSIGNED(uint64_t), 0 };
-static __Pyx_TypeInfo __Pyx_TypeInfo_nn_uint8_t = { "uint8_t", NULL, sizeof(uint8_t), { 0 }, 0, __PYX_IS_UNSIGNED(uint8_t) ? 'U' : 'I', __PYX_IS_UNSIGNED(uint8_t), 0 };
 /* #### Code section: before_global_var ### */
-#define __Pyx_MODULE_NAME "sliding_moves"
-extern int __pyx_module_is_main_sliding_moves;
-int __pyx_module_is_main_sliding_moves = 0;
+#define __Pyx_MODULE_NAME "jumping_moves"
+extern int __pyx_module_is_main_jumping_moves;
+int __pyx_module_is_main_jumping_moves = 0;
 
-/* Implementation of "sliding_moves" */
+/* Implementation of "jumping_moves" */
 /* #### Code section: global_var ### */
 static PyObject *__pyx_builtin_range;
 static PyObject *__pyx_builtin___import__;
@@ -2812,13 +2817,14 @@ static const char __pyx_k_[] = ": ";
 static const char __pyx_k_O[] = "O";
 static const char __pyx_k_c[] = "c";
 static const char __pyx_k_i[] = "i";
+static const char __pyx_k_n[] = "n";
 static const char __pyx_k__2[] = ".";
 static const char __pyx_k__3[] = "*";
 static const char __pyx_k__6[] = "'";
 static const char __pyx_k__7[] = ")";
 static const char __pyx_k_gc[] = "gc";
 static const char __pyx_k_id[] = "id";
-static const char __pyx_k__26[] = "?";
+static const char __pyx_k__31[] = "?";
 static const char __pyx_k_abc[] = "abc";
 static const char __pyx_k_and[] = " and ";
 static const char __pyx_k_got[] = " (got ";
@@ -2839,7 +2845,9 @@ static const char __pyx_k_stop[] = "stop";
 static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_ASCII[] = "ASCII";
 static const char __pyx_k_class[] = "__class__";
+static const char __pyx_k_color[] = "color";
 static const char __pyx_k_count[] = "count";
+static const char __pyx_k_ep_sq[] = "ep_sq";
 static const char __pyx_k_error[] = "error";
 static const char __pyx_k_flags[] = "flags";
 static const char __pyx_k_index[] = "index";
@@ -2847,6 +2855,8 @@ static const char __pyx_k_moves[] = "moves";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_shape[] = "shape";
 static const char __pyx_k_start[] = "start";
+static const char __pyx_k_can_ks[] = "can_ks";
+static const char __pyx_k_can_qs[] = "can_qs";
 static const char __pyx_k_enable[] = "enable";
 static const char __pyx_k_encode[] = "encode";
 static const char __pyx_k_format[] = "format";
@@ -2858,11 +2868,12 @@ static const char __pyx_k_reduce[] = "__reduce__";
 static const char __pyx_k_struct[] = "struct";
 static const char __pyx_k_unpack[] = "unpack";
 static const char __pyx_k_update[] = "update";
+static const char __pyx_k_attacks[] = "attacks";
 static const char __pyx_k_disable[] = "disable";
-static const char __pyx_k_flatten[] = "flatten";
 static const char __pyx_k_fortran[] = "fortran";
-static const char __pyx_k_is_rook[] = "is_rook";
+static const char __pyx_k_from_sq[] = "from_sq";
 static const char __pyx_k_memview[] = "memview";
+static const char __pyx_k_opp_occ[] = "opp_occ";
 static const char __pyx_k_own_occ[] = "own_occ";
 static const char __pyx_k_Ellipsis[] = "Ellipsis";
 static const char __pyx_k_Sequence[] = "Sequence";
@@ -2879,62 +2890,53 @@ static const char __pyx_k_pyx_state[] = "__pyx_state";
 static const char __pyx_k_reduce_ex[] = "__reduce_ex__";
 static const char __pyx_k_IndexError[] = "IndexError";
 static const char __pyx_k_ValueError[] = "ValueError";
-static const char __pyx_k_move_count[] = "move_count";
 static const char __pyx_k_pyx_result[] = "__pyx_result";
 static const char __pyx_k_pyx_vtable[] = "__pyx_vtable__";
-static const char __pyx_k_rook_masks[] = "rook_masks";
 static const char __pyx_k_MemoryError[] = "MemoryError";
 static const char __pyx_k_PickleError[] = "PickleError";
 static const char __pyx_k_collections[] = "collections";
-static const char __pyx_k_rook_magics[] = "rook_magics";
-static const char __pyx_k_rook_shifts[] = "rook_shifts";
-static const char __pyx_k_bishop_masks[] = "bishop_masks";
+static const char __pyx_k_attacks_view[] = "attacks_view";
 static const char __pyx_k_initializing[] = "_initializing";
 static const char __pyx_k_is_coroutine[] = "_is_coroutine";
 static const char __pyx_k_pyx_checksum[] = "__pyx_checksum";
-static const char __pyx_k_rook_attacks[] = "rook_attacks";
 static const char __pyx_k_stringsource[] = "<stringsource>";
 static const char __pyx_k_version_info[] = "version_info";
-static const char __pyx_k_bishop_magics[] = "bishop_magics";
-static const char __pyx_k_bishop_shifts[] = "bishop_shifts";
+static const char __pyx_k_black_attacks[] = "black_attacks";
 static const char __pyx_k_class_getitem[] = "__class_getitem__";
+static const char __pyx_k_jumping_moves[] = "jumping_moves";
 static const char __pyx_k_reduce_cython[] = "__reduce_cython__";
-static const char __pyx_k_sliding_moves[] = "sliding_moves";
+static const char __pyx_k_white_attacks[] = "white_attacks";
 static const char __pyx_k_AssertionError[] = "AssertionError";
-static const char __pyx_k_bishop_attacks[] = "bishop_attacks";
 static const char __pyx_k_View_MemoryView[] = "View.MemoryView";
 static const char __pyx_k_allocate_buffer[] = "allocate_buffer";
 static const char __pyx_k_collections_abc[] = "collections.abc";
 static const char __pyx_k_dtype_is_object[] = "dtype_is_object";
 static const char __pyx_k_pyx_PickleError[] = "__pyx_PickleError";
-static const char __pyx_k_rook_masks_view[] = "rook_masks_view";
 static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
-static const char __pyx_k_rook_magics_view[] = "rook_magics_view";
-static const char __pyx_k_rook_shifts_view[] = "rook_shifts_view";
-static const char __pyx_k_bishop_masks_view[] = "bishop_masks_view";
+static const char __pyx_k_jumping_moves_pyx[] = "jumping_moves.pyx";
 static const char __pyx_k_pyx_unpickle_Enum[] = "__pyx_unpickle_Enum";
-static const char __pyx_k_rook_attacks_view[] = "rook_attacks_view";
-static const char __pyx_k_sliding_moves_pyx[] = "sliding_moves.pyx";
 static const char __pyx_k_asyncio_coroutines[] = "asyncio.coroutines";
-static const char __pyx_k_bishop_magics_view[] = "bishop_magics_view";
-static const char __pyx_k_bishop_shifts_view[] = "bishop_shifts_view";
+static const char __pyx_k_black_attacks_view[] = "black_attacks_view";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_strided_and_direct[] = "<strided and direct>";
-static const char __pyx_k_bishop_attacks_view[] = "bishop_attacks_view";
+static const char __pyx_k_white_attacks_view[] = "white_attacks_view";
 static const char __pyx_k_strided_and_indirect[] = "<strided and indirect>";
 static const char __pyx_k_Invalid_shape_in_axis[] = "Invalid shape in axis ";
 static const char __pyx_k_contiguous_and_direct[] = "<contiguous and direct>";
+static const char __pyx_k_initialize_king_table[] = "initialize_king_table";
 static const char __pyx_k_Cannot_index_with_type[] = "Cannot index with type '";
 static const char __pyx_k_MemoryView_of_r_object[] = "<MemoryView of %r object>";
-static const char __pyx_k_generate_moves_wrapper[] = "generate_moves_wrapper";
-static const char __pyx_k_initialize_rook_tables[] = "initialize_rook_tables";
+static const char __pyx_k_initialize_pawn_tables[] = "initialize_pawn_tables";
 static const char __pyx_k_MemoryView_of_r_at_0x_x[] = "<MemoryView of %r at 0x%x>";
 static const char __pyx_k_contiguous_and_indirect[] = "<contiguous and indirect>";
-static const char __pyx_k_initialize_bishop_tables[] = "initialize_bishop_tables";
+static const char __pyx_k_initialize_knight_table[] = "initialize_knight_table";
 static const char __pyx_k_Dimension_d_is_not_direct[] = "Dimension %d is not direct";
 static const char __pyx_k_Index_out_of_bounds_axis_d[] = "Index out of bounds (axis %d)";
 static const char __pyx_k_Step_may_not_be_zero_axis_d[] = "Step may not be zero (axis %d)";
+static const char __pyx_k_generate_king_moves_wrapper[] = "generate_king_moves_wrapper";
+static const char __pyx_k_generate_pawn_moves_wrapper[] = "generate_pawn_moves_wrapper";
 static const char __pyx_k_itemsize_0_for_cython_array[] = "itemsize <= 0 for cython.array";
+static const char __pyx_k_generate_knight_moves_wrapper[] = "generate_knight_moves_wrapper";
 static const char __pyx_k_unable_to_allocate_array_data[] = "unable to allocate array data.";
 static const char __pyx_k_strided_and_direct_or_indirect[] = "<strided and direct or indirect>";
 static const char __pyx_k_All_dimensions_preceding_dimensi[] = "All dimensions preceding dimension %d must be indexed and not sliced";
@@ -2994,9 +2996,12 @@ static void __pyx_memoryviewslice___pyx_pf_15View_dot_MemoryView_16_memoryviewsl
 static PyObject *__pyx_pf___pyx_memoryviewslice___reduce_cython__(CYTHON_UNUSED struct __pyx_memoryviewslice_obj *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf___pyx_memoryviewslice_2__setstate_cython__(CYTHON_UNUSED struct __pyx_memoryviewslice_obj *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v___pyx_state); /* proto */
 static PyObject *__pyx_pf_15View_dot_MemoryView___pyx_unpickle_Enum(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_13sliding_moves_initialize_rook_tables(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_rook_magics, PyObject *__pyx_v_rook_masks, PyObject *__pyx_v_rook_shifts, PyObject *__pyx_v_rook_attacks); /* proto */
-static PyObject *__pyx_pf_13sliding_moves_2initialize_bishop_tables(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_bishop_magics, PyObject *__pyx_v_bishop_masks, PyObject *__pyx_v_bishop_shifts, PyObject *__pyx_v_bishop_attacks); /* proto */
-static PyObject *__pyx_pf_13sliding_moves_4generate_moves_wrapper(CYTHON_UNUSED PyObject *__pyx_self, uint64_t __pyx_v_pieces, uint64_t __pyx_v_occupancy, uint64_t __pyx_v_own_occ, int __pyx_v_is_rook); /* proto */
+static PyObject *__pyx_pf_13jumping_moves_initialize_pawn_tables(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_white_attacks, PyObject *__pyx_v_black_attacks); /* proto */
+static PyObject *__pyx_pf_13jumping_moves_2initialize_king_table(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_attacks); /* proto */
+static PyObject *__pyx_pf_13jumping_moves_4initialize_knight_table(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_attacks); /* proto */
+static PyObject *__pyx_pf_13jumping_moves_6generate_pawn_moves_wrapper(CYTHON_UNUSED PyObject *__pyx_self, uint64_t __pyx_v_pieces, uint64_t __pyx_v_occupancy, uint64_t __pyx_v_opp_occ, int __pyx_v_color, int __pyx_v_ep_sq); /* proto */
+static PyObject *__pyx_pf_13jumping_moves_8generate_king_moves_wrapper(CYTHON_UNUSED PyObject *__pyx_self, uint64_t __pyx_v_occupancy, uint64_t __pyx_v_own_occ, int __pyx_v_from_sq, int __pyx_v_can_ks, int __pyx_v_can_qs, int __pyx_v_color); /* proto */
+static PyObject *__pyx_pf_13jumping_moves_10generate_knight_moves_wrapper(CYTHON_UNUSED PyObject *__pyx_self, uint64_t __pyx_v_own_occ, uint64_t __pyx_v_pieces, int __pyx_v_color); /* proto */
 static PyObject *__pyx_tp_new_array(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_Enum(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_memoryview(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -3072,30 +3077,29 @@ typedef struct {
   PyObject *__pyx_n_s_ValueError;
   PyObject *__pyx_n_s_View_MemoryView;
   PyObject *__pyx_kp_u__2;
-  PyObject *__pyx_n_s__26;
   PyObject *__pyx_n_s__3;
+  PyObject *__pyx_n_s__31;
   PyObject *__pyx_kp_u__6;
   PyObject *__pyx_kp_u__7;
   PyObject *__pyx_n_s_abc;
   PyObject *__pyx_n_s_allocate_buffer;
   PyObject *__pyx_kp_u_and;
   PyObject *__pyx_n_s_asyncio_coroutines;
+  PyObject *__pyx_n_s_attacks;
+  PyObject *__pyx_n_s_attacks_view;
   PyObject *__pyx_n_s_base;
-  PyObject *__pyx_n_s_bishop_attacks;
-  PyObject *__pyx_n_s_bishop_attacks_view;
-  PyObject *__pyx_n_s_bishop_magics;
-  PyObject *__pyx_n_s_bishop_magics_view;
-  PyObject *__pyx_n_s_bishop_masks;
-  PyObject *__pyx_n_s_bishop_masks_view;
-  PyObject *__pyx_n_s_bishop_shifts;
-  PyObject *__pyx_n_s_bishop_shifts_view;
+  PyObject *__pyx_n_s_black_attacks;
+  PyObject *__pyx_n_s_black_attacks_view;
   PyObject *__pyx_n_s_c;
   PyObject *__pyx_n_u_c;
+  PyObject *__pyx_n_s_can_ks;
+  PyObject *__pyx_n_s_can_qs;
   PyObject *__pyx_n_s_class;
   PyObject *__pyx_n_s_class_getitem;
   PyObject *__pyx_n_s_cline_in_traceback;
   PyObject *__pyx_n_s_collections;
   PyObject *__pyx_kp_s_collections_abc;
+  PyObject *__pyx_n_s_color;
   PyObject *__pyx_kp_s_contiguous_and_direct;
   PyObject *__pyx_kp_s_contiguous_and_indirect;
   PyObject *__pyx_n_s_count;
@@ -3105,14 +3109,17 @@ typedef struct {
   PyObject *__pyx_kp_u_enable;
   PyObject *__pyx_n_s_encode;
   PyObject *__pyx_n_s_enumerate;
+  PyObject *__pyx_n_s_ep_sq;
   PyObject *__pyx_n_s_error;
   PyObject *__pyx_n_s_flags;
-  PyObject *__pyx_n_s_flatten;
   PyObject *__pyx_n_s_format;
   PyObject *__pyx_n_s_fortran;
   PyObject *__pyx_n_u_fortran;
+  PyObject *__pyx_n_s_from_sq;
   PyObject *__pyx_kp_u_gc;
-  PyObject *__pyx_n_s_generate_moves_wrapper;
+  PyObject *__pyx_n_s_generate_king_moves_wrapper;
+  PyObject *__pyx_n_s_generate_knight_moves_wrapper;
+  PyObject *__pyx_n_s_generate_pawn_moves_wrapper;
   PyObject *__pyx_n_s_getstate;
   PyObject *__pyx_kp_u_got;
   PyObject *__pyx_kp_u_got_differing_extents_in_dimensi;
@@ -3120,19 +3127,21 @@ typedef struct {
   PyObject *__pyx_n_s_id;
   PyObject *__pyx_n_s_import;
   PyObject *__pyx_n_s_index;
-  PyObject *__pyx_n_s_initialize_bishop_tables;
-  PyObject *__pyx_n_s_initialize_rook_tables;
+  PyObject *__pyx_n_s_initialize_king_table;
+  PyObject *__pyx_n_s_initialize_knight_table;
+  PyObject *__pyx_n_s_initialize_pawn_tables;
   PyObject *__pyx_n_s_initializing;
   PyObject *__pyx_n_s_is_coroutine;
-  PyObject *__pyx_n_s_is_rook;
   PyObject *__pyx_kp_u_isenabled;
   PyObject *__pyx_n_s_itemsize;
   PyObject *__pyx_kp_s_itemsize_0_for_cython_array;
+  PyObject *__pyx_n_s_jumping_moves;
+  PyObject *__pyx_kp_s_jumping_moves_pyx;
   PyObject *__pyx_n_s_main;
   PyObject *__pyx_n_s_memview;
   PyObject *__pyx_n_s_mode;
-  PyObject *__pyx_n_s_move_count;
   PyObject *__pyx_n_s_moves;
+  PyObject *__pyx_n_s_n;
   PyObject *__pyx_n_s_name;
   PyObject *__pyx_n_s_name_2;
   PyObject *__pyx_n_s_ndim;
@@ -3140,6 +3149,7 @@ typedef struct {
   PyObject *__pyx_kp_s_no_default___reduce___due_to_non;
   PyObject *__pyx_n_s_obj;
   PyObject *__pyx_n_s_occupancy;
+  PyObject *__pyx_n_s_opp_occ;
   PyObject *__pyx_n_s_own_occ;
   PyObject *__pyx_n_s_pack;
   PyObject *__pyx_n_s_pickle;
@@ -3156,20 +3166,10 @@ typedef struct {
   PyObject *__pyx_n_s_reduce_cython;
   PyObject *__pyx_n_s_reduce_ex;
   PyObject *__pyx_n_s_register;
-  PyObject *__pyx_n_s_rook_attacks;
-  PyObject *__pyx_n_s_rook_attacks_view;
-  PyObject *__pyx_n_s_rook_magics;
-  PyObject *__pyx_n_s_rook_magics_view;
-  PyObject *__pyx_n_s_rook_masks;
-  PyObject *__pyx_n_s_rook_masks_view;
-  PyObject *__pyx_n_s_rook_shifts;
-  PyObject *__pyx_n_s_rook_shifts_view;
   PyObject *__pyx_n_s_setstate;
   PyObject *__pyx_n_s_setstate_cython;
   PyObject *__pyx_n_s_shape;
   PyObject *__pyx_n_s_size;
-  PyObject *__pyx_n_s_sliding_moves;
-  PyObject *__pyx_kp_s_sliding_moves_pyx;
   PyObject *__pyx_n_s_spec;
   PyObject *__pyx_n_s_start;
   PyObject *__pyx_n_s_step;
@@ -3186,6 +3186,8 @@ typedef struct {
   PyObject *__pyx_n_s_unpack;
   PyObject *__pyx_n_s_update;
   PyObject *__pyx_n_s_version_info;
+  PyObject *__pyx_n_s_white_attacks;
+  PyObject *__pyx_n_s_white_attacks_view;
   PyObject *__pyx_int_0;
   PyObject *__pyx_int_1;
   PyObject *__pyx_int_3;
@@ -3208,11 +3210,16 @@ typedef struct {
   PyObject *__pyx_tuple__18;
   PyObject *__pyx_tuple__20;
   PyObject *__pyx_tuple__22;
-  PyObject *__pyx_tuple__24;
+  PyObject *__pyx_tuple__25;
+  PyObject *__pyx_tuple__27;
+  PyObject *__pyx_tuple__29;
   PyObject *__pyx_codeobj__19;
   PyObject *__pyx_codeobj__21;
   PyObject *__pyx_codeobj__23;
-  PyObject *__pyx_codeobj__25;
+  PyObject *__pyx_codeobj__24;
+  PyObject *__pyx_codeobj__26;
+  PyObject *__pyx_codeobj__28;
+  PyObject *__pyx_codeobj__30;
 } __pyx_mstate;
 
 #if CYTHON_USE_MODULE_STATE
@@ -3295,30 +3302,29 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_ValueError);
   Py_CLEAR(clear_module_state->__pyx_n_s_View_MemoryView);
   Py_CLEAR(clear_module_state->__pyx_kp_u__2);
-  Py_CLEAR(clear_module_state->__pyx_n_s__26);
   Py_CLEAR(clear_module_state->__pyx_n_s__3);
+  Py_CLEAR(clear_module_state->__pyx_n_s__31);
   Py_CLEAR(clear_module_state->__pyx_kp_u__6);
   Py_CLEAR(clear_module_state->__pyx_kp_u__7);
   Py_CLEAR(clear_module_state->__pyx_n_s_abc);
   Py_CLEAR(clear_module_state->__pyx_n_s_allocate_buffer);
   Py_CLEAR(clear_module_state->__pyx_kp_u_and);
   Py_CLEAR(clear_module_state->__pyx_n_s_asyncio_coroutines);
+  Py_CLEAR(clear_module_state->__pyx_n_s_attacks);
+  Py_CLEAR(clear_module_state->__pyx_n_s_attacks_view);
   Py_CLEAR(clear_module_state->__pyx_n_s_base);
-  Py_CLEAR(clear_module_state->__pyx_n_s_bishop_attacks);
-  Py_CLEAR(clear_module_state->__pyx_n_s_bishop_attacks_view);
-  Py_CLEAR(clear_module_state->__pyx_n_s_bishop_magics);
-  Py_CLEAR(clear_module_state->__pyx_n_s_bishop_magics_view);
-  Py_CLEAR(clear_module_state->__pyx_n_s_bishop_masks);
-  Py_CLEAR(clear_module_state->__pyx_n_s_bishop_masks_view);
-  Py_CLEAR(clear_module_state->__pyx_n_s_bishop_shifts);
-  Py_CLEAR(clear_module_state->__pyx_n_s_bishop_shifts_view);
+  Py_CLEAR(clear_module_state->__pyx_n_s_black_attacks);
+  Py_CLEAR(clear_module_state->__pyx_n_s_black_attacks_view);
   Py_CLEAR(clear_module_state->__pyx_n_s_c);
   Py_CLEAR(clear_module_state->__pyx_n_u_c);
+  Py_CLEAR(clear_module_state->__pyx_n_s_can_ks);
+  Py_CLEAR(clear_module_state->__pyx_n_s_can_qs);
   Py_CLEAR(clear_module_state->__pyx_n_s_class);
   Py_CLEAR(clear_module_state->__pyx_n_s_class_getitem);
   Py_CLEAR(clear_module_state->__pyx_n_s_cline_in_traceback);
   Py_CLEAR(clear_module_state->__pyx_n_s_collections);
   Py_CLEAR(clear_module_state->__pyx_kp_s_collections_abc);
+  Py_CLEAR(clear_module_state->__pyx_n_s_color);
   Py_CLEAR(clear_module_state->__pyx_kp_s_contiguous_and_direct);
   Py_CLEAR(clear_module_state->__pyx_kp_s_contiguous_and_indirect);
   Py_CLEAR(clear_module_state->__pyx_n_s_count);
@@ -3328,14 +3334,17 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_kp_u_enable);
   Py_CLEAR(clear_module_state->__pyx_n_s_encode);
   Py_CLEAR(clear_module_state->__pyx_n_s_enumerate);
+  Py_CLEAR(clear_module_state->__pyx_n_s_ep_sq);
   Py_CLEAR(clear_module_state->__pyx_n_s_error);
   Py_CLEAR(clear_module_state->__pyx_n_s_flags);
-  Py_CLEAR(clear_module_state->__pyx_n_s_flatten);
   Py_CLEAR(clear_module_state->__pyx_n_s_format);
   Py_CLEAR(clear_module_state->__pyx_n_s_fortran);
   Py_CLEAR(clear_module_state->__pyx_n_u_fortran);
+  Py_CLEAR(clear_module_state->__pyx_n_s_from_sq);
   Py_CLEAR(clear_module_state->__pyx_kp_u_gc);
-  Py_CLEAR(clear_module_state->__pyx_n_s_generate_moves_wrapper);
+  Py_CLEAR(clear_module_state->__pyx_n_s_generate_king_moves_wrapper);
+  Py_CLEAR(clear_module_state->__pyx_n_s_generate_knight_moves_wrapper);
+  Py_CLEAR(clear_module_state->__pyx_n_s_generate_pawn_moves_wrapper);
   Py_CLEAR(clear_module_state->__pyx_n_s_getstate);
   Py_CLEAR(clear_module_state->__pyx_kp_u_got);
   Py_CLEAR(clear_module_state->__pyx_kp_u_got_differing_extents_in_dimensi);
@@ -3343,19 +3352,21 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_id);
   Py_CLEAR(clear_module_state->__pyx_n_s_import);
   Py_CLEAR(clear_module_state->__pyx_n_s_index);
-  Py_CLEAR(clear_module_state->__pyx_n_s_initialize_bishop_tables);
-  Py_CLEAR(clear_module_state->__pyx_n_s_initialize_rook_tables);
+  Py_CLEAR(clear_module_state->__pyx_n_s_initialize_king_table);
+  Py_CLEAR(clear_module_state->__pyx_n_s_initialize_knight_table);
+  Py_CLEAR(clear_module_state->__pyx_n_s_initialize_pawn_tables);
   Py_CLEAR(clear_module_state->__pyx_n_s_initializing);
   Py_CLEAR(clear_module_state->__pyx_n_s_is_coroutine);
-  Py_CLEAR(clear_module_state->__pyx_n_s_is_rook);
   Py_CLEAR(clear_module_state->__pyx_kp_u_isenabled);
   Py_CLEAR(clear_module_state->__pyx_n_s_itemsize);
   Py_CLEAR(clear_module_state->__pyx_kp_s_itemsize_0_for_cython_array);
+  Py_CLEAR(clear_module_state->__pyx_n_s_jumping_moves);
+  Py_CLEAR(clear_module_state->__pyx_kp_s_jumping_moves_pyx);
   Py_CLEAR(clear_module_state->__pyx_n_s_main);
   Py_CLEAR(clear_module_state->__pyx_n_s_memview);
   Py_CLEAR(clear_module_state->__pyx_n_s_mode);
-  Py_CLEAR(clear_module_state->__pyx_n_s_move_count);
   Py_CLEAR(clear_module_state->__pyx_n_s_moves);
+  Py_CLEAR(clear_module_state->__pyx_n_s_n);
   Py_CLEAR(clear_module_state->__pyx_n_s_name);
   Py_CLEAR(clear_module_state->__pyx_n_s_name_2);
   Py_CLEAR(clear_module_state->__pyx_n_s_ndim);
@@ -3363,6 +3374,7 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_kp_s_no_default___reduce___due_to_non);
   Py_CLEAR(clear_module_state->__pyx_n_s_obj);
   Py_CLEAR(clear_module_state->__pyx_n_s_occupancy);
+  Py_CLEAR(clear_module_state->__pyx_n_s_opp_occ);
   Py_CLEAR(clear_module_state->__pyx_n_s_own_occ);
   Py_CLEAR(clear_module_state->__pyx_n_s_pack);
   Py_CLEAR(clear_module_state->__pyx_n_s_pickle);
@@ -3379,20 +3391,10 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_reduce_cython);
   Py_CLEAR(clear_module_state->__pyx_n_s_reduce_ex);
   Py_CLEAR(clear_module_state->__pyx_n_s_register);
-  Py_CLEAR(clear_module_state->__pyx_n_s_rook_attacks);
-  Py_CLEAR(clear_module_state->__pyx_n_s_rook_attacks_view);
-  Py_CLEAR(clear_module_state->__pyx_n_s_rook_magics);
-  Py_CLEAR(clear_module_state->__pyx_n_s_rook_magics_view);
-  Py_CLEAR(clear_module_state->__pyx_n_s_rook_masks);
-  Py_CLEAR(clear_module_state->__pyx_n_s_rook_masks_view);
-  Py_CLEAR(clear_module_state->__pyx_n_s_rook_shifts);
-  Py_CLEAR(clear_module_state->__pyx_n_s_rook_shifts_view);
   Py_CLEAR(clear_module_state->__pyx_n_s_setstate);
   Py_CLEAR(clear_module_state->__pyx_n_s_setstate_cython);
   Py_CLEAR(clear_module_state->__pyx_n_s_shape);
   Py_CLEAR(clear_module_state->__pyx_n_s_size);
-  Py_CLEAR(clear_module_state->__pyx_n_s_sliding_moves);
-  Py_CLEAR(clear_module_state->__pyx_kp_s_sliding_moves_pyx);
   Py_CLEAR(clear_module_state->__pyx_n_s_spec);
   Py_CLEAR(clear_module_state->__pyx_n_s_start);
   Py_CLEAR(clear_module_state->__pyx_n_s_step);
@@ -3409,6 +3411,8 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_unpack);
   Py_CLEAR(clear_module_state->__pyx_n_s_update);
   Py_CLEAR(clear_module_state->__pyx_n_s_version_info);
+  Py_CLEAR(clear_module_state->__pyx_n_s_white_attacks);
+  Py_CLEAR(clear_module_state->__pyx_n_s_white_attacks_view);
   Py_CLEAR(clear_module_state->__pyx_int_0);
   Py_CLEAR(clear_module_state->__pyx_int_1);
   Py_CLEAR(clear_module_state->__pyx_int_3);
@@ -3431,11 +3435,16 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_tuple__18);
   Py_CLEAR(clear_module_state->__pyx_tuple__20);
   Py_CLEAR(clear_module_state->__pyx_tuple__22);
-  Py_CLEAR(clear_module_state->__pyx_tuple__24);
+  Py_CLEAR(clear_module_state->__pyx_tuple__25);
+  Py_CLEAR(clear_module_state->__pyx_tuple__27);
+  Py_CLEAR(clear_module_state->__pyx_tuple__29);
   Py_CLEAR(clear_module_state->__pyx_codeobj__19);
   Py_CLEAR(clear_module_state->__pyx_codeobj__21);
   Py_CLEAR(clear_module_state->__pyx_codeobj__23);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__25);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__24);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__26);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__28);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__30);
   return 0;
 }
 #endif
@@ -3496,30 +3505,29 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_ValueError);
   Py_VISIT(traverse_module_state->__pyx_n_s_View_MemoryView);
   Py_VISIT(traverse_module_state->__pyx_kp_u__2);
-  Py_VISIT(traverse_module_state->__pyx_n_s__26);
   Py_VISIT(traverse_module_state->__pyx_n_s__3);
+  Py_VISIT(traverse_module_state->__pyx_n_s__31);
   Py_VISIT(traverse_module_state->__pyx_kp_u__6);
   Py_VISIT(traverse_module_state->__pyx_kp_u__7);
   Py_VISIT(traverse_module_state->__pyx_n_s_abc);
   Py_VISIT(traverse_module_state->__pyx_n_s_allocate_buffer);
   Py_VISIT(traverse_module_state->__pyx_kp_u_and);
   Py_VISIT(traverse_module_state->__pyx_n_s_asyncio_coroutines);
+  Py_VISIT(traverse_module_state->__pyx_n_s_attacks);
+  Py_VISIT(traverse_module_state->__pyx_n_s_attacks_view);
   Py_VISIT(traverse_module_state->__pyx_n_s_base);
-  Py_VISIT(traverse_module_state->__pyx_n_s_bishop_attacks);
-  Py_VISIT(traverse_module_state->__pyx_n_s_bishop_attacks_view);
-  Py_VISIT(traverse_module_state->__pyx_n_s_bishop_magics);
-  Py_VISIT(traverse_module_state->__pyx_n_s_bishop_magics_view);
-  Py_VISIT(traverse_module_state->__pyx_n_s_bishop_masks);
-  Py_VISIT(traverse_module_state->__pyx_n_s_bishop_masks_view);
-  Py_VISIT(traverse_module_state->__pyx_n_s_bishop_shifts);
-  Py_VISIT(traverse_module_state->__pyx_n_s_bishop_shifts_view);
+  Py_VISIT(traverse_module_state->__pyx_n_s_black_attacks);
+  Py_VISIT(traverse_module_state->__pyx_n_s_black_attacks_view);
   Py_VISIT(traverse_module_state->__pyx_n_s_c);
   Py_VISIT(traverse_module_state->__pyx_n_u_c);
+  Py_VISIT(traverse_module_state->__pyx_n_s_can_ks);
+  Py_VISIT(traverse_module_state->__pyx_n_s_can_qs);
   Py_VISIT(traverse_module_state->__pyx_n_s_class);
   Py_VISIT(traverse_module_state->__pyx_n_s_class_getitem);
   Py_VISIT(traverse_module_state->__pyx_n_s_cline_in_traceback);
   Py_VISIT(traverse_module_state->__pyx_n_s_collections);
   Py_VISIT(traverse_module_state->__pyx_kp_s_collections_abc);
+  Py_VISIT(traverse_module_state->__pyx_n_s_color);
   Py_VISIT(traverse_module_state->__pyx_kp_s_contiguous_and_direct);
   Py_VISIT(traverse_module_state->__pyx_kp_s_contiguous_and_indirect);
   Py_VISIT(traverse_module_state->__pyx_n_s_count);
@@ -3529,14 +3537,17 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_kp_u_enable);
   Py_VISIT(traverse_module_state->__pyx_n_s_encode);
   Py_VISIT(traverse_module_state->__pyx_n_s_enumerate);
+  Py_VISIT(traverse_module_state->__pyx_n_s_ep_sq);
   Py_VISIT(traverse_module_state->__pyx_n_s_error);
   Py_VISIT(traverse_module_state->__pyx_n_s_flags);
-  Py_VISIT(traverse_module_state->__pyx_n_s_flatten);
   Py_VISIT(traverse_module_state->__pyx_n_s_format);
   Py_VISIT(traverse_module_state->__pyx_n_s_fortran);
   Py_VISIT(traverse_module_state->__pyx_n_u_fortran);
+  Py_VISIT(traverse_module_state->__pyx_n_s_from_sq);
   Py_VISIT(traverse_module_state->__pyx_kp_u_gc);
-  Py_VISIT(traverse_module_state->__pyx_n_s_generate_moves_wrapper);
+  Py_VISIT(traverse_module_state->__pyx_n_s_generate_king_moves_wrapper);
+  Py_VISIT(traverse_module_state->__pyx_n_s_generate_knight_moves_wrapper);
+  Py_VISIT(traverse_module_state->__pyx_n_s_generate_pawn_moves_wrapper);
   Py_VISIT(traverse_module_state->__pyx_n_s_getstate);
   Py_VISIT(traverse_module_state->__pyx_kp_u_got);
   Py_VISIT(traverse_module_state->__pyx_kp_u_got_differing_extents_in_dimensi);
@@ -3544,19 +3555,21 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_id);
   Py_VISIT(traverse_module_state->__pyx_n_s_import);
   Py_VISIT(traverse_module_state->__pyx_n_s_index);
-  Py_VISIT(traverse_module_state->__pyx_n_s_initialize_bishop_tables);
-  Py_VISIT(traverse_module_state->__pyx_n_s_initialize_rook_tables);
+  Py_VISIT(traverse_module_state->__pyx_n_s_initialize_king_table);
+  Py_VISIT(traverse_module_state->__pyx_n_s_initialize_knight_table);
+  Py_VISIT(traverse_module_state->__pyx_n_s_initialize_pawn_tables);
   Py_VISIT(traverse_module_state->__pyx_n_s_initializing);
   Py_VISIT(traverse_module_state->__pyx_n_s_is_coroutine);
-  Py_VISIT(traverse_module_state->__pyx_n_s_is_rook);
   Py_VISIT(traverse_module_state->__pyx_kp_u_isenabled);
   Py_VISIT(traverse_module_state->__pyx_n_s_itemsize);
   Py_VISIT(traverse_module_state->__pyx_kp_s_itemsize_0_for_cython_array);
+  Py_VISIT(traverse_module_state->__pyx_n_s_jumping_moves);
+  Py_VISIT(traverse_module_state->__pyx_kp_s_jumping_moves_pyx);
   Py_VISIT(traverse_module_state->__pyx_n_s_main);
   Py_VISIT(traverse_module_state->__pyx_n_s_memview);
   Py_VISIT(traverse_module_state->__pyx_n_s_mode);
-  Py_VISIT(traverse_module_state->__pyx_n_s_move_count);
   Py_VISIT(traverse_module_state->__pyx_n_s_moves);
+  Py_VISIT(traverse_module_state->__pyx_n_s_n);
   Py_VISIT(traverse_module_state->__pyx_n_s_name);
   Py_VISIT(traverse_module_state->__pyx_n_s_name_2);
   Py_VISIT(traverse_module_state->__pyx_n_s_ndim);
@@ -3564,6 +3577,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_kp_s_no_default___reduce___due_to_non);
   Py_VISIT(traverse_module_state->__pyx_n_s_obj);
   Py_VISIT(traverse_module_state->__pyx_n_s_occupancy);
+  Py_VISIT(traverse_module_state->__pyx_n_s_opp_occ);
   Py_VISIT(traverse_module_state->__pyx_n_s_own_occ);
   Py_VISIT(traverse_module_state->__pyx_n_s_pack);
   Py_VISIT(traverse_module_state->__pyx_n_s_pickle);
@@ -3580,20 +3594,10 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_reduce_cython);
   Py_VISIT(traverse_module_state->__pyx_n_s_reduce_ex);
   Py_VISIT(traverse_module_state->__pyx_n_s_register);
-  Py_VISIT(traverse_module_state->__pyx_n_s_rook_attacks);
-  Py_VISIT(traverse_module_state->__pyx_n_s_rook_attacks_view);
-  Py_VISIT(traverse_module_state->__pyx_n_s_rook_magics);
-  Py_VISIT(traverse_module_state->__pyx_n_s_rook_magics_view);
-  Py_VISIT(traverse_module_state->__pyx_n_s_rook_masks);
-  Py_VISIT(traverse_module_state->__pyx_n_s_rook_masks_view);
-  Py_VISIT(traverse_module_state->__pyx_n_s_rook_shifts);
-  Py_VISIT(traverse_module_state->__pyx_n_s_rook_shifts_view);
   Py_VISIT(traverse_module_state->__pyx_n_s_setstate);
   Py_VISIT(traverse_module_state->__pyx_n_s_setstate_cython);
   Py_VISIT(traverse_module_state->__pyx_n_s_shape);
   Py_VISIT(traverse_module_state->__pyx_n_s_size);
-  Py_VISIT(traverse_module_state->__pyx_n_s_sliding_moves);
-  Py_VISIT(traverse_module_state->__pyx_kp_s_sliding_moves_pyx);
   Py_VISIT(traverse_module_state->__pyx_n_s_spec);
   Py_VISIT(traverse_module_state->__pyx_n_s_start);
   Py_VISIT(traverse_module_state->__pyx_n_s_step);
@@ -3610,6 +3614,8 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_unpack);
   Py_VISIT(traverse_module_state->__pyx_n_s_update);
   Py_VISIT(traverse_module_state->__pyx_n_s_version_info);
+  Py_VISIT(traverse_module_state->__pyx_n_s_white_attacks);
+  Py_VISIT(traverse_module_state->__pyx_n_s_white_attacks_view);
   Py_VISIT(traverse_module_state->__pyx_int_0);
   Py_VISIT(traverse_module_state->__pyx_int_1);
   Py_VISIT(traverse_module_state->__pyx_int_3);
@@ -3632,11 +3638,16 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_tuple__18);
   Py_VISIT(traverse_module_state->__pyx_tuple__20);
   Py_VISIT(traverse_module_state->__pyx_tuple__22);
-  Py_VISIT(traverse_module_state->__pyx_tuple__24);
+  Py_VISIT(traverse_module_state->__pyx_tuple__25);
+  Py_VISIT(traverse_module_state->__pyx_tuple__27);
+  Py_VISIT(traverse_module_state->__pyx_tuple__29);
   Py_VISIT(traverse_module_state->__pyx_codeobj__19);
   Py_VISIT(traverse_module_state->__pyx_codeobj__21);
   Py_VISIT(traverse_module_state->__pyx_codeobj__23);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__25);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__24);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__26);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__28);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__30);
   return 0;
 }
 #endif
@@ -3709,30 +3720,29 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_ValueError __pyx_mstate_global->__pyx_n_s_ValueError
 #define __pyx_n_s_View_MemoryView __pyx_mstate_global->__pyx_n_s_View_MemoryView
 #define __pyx_kp_u__2 __pyx_mstate_global->__pyx_kp_u__2
-#define __pyx_n_s__26 __pyx_mstate_global->__pyx_n_s__26
 #define __pyx_n_s__3 __pyx_mstate_global->__pyx_n_s__3
+#define __pyx_n_s__31 __pyx_mstate_global->__pyx_n_s__31
 #define __pyx_kp_u__6 __pyx_mstate_global->__pyx_kp_u__6
 #define __pyx_kp_u__7 __pyx_mstate_global->__pyx_kp_u__7
 #define __pyx_n_s_abc __pyx_mstate_global->__pyx_n_s_abc
 #define __pyx_n_s_allocate_buffer __pyx_mstate_global->__pyx_n_s_allocate_buffer
 #define __pyx_kp_u_and __pyx_mstate_global->__pyx_kp_u_and
 #define __pyx_n_s_asyncio_coroutines __pyx_mstate_global->__pyx_n_s_asyncio_coroutines
+#define __pyx_n_s_attacks __pyx_mstate_global->__pyx_n_s_attacks
+#define __pyx_n_s_attacks_view __pyx_mstate_global->__pyx_n_s_attacks_view
 #define __pyx_n_s_base __pyx_mstate_global->__pyx_n_s_base
-#define __pyx_n_s_bishop_attacks __pyx_mstate_global->__pyx_n_s_bishop_attacks
-#define __pyx_n_s_bishop_attacks_view __pyx_mstate_global->__pyx_n_s_bishop_attacks_view
-#define __pyx_n_s_bishop_magics __pyx_mstate_global->__pyx_n_s_bishop_magics
-#define __pyx_n_s_bishop_magics_view __pyx_mstate_global->__pyx_n_s_bishop_magics_view
-#define __pyx_n_s_bishop_masks __pyx_mstate_global->__pyx_n_s_bishop_masks
-#define __pyx_n_s_bishop_masks_view __pyx_mstate_global->__pyx_n_s_bishop_masks_view
-#define __pyx_n_s_bishop_shifts __pyx_mstate_global->__pyx_n_s_bishop_shifts
-#define __pyx_n_s_bishop_shifts_view __pyx_mstate_global->__pyx_n_s_bishop_shifts_view
+#define __pyx_n_s_black_attacks __pyx_mstate_global->__pyx_n_s_black_attacks
+#define __pyx_n_s_black_attacks_view __pyx_mstate_global->__pyx_n_s_black_attacks_view
 #define __pyx_n_s_c __pyx_mstate_global->__pyx_n_s_c
 #define __pyx_n_u_c __pyx_mstate_global->__pyx_n_u_c
+#define __pyx_n_s_can_ks __pyx_mstate_global->__pyx_n_s_can_ks
+#define __pyx_n_s_can_qs __pyx_mstate_global->__pyx_n_s_can_qs
 #define __pyx_n_s_class __pyx_mstate_global->__pyx_n_s_class
 #define __pyx_n_s_class_getitem __pyx_mstate_global->__pyx_n_s_class_getitem
 #define __pyx_n_s_cline_in_traceback __pyx_mstate_global->__pyx_n_s_cline_in_traceback
 #define __pyx_n_s_collections __pyx_mstate_global->__pyx_n_s_collections
 #define __pyx_kp_s_collections_abc __pyx_mstate_global->__pyx_kp_s_collections_abc
+#define __pyx_n_s_color __pyx_mstate_global->__pyx_n_s_color
 #define __pyx_kp_s_contiguous_and_direct __pyx_mstate_global->__pyx_kp_s_contiguous_and_direct
 #define __pyx_kp_s_contiguous_and_indirect __pyx_mstate_global->__pyx_kp_s_contiguous_and_indirect
 #define __pyx_n_s_count __pyx_mstate_global->__pyx_n_s_count
@@ -3742,14 +3752,17 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_kp_u_enable __pyx_mstate_global->__pyx_kp_u_enable
 #define __pyx_n_s_encode __pyx_mstate_global->__pyx_n_s_encode
 #define __pyx_n_s_enumerate __pyx_mstate_global->__pyx_n_s_enumerate
+#define __pyx_n_s_ep_sq __pyx_mstate_global->__pyx_n_s_ep_sq
 #define __pyx_n_s_error __pyx_mstate_global->__pyx_n_s_error
 #define __pyx_n_s_flags __pyx_mstate_global->__pyx_n_s_flags
-#define __pyx_n_s_flatten __pyx_mstate_global->__pyx_n_s_flatten
 #define __pyx_n_s_format __pyx_mstate_global->__pyx_n_s_format
 #define __pyx_n_s_fortran __pyx_mstate_global->__pyx_n_s_fortran
 #define __pyx_n_u_fortran __pyx_mstate_global->__pyx_n_u_fortran
+#define __pyx_n_s_from_sq __pyx_mstate_global->__pyx_n_s_from_sq
 #define __pyx_kp_u_gc __pyx_mstate_global->__pyx_kp_u_gc
-#define __pyx_n_s_generate_moves_wrapper __pyx_mstate_global->__pyx_n_s_generate_moves_wrapper
+#define __pyx_n_s_generate_king_moves_wrapper __pyx_mstate_global->__pyx_n_s_generate_king_moves_wrapper
+#define __pyx_n_s_generate_knight_moves_wrapper __pyx_mstate_global->__pyx_n_s_generate_knight_moves_wrapper
+#define __pyx_n_s_generate_pawn_moves_wrapper __pyx_mstate_global->__pyx_n_s_generate_pawn_moves_wrapper
 #define __pyx_n_s_getstate __pyx_mstate_global->__pyx_n_s_getstate
 #define __pyx_kp_u_got __pyx_mstate_global->__pyx_kp_u_got
 #define __pyx_kp_u_got_differing_extents_in_dimensi __pyx_mstate_global->__pyx_kp_u_got_differing_extents_in_dimensi
@@ -3757,19 +3770,21 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_id __pyx_mstate_global->__pyx_n_s_id
 #define __pyx_n_s_import __pyx_mstate_global->__pyx_n_s_import
 #define __pyx_n_s_index __pyx_mstate_global->__pyx_n_s_index
-#define __pyx_n_s_initialize_bishop_tables __pyx_mstate_global->__pyx_n_s_initialize_bishop_tables
-#define __pyx_n_s_initialize_rook_tables __pyx_mstate_global->__pyx_n_s_initialize_rook_tables
+#define __pyx_n_s_initialize_king_table __pyx_mstate_global->__pyx_n_s_initialize_king_table
+#define __pyx_n_s_initialize_knight_table __pyx_mstate_global->__pyx_n_s_initialize_knight_table
+#define __pyx_n_s_initialize_pawn_tables __pyx_mstate_global->__pyx_n_s_initialize_pawn_tables
 #define __pyx_n_s_initializing __pyx_mstate_global->__pyx_n_s_initializing
 #define __pyx_n_s_is_coroutine __pyx_mstate_global->__pyx_n_s_is_coroutine
-#define __pyx_n_s_is_rook __pyx_mstate_global->__pyx_n_s_is_rook
 #define __pyx_kp_u_isenabled __pyx_mstate_global->__pyx_kp_u_isenabled
 #define __pyx_n_s_itemsize __pyx_mstate_global->__pyx_n_s_itemsize
 #define __pyx_kp_s_itemsize_0_for_cython_array __pyx_mstate_global->__pyx_kp_s_itemsize_0_for_cython_array
+#define __pyx_n_s_jumping_moves __pyx_mstate_global->__pyx_n_s_jumping_moves
+#define __pyx_kp_s_jumping_moves_pyx __pyx_mstate_global->__pyx_kp_s_jumping_moves_pyx
 #define __pyx_n_s_main __pyx_mstate_global->__pyx_n_s_main
 #define __pyx_n_s_memview __pyx_mstate_global->__pyx_n_s_memview
 #define __pyx_n_s_mode __pyx_mstate_global->__pyx_n_s_mode
-#define __pyx_n_s_move_count __pyx_mstate_global->__pyx_n_s_move_count
 #define __pyx_n_s_moves __pyx_mstate_global->__pyx_n_s_moves
+#define __pyx_n_s_n __pyx_mstate_global->__pyx_n_s_n
 #define __pyx_n_s_name __pyx_mstate_global->__pyx_n_s_name
 #define __pyx_n_s_name_2 __pyx_mstate_global->__pyx_n_s_name_2
 #define __pyx_n_s_ndim __pyx_mstate_global->__pyx_n_s_ndim
@@ -3777,6 +3792,7 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_kp_s_no_default___reduce___due_to_non __pyx_mstate_global->__pyx_kp_s_no_default___reduce___due_to_non
 #define __pyx_n_s_obj __pyx_mstate_global->__pyx_n_s_obj
 #define __pyx_n_s_occupancy __pyx_mstate_global->__pyx_n_s_occupancy
+#define __pyx_n_s_opp_occ __pyx_mstate_global->__pyx_n_s_opp_occ
 #define __pyx_n_s_own_occ __pyx_mstate_global->__pyx_n_s_own_occ
 #define __pyx_n_s_pack __pyx_mstate_global->__pyx_n_s_pack
 #define __pyx_n_s_pickle __pyx_mstate_global->__pyx_n_s_pickle
@@ -3793,20 +3809,10 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_reduce_cython __pyx_mstate_global->__pyx_n_s_reduce_cython
 #define __pyx_n_s_reduce_ex __pyx_mstate_global->__pyx_n_s_reduce_ex
 #define __pyx_n_s_register __pyx_mstate_global->__pyx_n_s_register
-#define __pyx_n_s_rook_attacks __pyx_mstate_global->__pyx_n_s_rook_attacks
-#define __pyx_n_s_rook_attacks_view __pyx_mstate_global->__pyx_n_s_rook_attacks_view
-#define __pyx_n_s_rook_magics __pyx_mstate_global->__pyx_n_s_rook_magics
-#define __pyx_n_s_rook_magics_view __pyx_mstate_global->__pyx_n_s_rook_magics_view
-#define __pyx_n_s_rook_masks __pyx_mstate_global->__pyx_n_s_rook_masks
-#define __pyx_n_s_rook_masks_view __pyx_mstate_global->__pyx_n_s_rook_masks_view
-#define __pyx_n_s_rook_shifts __pyx_mstate_global->__pyx_n_s_rook_shifts
-#define __pyx_n_s_rook_shifts_view __pyx_mstate_global->__pyx_n_s_rook_shifts_view
 #define __pyx_n_s_setstate __pyx_mstate_global->__pyx_n_s_setstate
 #define __pyx_n_s_setstate_cython __pyx_mstate_global->__pyx_n_s_setstate_cython
 #define __pyx_n_s_shape __pyx_mstate_global->__pyx_n_s_shape
 #define __pyx_n_s_size __pyx_mstate_global->__pyx_n_s_size
-#define __pyx_n_s_sliding_moves __pyx_mstate_global->__pyx_n_s_sliding_moves
-#define __pyx_kp_s_sliding_moves_pyx __pyx_mstate_global->__pyx_kp_s_sliding_moves_pyx
 #define __pyx_n_s_spec __pyx_mstate_global->__pyx_n_s_spec
 #define __pyx_n_s_start __pyx_mstate_global->__pyx_n_s_start
 #define __pyx_n_s_step __pyx_mstate_global->__pyx_n_s_step
@@ -3823,6 +3829,8 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_unpack __pyx_mstate_global->__pyx_n_s_unpack
 #define __pyx_n_s_update __pyx_mstate_global->__pyx_n_s_update
 #define __pyx_n_s_version_info __pyx_mstate_global->__pyx_n_s_version_info
+#define __pyx_n_s_white_attacks __pyx_mstate_global->__pyx_n_s_white_attacks
+#define __pyx_n_s_white_attacks_view __pyx_mstate_global->__pyx_n_s_white_attacks_view
 #define __pyx_int_0 __pyx_mstate_global->__pyx_int_0
 #define __pyx_int_1 __pyx_mstate_global->__pyx_int_1
 #define __pyx_int_3 __pyx_mstate_global->__pyx_int_3
@@ -3845,11 +3853,16 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_tuple__18 __pyx_mstate_global->__pyx_tuple__18
 #define __pyx_tuple__20 __pyx_mstate_global->__pyx_tuple__20
 #define __pyx_tuple__22 __pyx_mstate_global->__pyx_tuple__22
-#define __pyx_tuple__24 __pyx_mstate_global->__pyx_tuple__24
+#define __pyx_tuple__25 __pyx_mstate_global->__pyx_tuple__25
+#define __pyx_tuple__27 __pyx_mstate_global->__pyx_tuple__27
+#define __pyx_tuple__29 __pyx_mstate_global->__pyx_tuple__29
 #define __pyx_codeobj__19 __pyx_mstate_global->__pyx_codeobj__19
 #define __pyx_codeobj__21 __pyx_mstate_global->__pyx_codeobj__21
 #define __pyx_codeobj__23 __pyx_mstate_global->__pyx_codeobj__23
-#define __pyx_codeobj__25 __pyx_mstate_global->__pyx_codeobj__25
+#define __pyx_codeobj__24 __pyx_mstate_global->__pyx_codeobj__24
+#define __pyx_codeobj__26 __pyx_mstate_global->__pyx_codeobj__26
+#define __pyx_codeobj__28 __pyx_mstate_global->__pyx_codeobj__28
+#define __pyx_codeobj__30 __pyx_mstate_global->__pyx_codeobj__30
 /* #### Code section: module_code ### */
 
 /* "View.MemoryView":131
@@ -17480,46 +17493,43 @@ static PyObject *__pyx_unpickle_Enum__set_state(struct __pyx_MemviewEnum_obj *__
   return __pyx_r;
 }
 
-/* "sliding_moves.pyx":14
+/* "jumping_moves.pyx":19
  * 
+ * # ATTACK TABLE INITIALIZATIONS
+ * def initialize_pawn_tables( white_attacks, black_attacks):             # <<<<<<<<<<<<<<
  * 
- * def initialize_rook_tables(rook_magics, rook_masks, rook_shifts, rook_attacks):             # <<<<<<<<<<<<<<
- *     """Initialize rook tables from Python."""
- *     cdef uint64_t[:] rook_magics_view = rook_magics
+ *     cdef uint64_t[:] white_attacks_view = white_attacks
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_13sliding_moves_1initialize_rook_tables(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_13jumping_moves_1initialize_pawn_tables(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_13sliding_moves_initialize_rook_tables, "Initialize rook tables from Python.");
-static PyMethodDef __pyx_mdef_13sliding_moves_1initialize_rook_tables = {"initialize_rook_tables", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13sliding_moves_1initialize_rook_tables, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_13sliding_moves_initialize_rook_tables};
-static PyObject *__pyx_pw_13sliding_moves_1initialize_rook_tables(PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_13jumping_moves_1initialize_pawn_tables = {"initialize_pawn_tables", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13jumping_moves_1initialize_pawn_tables, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_13jumping_moves_1initialize_pawn_tables(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ) {
-  PyObject *__pyx_v_rook_magics = 0;
-  PyObject *__pyx_v_rook_masks = 0;
-  PyObject *__pyx_v_rook_shifts = 0;
-  PyObject *__pyx_v_rook_attacks = 0;
+  PyObject *__pyx_v_white_attacks = 0;
+  PyObject *__pyx_v_black_attacks = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject* values[4] = {0,0,0,0};
+  PyObject* values[2] = {0,0};
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("initialize_rook_tables (wrapper)", 0);
+  __Pyx_RefNannySetupContext("initialize_pawn_tables (wrapper)", 0);
   #if !CYTHON_METH_FASTCALL
   #if CYTHON_ASSUME_SAFE_MACROS
   __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
@@ -17529,14 +17539,10 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   #endif
   __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
   {
-    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_rook_magics,&__pyx_n_s_rook_masks,&__pyx_n_s_rook_shifts,&__pyx_n_s_rook_attacks,0};
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_white_attacks,&__pyx_n_s_black_attacks,0};
     if (__pyx_kwds) {
       Py_ssize_t kw_args;
       switch (__pyx_nargs) {
-        case  4: values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
-        CYTHON_FALLTHROUGH;
-        case  3: values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
         case  2: values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
         CYTHON_FALLTHROUGH;
         case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
@@ -17547,63 +17553,39 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       kw_args = __Pyx_NumKwargs_FASTCALL(__pyx_kwds);
       switch (__pyx_nargs) {
         case  0:
-        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_rook_magics)) != 0)) {
+        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_white_attacks)) != 0)) {
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
-        if (likely((values[1] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_rook_masks)) != 0)) {
+        if (likely((values[1] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_black_attacks)) != 0)) {
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("initialize_rook_tables", 1, 4, 4, 1); __PYX_ERR(0, 14, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_rook_shifts)) != 0)) {
-          (void)__Pyx_Arg_NewRef_FASTCALL(values[2]);
-          kw_args--;
-        }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L3_error)
-        else {
-          __Pyx_RaiseArgtupleInvalid("initialize_rook_tables", 1, 4, 4, 2); __PYX_ERR(0, 14, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  3:
-        if (likely((values[3] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_rook_attacks)) != 0)) {
-          (void)__Pyx_Arg_NewRef_FASTCALL(values[3]);
-          kw_args--;
-        }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 14, __pyx_L3_error)
-        else {
-          __Pyx_RaiseArgtupleInvalid("initialize_rook_tables", 1, 4, 4, 3); __PYX_ERR(0, 14, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("initialize_pawn_tables", 1, 2, 2, 1); __PYX_ERR(0, 19, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "initialize_rook_tables") < 0)) __PYX_ERR(0, 14, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "initialize_pawn_tables") < 0)) __PYX_ERR(0, 19, __pyx_L3_error)
       }
-    } else if (unlikely(__pyx_nargs != 4)) {
+    } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
       values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
-      values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
-      values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
     }
-    __pyx_v_rook_magics = values[0];
-    __pyx_v_rook_masks = values[1];
-    __pyx_v_rook_shifts = values[2];
-    __pyx_v_rook_attacks = values[3];
+    __pyx_v_white_attacks = values[0];
+    __pyx_v_black_attacks = values[1];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("initialize_rook_tables", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 14, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("initialize_pawn_tables", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 19, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -17613,11 +17595,11 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
     }
   }
-  __Pyx_AddTraceback("sliding_moves.initialize_rook_tables", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("jumping_moves.initialize_pawn_tables", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_13sliding_moves_initialize_rook_tables(__pyx_self, __pyx_v_rook_magics, __pyx_v_rook_masks, __pyx_v_rook_shifts, __pyx_v_rook_attacks);
+  __pyx_r = __pyx_pf_13jumping_moves_initialize_pawn_tables(__pyx_self, __pyx_v_white_attacks, __pyx_v_black_attacks);
 
   /* function exit code */
   {
@@ -17630,157 +17612,79 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_13sliding_moves_initialize_rook_tables(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_rook_magics, PyObject *__pyx_v_rook_masks, PyObject *__pyx_v_rook_shifts, PyObject *__pyx_v_rook_attacks) {
-  __Pyx_memviewslice __pyx_v_rook_magics_view = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_v_rook_masks_view = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_v_rook_shifts_view = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_v_rook_attacks_view = { 0, 0, { 0 }, { 0 }, { 0 } };
+static PyObject *__pyx_pf_13jumping_moves_initialize_pawn_tables(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_white_attacks, PyObject *__pyx_v_black_attacks) {
+  __Pyx_memviewslice __pyx_v_white_attacks_view = { 0, 0, { 0 }, { 0 }, { 0 } };
+  __Pyx_memviewslice __pyx_v_black_attacks_view = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   __Pyx_memviewslice __pyx_t_1 = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_t_2 = { 0, 0, { 0 }, { 0 }, { 0 } };
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  unsigned int __pyx_t_6;
-  Py_ssize_t __pyx_t_7;
-  int __pyx_t_8;
-  Py_ssize_t __pyx_t_9;
-  Py_ssize_t __pyx_t_10;
-  Py_ssize_t __pyx_t_11;
+  Py_ssize_t __pyx_t_2;
+  int __pyx_t_3;
+  Py_ssize_t __pyx_t_4;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("initialize_rook_tables", 1);
+  __Pyx_RefNannySetupContext("initialize_pawn_tables", 1);
 
-  /* "sliding_moves.pyx":16
- * def initialize_rook_tables(rook_magics, rook_masks, rook_shifts, rook_attacks):
- *     """Initialize rook tables from Python."""
- *     cdef uint64_t[:] rook_magics_view = rook_magics             # <<<<<<<<<<<<<<
- *     cdef uint64_t[:] rook_masks_view = rook_masks
- *     cdef uint8_t[:] rook_shifts_view = rook_shifts
+  /* "jumping_moves.pyx":21
+ * def initialize_pawn_tables( white_attacks, black_attacks):
+ * 
+ *     cdef uint64_t[:] white_attacks_view = white_attacks             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] black_attacks_view = black_attacks
  */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_v_rook_magics, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 16, __pyx_L1_error)
-  __pyx_v_rook_magics_view = __pyx_t_1;
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_v_white_attacks, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_v_white_attacks_view = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "sliding_moves.pyx":17
- *     """Initialize rook tables from Python."""
- *     cdef uint64_t[:] rook_magics_view = rook_magics
- *     cdef uint64_t[:] rook_masks_view = rook_masks             # <<<<<<<<<<<<<<
- *     cdef uint8_t[:] rook_shifts_view = rook_shifts
- *     cdef uint64_t[:] rook_attacks_view = rook_attacks.flatten()
+  /* "jumping_moves.pyx":23
+ *     cdef uint64_t[:] white_attacks_view = white_attacks
+ * 
+ *     cdef uint64_t[:] black_attacks_view = black_attacks             # <<<<<<<<<<<<<<
+ * 
+ *     initialize_pawn_attacks(&white_attacks_view[0], &black_attacks_view[0])
  */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_v_rook_masks, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 17, __pyx_L1_error)
-  __pyx_v_rook_masks_view = __pyx_t_1;
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_v_black_attacks, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_v_black_attacks_view = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "sliding_moves.pyx":18
- *     cdef uint64_t[:] rook_magics_view = rook_magics
- *     cdef uint64_t[:] rook_masks_view = rook_masks
- *     cdef uint8_t[:] rook_shifts_view = rook_shifts             # <<<<<<<<<<<<<<
- *     cdef uint64_t[:] rook_attacks_view = rook_attacks.flatten()
- *     init_rook_tables(&rook_magics_view[0], &rook_masks_view[0], &rook_shifts_view[0], &rook_attacks_view[0])
- */
-  __pyx_t_2 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint8_t(__pyx_v_rook_shifts, PyBUF_WRITABLE); if (unlikely(!__pyx_t_2.memview)) __PYX_ERR(0, 18, __pyx_L1_error)
-  __pyx_v_rook_shifts_view = __pyx_t_2;
-  __pyx_t_2.memview = NULL;
-  __pyx_t_2.data = NULL;
-
-  /* "sliding_moves.pyx":19
- *     cdef uint64_t[:] rook_masks_view = rook_masks
- *     cdef uint8_t[:] rook_shifts_view = rook_shifts
- *     cdef uint64_t[:] rook_attacks_view = rook_attacks.flatten()             # <<<<<<<<<<<<<<
- *     init_rook_tables(&rook_magics_view[0], &rook_masks_view[0], &rook_shifts_view[0], &rook_attacks_view[0])
+  /* "jumping_moves.pyx":25
+ *     cdef uint64_t[:] black_attacks_view = black_attacks
+ * 
+ *     initialize_pawn_attacks(&white_attacks_view[0], &black_attacks_view[0])             # <<<<<<<<<<<<<<
+ * 
  * 
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_rook_attacks, __pyx_n_s_flatten); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 19, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = NULL;
-  __pyx_t_6 = 0;
-  #if CYTHON_UNPACK_METHODS
-  if (likely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_5)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_5);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-      __pyx_t_6 = 1;
-    }
+  __pyx_t_2 = 0;
+  __pyx_t_3 = -1;
+  if (__pyx_t_2 < 0) {
+    __pyx_t_2 += __pyx_v_white_attacks_view.shape[0];
+    if (unlikely(__pyx_t_2 < 0)) __pyx_t_3 = 0;
+  } else if (unlikely(__pyx_t_2 >= __pyx_v_white_attacks_view.shape[0])) __pyx_t_3 = 0;
+  if (unlikely(__pyx_t_3 != -1)) {
+    __Pyx_RaiseBufferIndexError(__pyx_t_3);
+    __PYX_ERR(0, 25, __pyx_L1_error)
   }
-  #endif
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_5, NULL};
-    __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
-    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 19, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = 0;
+  __pyx_t_3 = -1;
+  if (__pyx_t_4 < 0) {
+    __pyx_t_4 += __pyx_v_black_attacks_view.shape[0];
+    if (unlikely(__pyx_t_4 < 0)) __pyx_t_3 = 0;
+  } else if (unlikely(__pyx_t_4 >= __pyx_v_black_attacks_view.shape[0])) __pyx_t_3 = 0;
+  if (unlikely(__pyx_t_3 != -1)) {
+    __Pyx_RaiseBufferIndexError(__pyx_t_3);
+    __PYX_ERR(0, 25, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 19, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_rook_attacks_view = __pyx_t_1;
-  __pyx_t_1.memview = NULL;
-  __pyx_t_1.data = NULL;
+  initialize_pawn_attacks((&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_white_attacks_view.data + __pyx_t_2 * __pyx_v_white_attacks_view.strides[0]) )))), (&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_black_attacks_view.data + __pyx_t_4 * __pyx_v_black_attacks_view.strides[0]) )))));
 
-  /* "sliding_moves.pyx":20
- *     cdef uint8_t[:] rook_shifts_view = rook_shifts
- *     cdef uint64_t[:] rook_attacks_view = rook_attacks.flatten()
- *     init_rook_tables(&rook_magics_view[0], &rook_masks_view[0], &rook_shifts_view[0], &rook_attacks_view[0])             # <<<<<<<<<<<<<<
+  /* "jumping_moves.pyx":19
  * 
- * def initialize_bishop_tables(bishop_magics, bishop_masks, bishop_shifts, bishop_attacks):
- */
-  __pyx_t_7 = 0;
-  __pyx_t_8 = -1;
-  if (__pyx_t_7 < 0) {
-    __pyx_t_7 += __pyx_v_rook_magics_view.shape[0];
-    if (unlikely(__pyx_t_7 < 0)) __pyx_t_8 = 0;
-  } else if (unlikely(__pyx_t_7 >= __pyx_v_rook_magics_view.shape[0])) __pyx_t_8 = 0;
-  if (unlikely(__pyx_t_8 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_8);
-    __PYX_ERR(0, 20, __pyx_L1_error)
-  }
-  __pyx_t_9 = 0;
-  __pyx_t_8 = -1;
-  if (__pyx_t_9 < 0) {
-    __pyx_t_9 += __pyx_v_rook_masks_view.shape[0];
-    if (unlikely(__pyx_t_9 < 0)) __pyx_t_8 = 0;
-  } else if (unlikely(__pyx_t_9 >= __pyx_v_rook_masks_view.shape[0])) __pyx_t_8 = 0;
-  if (unlikely(__pyx_t_8 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_8);
-    __PYX_ERR(0, 20, __pyx_L1_error)
-  }
-  __pyx_t_10 = 0;
-  __pyx_t_8 = -1;
-  if (__pyx_t_10 < 0) {
-    __pyx_t_10 += __pyx_v_rook_shifts_view.shape[0];
-    if (unlikely(__pyx_t_10 < 0)) __pyx_t_8 = 0;
-  } else if (unlikely(__pyx_t_10 >= __pyx_v_rook_shifts_view.shape[0])) __pyx_t_8 = 0;
-  if (unlikely(__pyx_t_8 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_8);
-    __PYX_ERR(0, 20, __pyx_L1_error)
-  }
-  __pyx_t_11 = 0;
-  __pyx_t_8 = -1;
-  if (__pyx_t_11 < 0) {
-    __pyx_t_11 += __pyx_v_rook_attacks_view.shape[0];
-    if (unlikely(__pyx_t_11 < 0)) __pyx_t_8 = 0;
-  } else if (unlikely(__pyx_t_11 >= __pyx_v_rook_attacks_view.shape[0])) __pyx_t_8 = 0;
-  if (unlikely(__pyx_t_8 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_8);
-    __PYX_ERR(0, 20, __pyx_L1_error)
-  }
-  init_rook_tables((&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_rook_magics_view.data + __pyx_t_7 * __pyx_v_rook_magics_view.strides[0]) )))), (&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_rook_masks_view.data + __pyx_t_9 * __pyx_v_rook_masks_view.strides[0]) )))), (&(*((uint8_t *) ( /* dim=0 */ (__pyx_v_rook_shifts_view.data + __pyx_t_10 * __pyx_v_rook_shifts_view.strides[0]) )))), (&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_rook_attacks_view.data + __pyx_t_11 * __pyx_v_rook_attacks_view.strides[0]) )))));
-
-  /* "sliding_moves.pyx":14
+ * # ATTACK TABLE INITIALIZATIONS
+ * def initialize_pawn_tables( white_attacks, black_attacks):             # <<<<<<<<<<<<<<
  * 
- * 
- * def initialize_rook_tables(rook_magics, rook_masks, rook_shifts, rook_attacks):             # <<<<<<<<<<<<<<
- *     """Initialize rook tables from Python."""
- *     cdef uint64_t[:] rook_magics_view = rook_magics
+ *     cdef uint64_t[:] white_attacks_view = white_attacks
  */
 
   /* function exit code */
@@ -17788,62 +17692,52 @@ static PyObject *__pyx_pf_13sliding_moves_initialize_rook_tables(CYTHON_UNUSED P
   goto __pyx_L0;
   __pyx_L1_error:;
   __PYX_XCLEAR_MEMVIEW(&__pyx_t_1, 1);
-  __PYX_XCLEAR_MEMVIEW(&__pyx_t_2, 1);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("sliding_moves.initialize_rook_tables", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("jumping_moves.initialize_pawn_tables", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
-  __PYX_XCLEAR_MEMVIEW(&__pyx_v_rook_magics_view, 1);
-  __PYX_XCLEAR_MEMVIEW(&__pyx_v_rook_masks_view, 1);
-  __PYX_XCLEAR_MEMVIEW(&__pyx_v_rook_shifts_view, 1);
-  __PYX_XCLEAR_MEMVIEW(&__pyx_v_rook_attacks_view, 1);
+  __PYX_XCLEAR_MEMVIEW(&__pyx_v_white_attacks_view, 1);
+  __PYX_XCLEAR_MEMVIEW(&__pyx_v_black_attacks_view, 1);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "sliding_moves.pyx":22
- *     init_rook_tables(&rook_magics_view[0], &rook_masks_view[0], &rook_shifts_view[0], &rook_attacks_view[0])
+/* "jumping_moves.pyx":28
  * 
- * def initialize_bishop_tables(bishop_magics, bishop_masks, bishop_shifts, bishop_attacks):             # <<<<<<<<<<<<<<
- *     """Initialize bishop tables from Python."""
- *     cdef uint64_t[:] bishop_magics_view = bishop_magics
+ * 
+ * def initialize_king_table(attacks):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_13sliding_moves_3initialize_bishop_tables(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_13jumping_moves_3initialize_king_table(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_13sliding_moves_2initialize_bishop_tables, "Initialize bishop tables from Python.");
-static PyMethodDef __pyx_mdef_13sliding_moves_3initialize_bishop_tables = {"initialize_bishop_tables", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13sliding_moves_3initialize_bishop_tables, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_13sliding_moves_2initialize_bishop_tables};
-static PyObject *__pyx_pw_13sliding_moves_3initialize_bishop_tables(PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_13jumping_moves_3initialize_king_table = {"initialize_king_table", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13jumping_moves_3initialize_king_table, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_13jumping_moves_3initialize_king_table(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ) {
-  PyObject *__pyx_v_bishop_magics = 0;
-  PyObject *__pyx_v_bishop_masks = 0;
-  PyObject *__pyx_v_bishop_shifts = 0;
-  PyObject *__pyx_v_bishop_attacks = 0;
+  PyObject *__pyx_v_attacks = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject* values[4] = {0,0,0,0};
+  PyObject* values[1] = {0};
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("initialize_bishop_tables (wrapper)", 0);
+  __Pyx_RefNannySetupContext("initialize_king_table (wrapper)", 0);
   #if !CYTHON_METH_FASTCALL
   #if CYTHON_ASSUME_SAFE_MACROS
   __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
@@ -17853,16 +17747,10 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   #endif
   __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
   {
-    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_bishop_magics,&__pyx_n_s_bishop_masks,&__pyx_n_s_bishop_shifts,&__pyx_n_s_bishop_attacks,0};
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_attacks,0};
     if (__pyx_kwds) {
       Py_ssize_t kw_args;
       switch (__pyx_nargs) {
-        case  4: values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
-        CYTHON_FALLTHROUGH;
-        case  3: values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
-        case  2: values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
         case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
         CYTHON_FALLTHROUGH;
         case  0: break;
@@ -17871,63 +17759,27 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       kw_args = __Pyx_NumKwargs_FASTCALL(__pyx_kwds);
       switch (__pyx_nargs) {
         case  0:
-        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_bishop_magics)) != 0)) {
+        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_attacks)) != 0)) {
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 28, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_bishop_masks)) != 0)) {
-          (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
-          kw_args--;
-        }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L3_error)
-        else {
-          __Pyx_RaiseArgtupleInvalid("initialize_bishop_tables", 1, 4, 4, 1); __PYX_ERR(0, 22, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_bishop_shifts)) != 0)) {
-          (void)__Pyx_Arg_NewRef_FASTCALL(values[2]);
-          kw_args--;
-        }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L3_error)
-        else {
-          __Pyx_RaiseArgtupleInvalid("initialize_bishop_tables", 1, 4, 4, 2); __PYX_ERR(0, 22, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  3:
-        if (likely((values[3] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_bishop_attacks)) != 0)) {
-          (void)__Pyx_Arg_NewRef_FASTCALL(values[3]);
-          kw_args--;
-        }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L3_error)
-        else {
-          __Pyx_RaiseArgtupleInvalid("initialize_bishop_tables", 1, 4, 4, 3); __PYX_ERR(0, 22, __pyx_L3_error)
-        }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "initialize_bishop_tables") < 0)) __PYX_ERR(0, 22, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "initialize_king_table") < 0)) __PYX_ERR(0, 28, __pyx_L3_error)
       }
-    } else if (unlikely(__pyx_nargs != 4)) {
+    } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
-      values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
-      values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
-      values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
     }
-    __pyx_v_bishop_magics = values[0];
-    __pyx_v_bishop_masks = values[1];
-    __pyx_v_bishop_shifts = values[2];
-    __pyx_v_bishop_attacks = values[3];
+    __pyx_v_attacks = values[0];
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("initialize_bishop_tables", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 22, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("initialize_king_table", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 28, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -17937,11 +17789,11 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
     }
   }
-  __Pyx_AddTraceback("sliding_moves.initialize_bishop_tables", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("jumping_moves.initialize_king_table", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_13sliding_moves_2initialize_bishop_tables(__pyx_self, __pyx_v_bishop_magics, __pyx_v_bishop_masks, __pyx_v_bishop_shifts, __pyx_v_bishop_attacks);
+  __pyx_r = __pyx_pf_13jumping_moves_2initialize_king_table(__pyx_self, __pyx_v_attacks);
 
   /* function exit code */
   {
@@ -17954,157 +17806,55 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_13sliding_moves_2initialize_bishop_tables(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_bishop_magics, PyObject *__pyx_v_bishop_masks, PyObject *__pyx_v_bishop_shifts, PyObject *__pyx_v_bishop_attacks) {
-  __Pyx_memviewslice __pyx_v_bishop_magics_view = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_v_bishop_masks_view = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_v_bishop_shifts_view = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_v_bishop_attacks_view = { 0, 0, { 0 }, { 0 }, { 0 } };
+static PyObject *__pyx_pf_13jumping_moves_2initialize_king_table(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_attacks) {
+  __Pyx_memviewslice __pyx_v_attacks_view = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   __Pyx_memviewslice __pyx_t_1 = { 0, 0, { 0 }, { 0 }, { 0 } };
-  __Pyx_memviewslice __pyx_t_2 = { 0, 0, { 0 }, { 0 }, { 0 } };
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  unsigned int __pyx_t_6;
-  Py_ssize_t __pyx_t_7;
-  int __pyx_t_8;
-  Py_ssize_t __pyx_t_9;
-  Py_ssize_t __pyx_t_10;
-  Py_ssize_t __pyx_t_11;
+  Py_ssize_t __pyx_t_2;
+  int __pyx_t_3;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("initialize_bishop_tables", 1);
+  __Pyx_RefNannySetupContext("initialize_king_table", 1);
 
-  /* "sliding_moves.pyx":24
- * def initialize_bishop_tables(bishop_magics, bishop_masks, bishop_shifts, bishop_attacks):
- *     """Initialize bishop tables from Python."""
- *     cdef uint64_t[:] bishop_magics_view = bishop_magics             # <<<<<<<<<<<<<<
- *     cdef uint64_t[:] bishop_masks_view = bishop_masks
- *     cdef uint8_t[:] bishop_shifts_view = bishop_shifts
+  /* "jumping_moves.pyx":30
+ * def initialize_king_table(attacks):
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks             # <<<<<<<<<<<<<<
+ * 
+ *     initialize_king_attacks(&attacks_view[0])
  */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_v_bishop_magics, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 24, __pyx_L1_error)
-  __pyx_v_bishop_magics_view = __pyx_t_1;
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_v_attacks, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 30, __pyx_L1_error)
+  __pyx_v_attacks_view = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "sliding_moves.pyx":25
- *     """Initialize bishop tables from Python."""
- *     cdef uint64_t[:] bishop_magics_view = bishop_magics
- *     cdef uint64_t[:] bishop_masks_view = bishop_masks             # <<<<<<<<<<<<<<
- *     cdef uint8_t[:] bishop_shifts_view = bishop_shifts
- *     cdef uint64_t[:] bishop_attacks_view = bishop_attacks.flatten()
- */
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_v_bishop_masks, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 25, __pyx_L1_error)
-  __pyx_v_bishop_masks_view = __pyx_t_1;
-  __pyx_t_1.memview = NULL;
-  __pyx_t_1.data = NULL;
-
-  /* "sliding_moves.pyx":26
- *     cdef uint64_t[:] bishop_magics_view = bishop_magics
- *     cdef uint64_t[:] bishop_masks_view = bishop_masks
- *     cdef uint8_t[:] bishop_shifts_view = bishop_shifts             # <<<<<<<<<<<<<<
- *     cdef uint64_t[:] bishop_attacks_view = bishop_attacks.flatten()
+  /* "jumping_moves.pyx":32
+ *     cdef uint64_t[:] attacks_view = attacks
  * 
- */
-  __pyx_t_2 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint8_t(__pyx_v_bishop_shifts, PyBUF_WRITABLE); if (unlikely(!__pyx_t_2.memview)) __PYX_ERR(0, 26, __pyx_L1_error)
-  __pyx_v_bishop_shifts_view = __pyx_t_2;
-  __pyx_t_2.memview = NULL;
-  __pyx_t_2.data = NULL;
-
-  /* "sliding_moves.pyx":27
- *     cdef uint64_t[:] bishop_masks_view = bishop_masks
- *     cdef uint8_t[:] bishop_shifts_view = bishop_shifts
- *     cdef uint64_t[:] bishop_attacks_view = bishop_attacks.flatten()             # <<<<<<<<<<<<<<
- * 
- *     init_bishop_tables(&bishop_magics_view[0], &bishop_masks_view[0], &bishop_shifts_view[0], &bishop_attacks_view[0])
- */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_bishop_attacks, __pyx_n_s_flatten); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 27, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = NULL;
-  __pyx_t_6 = 0;
-  #if CYTHON_UNPACK_METHODS
-  if (likely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_5)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_5);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-      __pyx_t_6 = 1;
-    }
-  }
-  #endif
-  {
-    PyObject *__pyx_callargs[2] = {__pyx_t_5, NULL};
-    __pyx_t_3 = __Pyx_PyObject_FastCall(__pyx_t_4, __pyx_callargs+1-__pyx_t_6, 0+__pyx_t_6);
-    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 27, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  }
-  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 27, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_bishop_attacks_view = __pyx_t_1;
-  __pyx_t_1.memview = NULL;
-  __pyx_t_1.data = NULL;
-
-  /* "sliding_moves.pyx":29
- *     cdef uint64_t[:] bishop_attacks_view = bishop_attacks.flatten()
- * 
- *     init_bishop_tables(&bishop_magics_view[0], &bishop_masks_view[0], &bishop_shifts_view[0], &bishop_attacks_view[0])             # <<<<<<<<<<<<<<
+ *     initialize_king_attacks(&attacks_view[0])             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_7 = 0;
-  __pyx_t_8 = -1;
-  if (__pyx_t_7 < 0) {
-    __pyx_t_7 += __pyx_v_bishop_magics_view.shape[0];
-    if (unlikely(__pyx_t_7 < 0)) __pyx_t_8 = 0;
-  } else if (unlikely(__pyx_t_7 >= __pyx_v_bishop_magics_view.shape[0])) __pyx_t_8 = 0;
-  if (unlikely(__pyx_t_8 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_8);
-    __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_2 = 0;
+  __pyx_t_3 = -1;
+  if (__pyx_t_2 < 0) {
+    __pyx_t_2 += __pyx_v_attacks_view.shape[0];
+    if (unlikely(__pyx_t_2 < 0)) __pyx_t_3 = 0;
+  } else if (unlikely(__pyx_t_2 >= __pyx_v_attacks_view.shape[0])) __pyx_t_3 = 0;
+  if (unlikely(__pyx_t_3 != -1)) {
+    __Pyx_RaiseBufferIndexError(__pyx_t_3);
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
-  __pyx_t_9 = 0;
-  __pyx_t_8 = -1;
-  if (__pyx_t_9 < 0) {
-    __pyx_t_9 += __pyx_v_bishop_masks_view.shape[0];
-    if (unlikely(__pyx_t_9 < 0)) __pyx_t_8 = 0;
-  } else if (unlikely(__pyx_t_9 >= __pyx_v_bishop_masks_view.shape[0])) __pyx_t_8 = 0;
-  if (unlikely(__pyx_t_8 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_8);
-    __PYX_ERR(0, 29, __pyx_L1_error)
-  }
-  __pyx_t_10 = 0;
-  __pyx_t_8 = -1;
-  if (__pyx_t_10 < 0) {
-    __pyx_t_10 += __pyx_v_bishop_shifts_view.shape[0];
-    if (unlikely(__pyx_t_10 < 0)) __pyx_t_8 = 0;
-  } else if (unlikely(__pyx_t_10 >= __pyx_v_bishop_shifts_view.shape[0])) __pyx_t_8 = 0;
-  if (unlikely(__pyx_t_8 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_8);
-    __PYX_ERR(0, 29, __pyx_L1_error)
-  }
-  __pyx_t_11 = 0;
-  __pyx_t_8 = -1;
-  if (__pyx_t_11 < 0) {
-    __pyx_t_11 += __pyx_v_bishop_attacks_view.shape[0];
-    if (unlikely(__pyx_t_11 < 0)) __pyx_t_8 = 0;
-  } else if (unlikely(__pyx_t_11 >= __pyx_v_bishop_attacks_view.shape[0])) __pyx_t_8 = 0;
-  if (unlikely(__pyx_t_8 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_8);
-    __PYX_ERR(0, 29, __pyx_L1_error)
-  }
-  init_bishop_tables((&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_bishop_magics_view.data + __pyx_t_7 * __pyx_v_bishop_magics_view.strides[0]) )))), (&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_bishop_masks_view.data + __pyx_t_9 * __pyx_v_bishop_masks_view.strides[0]) )))), (&(*((uint8_t *) ( /* dim=0 */ (__pyx_v_bishop_shifts_view.data + __pyx_t_10 * __pyx_v_bishop_shifts_view.strides[0]) )))), (&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_bishop_attacks_view.data + __pyx_t_11 * __pyx_v_bishop_attacks_view.strides[0]) )))));
+  initialize_king_attacks((&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_attacks_view.data + __pyx_t_2 * __pyx_v_attacks_view.strides[0]) )))));
 
-  /* "sliding_moves.pyx":22
- *     init_rook_tables(&rook_magics_view[0], &rook_masks_view[0], &rook_shifts_view[0], &rook_attacks_view[0])
+  /* "jumping_moves.pyx":28
  * 
- * def initialize_bishop_tables(bishop_magics, bishop_masks, bishop_shifts, bishop_attacks):             # <<<<<<<<<<<<<<
- *     """Initialize bishop tables from Python."""
- *     cdef uint64_t[:] bishop_magics_view = bishop_magics
+ * 
+ * def initialize_king_table(attacks):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks
  */
 
   /* function exit code */
@@ -18112,40 +17862,202 @@ static PyObject *__pyx_pf_13sliding_moves_2initialize_bishop_tables(CYTHON_UNUSE
   goto __pyx_L0;
   __pyx_L1_error:;
   __PYX_XCLEAR_MEMVIEW(&__pyx_t_1, 1);
-  __PYX_XCLEAR_MEMVIEW(&__pyx_t_2, 1);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("sliding_moves.initialize_bishop_tables", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("jumping_moves.initialize_king_table", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
-  __PYX_XCLEAR_MEMVIEW(&__pyx_v_bishop_magics_view, 1);
-  __PYX_XCLEAR_MEMVIEW(&__pyx_v_bishop_masks_view, 1);
-  __PYX_XCLEAR_MEMVIEW(&__pyx_v_bishop_shifts_view, 1);
-  __PYX_XCLEAR_MEMVIEW(&__pyx_v_bishop_attacks_view, 1);
+  __PYX_XCLEAR_MEMVIEW(&__pyx_v_attacks_view, 1);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "sliding_moves.pyx":32
+/* "jumping_moves.pyx":35
  * 
  * 
- * def generate_moves_wrapper(uint64_t pieces, uint64_t occupancy, uint64_t own_occ, int is_rook):             # <<<<<<<<<<<<<<
- *     cdef int move_count = 0
- *     cdef uint16_t[1024] moves  # Adjust size as needed
+ * def initialize_knight_table(attacks):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_13sliding_moves_5generate_moves_wrapper(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_13jumping_moves_5initialize_knight_table(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_13sliding_moves_5generate_moves_wrapper = {"generate_moves_wrapper", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13sliding_moves_5generate_moves_wrapper, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_13sliding_moves_5generate_moves_wrapper(PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_13jumping_moves_5initialize_knight_table = {"initialize_knight_table", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13jumping_moves_5initialize_knight_table, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_13jumping_moves_5initialize_knight_table(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  PyObject *__pyx_v_attacks = 0;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[1] = {0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("initialize_knight_table (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_attacks,0};
+    if (__pyx_kwds) {
+      Py_ssize_t kw_args;
+      switch (__pyx_nargs) {
+        case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = __Pyx_NumKwargs_FASTCALL(__pyx_kwds);
+      switch (__pyx_nargs) {
+        case  0:
+        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_attacks)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 35, __pyx_L3_error)
+        else goto __pyx_L5_argtuple_error;
+      }
+      if (unlikely(kw_args > 0)) {
+        const Py_ssize_t kwd_pos_args = __pyx_nargs;
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "initialize_knight_table") < 0)) __PYX_ERR(0, 35, __pyx_L3_error)
+      }
+    } else if (unlikely(__pyx_nargs != 1)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
+    }
+    __pyx_v_attacks = values[0];
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("initialize_knight_table", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 35, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  {
+    Py_ssize_t __pyx_temp;
+    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
+    }
+  }
+  __Pyx_AddTraceback("jumping_moves.initialize_knight_table", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_13jumping_moves_4initialize_knight_table(__pyx_self, __pyx_v_attacks);
+
+  /* function exit code */
+  {
+    Py_ssize_t __pyx_temp;
+    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
+    }
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_13jumping_moves_4initialize_knight_table(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_attacks) {
+  __Pyx_memviewslice __pyx_v_attacks_view = { 0, 0, { 0 }, { 0 }, { 0 } };
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_memviewslice __pyx_t_1 = { 0, 0, { 0 }, { 0 }, { 0 } };
+  Py_ssize_t __pyx_t_2;
+  int __pyx_t_3;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("initialize_knight_table", 1);
+
+  /* "jumping_moves.pyx":37
+ * def initialize_knight_table(attacks):
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks             # <<<<<<<<<<<<<<
+ * 
+ *     initialize_knight_attacks(&attacks_view[0])
+ */
+  __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint64_t(__pyx_v_attacks, PyBUF_WRITABLE); if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_v_attacks_view = __pyx_t_1;
+  __pyx_t_1.memview = NULL;
+  __pyx_t_1.data = NULL;
+
+  /* "jumping_moves.pyx":39
+ *     cdef uint64_t[:] attacks_view = attacks
+ * 
+ *     initialize_knight_attacks(&attacks_view[0])             # <<<<<<<<<<<<<<
+ * 
+ * # WRAPPERS
+ */
+  __pyx_t_2 = 0;
+  __pyx_t_3 = -1;
+  if (__pyx_t_2 < 0) {
+    __pyx_t_2 += __pyx_v_attacks_view.shape[0];
+    if (unlikely(__pyx_t_2 < 0)) __pyx_t_3 = 0;
+  } else if (unlikely(__pyx_t_2 >= __pyx_v_attacks_view.shape[0])) __pyx_t_3 = 0;
+  if (unlikely(__pyx_t_3 != -1)) {
+    __Pyx_RaiseBufferIndexError(__pyx_t_3);
+    __PYX_ERR(0, 39, __pyx_L1_error)
+  }
+  initialize_knight_attacks((&(*((uint64_t *) ( /* dim=0 */ (__pyx_v_attacks_view.data + __pyx_t_2 * __pyx_v_attacks_view.strides[0]) )))));
+
+  /* "jumping_moves.pyx":35
+ * 
+ * 
+ * def initialize_knight_table(attacks):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __PYX_XCLEAR_MEMVIEW(&__pyx_t_1, 1);
+  __Pyx_AddTraceback("jumping_moves.initialize_knight_table", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __PYX_XCLEAR_MEMVIEW(&__pyx_v_attacks_view, 1);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "jumping_moves.pyx":42
+ * 
+ * # WRAPPERS
+ * def generate_pawn_moves_wrapper(uint64_t pieces,             # <<<<<<<<<<<<<<
+ *                                 uint64_t occupancy,
+ *                                 uint64_t opp_occ,
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_13jumping_moves_7generate_pawn_moves_wrapper(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_13jumping_moves_7generate_pawn_moves_wrapper = {"generate_pawn_moves_wrapper", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13jumping_moves_7generate_pawn_moves_wrapper, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_13jumping_moves_7generate_pawn_moves_wrapper(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -18154,19 +18066,20 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
 ) {
   uint64_t __pyx_v_pieces;
   uint64_t __pyx_v_occupancy;
-  uint64_t __pyx_v_own_occ;
-  int __pyx_v_is_rook;
+  uint64_t __pyx_v_opp_occ;
+  int __pyx_v_color;
+  int __pyx_v_ep_sq;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject* values[4] = {0,0,0,0};
+  PyObject* values[5] = {0,0,0,0,0};
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("generate_moves_wrapper (wrapper)", 0);
+  __Pyx_RefNannySetupContext("generate_pawn_moves_wrapper (wrapper)", 0);
   #if !CYTHON_METH_FASTCALL
   #if CYTHON_ASSUME_SAFE_MACROS
   __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
@@ -18176,10 +18089,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   #endif
   __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
   {
-    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pieces,&__pyx_n_s_occupancy,&__pyx_n_s_own_occ,&__pyx_n_s_is_rook,0};
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pieces,&__pyx_n_s_occupancy,&__pyx_n_s_opp_occ,&__pyx_n_s_color,&__pyx_n_s_ep_sq,0};
     if (__pyx_kwds) {
       Py_ssize_t kw_args;
       switch (__pyx_nargs) {
+        case  5: values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
+        CYTHON_FALLTHROUGH;
         case  4: values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
         CYTHON_FALLTHROUGH;
         case  3: values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
@@ -18198,7 +18113,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L3_error)
         else goto __pyx_L5_argtuple_error;
         CYTHON_FALLTHROUGH;
         case  1:
@@ -18206,51 +18121,63 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
           (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("generate_moves_wrapper", 1, 4, 4, 1); __PYX_ERR(0, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("generate_pawn_moves_wrapper", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
-        if (likely((values[2] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_own_occ)) != 0)) {
+        if (likely((values[2] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_opp_occ)) != 0)) {
           (void)__Pyx_Arg_NewRef_FASTCALL(values[2]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("generate_moves_wrapper", 1, 4, 4, 2); __PYX_ERR(0, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("generate_pawn_moves_wrapper", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
-        if (likely((values[3] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_is_rook)) != 0)) {
+        if (likely((values[3] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_color)) != 0)) {
           (void)__Pyx_Arg_NewRef_FASTCALL(values[3]);
           kw_args--;
         }
-        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L3_error)
         else {
-          __Pyx_RaiseArgtupleInvalid("generate_moves_wrapper", 1, 4, 4, 3); __PYX_ERR(0, 32, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("generate_pawn_moves_wrapper", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  4:
+        if (likely((values[4] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_ep_sq)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[4]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("generate_pawn_moves_wrapper", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
         const Py_ssize_t kwd_pos_args = __pyx_nargs;
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "generate_moves_wrapper") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "generate_pawn_moves_wrapper") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
       }
-    } else if (unlikely(__pyx_nargs != 4)) {
+    } else if (unlikely(__pyx_nargs != 5)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
       values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
       values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
       values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
+      values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
     }
-    __pyx_v_pieces = __Pyx_PyInt_As_uint64_t(values[0]); if (unlikely((__pyx_v_pieces == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
-    __pyx_v_occupancy = __Pyx_PyInt_As_uint64_t(values[1]); if (unlikely((__pyx_v_occupancy == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
-    __pyx_v_own_occ = __Pyx_PyInt_As_uint64_t(values[2]); if (unlikely((__pyx_v_own_occ == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
-    __pyx_v_is_rook = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_is_rook == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_pieces = __Pyx_PyInt_As_uint64_t(values[0]); if (unlikely((__pyx_v_pieces == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L3_error)
+    __pyx_v_occupancy = __Pyx_PyInt_As_uint64_t(values[1]); if (unlikely((__pyx_v_occupancy == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 43, __pyx_L3_error)
+    __pyx_v_opp_occ = __Pyx_PyInt_As_uint64_t(values[2]); if (unlikely((__pyx_v_opp_occ == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_color = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_color == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 45, __pyx_L3_error)
+    __pyx_v_ep_sq = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_ep_sq == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 46, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("generate_moves_wrapper", 1, 4, 4, __pyx_nargs); __PYX_ERR(0, 32, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("generate_pawn_moves_wrapper", 1, 5, 5, __pyx_nargs); __PYX_ERR(0, 42, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -18260,11 +18187,11 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
       __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
     }
   }
-  __Pyx_AddTraceback("sliding_moves.generate_moves_wrapper", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("jumping_moves.generate_pawn_moves_wrapper", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_13sliding_moves_4generate_moves_wrapper(__pyx_self, __pyx_v_pieces, __pyx_v_occupancy, __pyx_v_own_occ, __pyx_v_is_rook);
+  __pyx_r = __pyx_pf_13jumping_moves_6generate_pawn_moves_wrapper(__pyx_self, __pyx_v_pieces, __pyx_v_occupancy, __pyx_v_opp_occ, __pyx_v_color, __pyx_v_ep_sq);
 
   /* function exit code */
   {
@@ -18277,56 +18204,49 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_13sliding_moves_4generate_moves_wrapper(CYTHON_UNUSED PyObject *__pyx_self, uint64_t __pyx_v_pieces, uint64_t __pyx_v_occupancy, uint64_t __pyx_v_own_occ, int __pyx_v_is_rook) {
-  int __pyx_v_move_count;
-  uint16_t __pyx_v_moves[0x400];
-  int __pyx_7genexpr__pyx_v_i;
+static PyObject *__pyx_pf_13jumping_moves_6generate_pawn_moves_wrapper(CYTHON_UNUSED PyObject *__pyx_self, uint64_t __pyx_v_pieces, uint64_t __pyx_v_occupancy, uint64_t __pyx_v_opp_occ, int __pyx_v_color, int __pyx_v_ep_sq) {
+  uint32_t __pyx_v_moves[0x100];
+  size_t __pyx_v_n;
+  size_t __pyx_7genexpr__pyx_v_i;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  int __pyx_t_2;
-  int __pyx_t_3;
-  int __pyx_t_4;
+  size_t __pyx_t_2;
+  size_t __pyx_t_3;
+  size_t __pyx_t_4;
   PyObject *__pyx_t_5 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("generate_moves_wrapper", 1);
+  __Pyx_RefNannySetupContext("generate_pawn_moves_wrapper", 1);
 
-  /* "sliding_moves.pyx":33
+  /* "jumping_moves.pyx":49
+ *     cdef uint32_t moves[256]  # buffer to hold generated moves
  * 
- * def generate_moves_wrapper(uint64_t pieces, uint64_t occupancy, uint64_t own_occ, int is_rook):
- *     cdef int move_count = 0             # <<<<<<<<<<<<<<
- *     cdef uint16_t[1024] moves  # Adjust size as needed
+ *     cdef size_t n = generate_pawn_moves(pieces, occupancy, opp_occ, color, ep_sq, &moves[0])             # <<<<<<<<<<<<<<
  * 
+ *     return [moves[i] for i in range(n)]
  */
-  __pyx_v_move_count = 0;
+  __pyx_v_n = generate_pawn_moves(__pyx_v_pieces, __pyx_v_occupancy, __pyx_v_opp_occ, __pyx_v_color, __pyx_v_ep_sq, (&(__pyx_v_moves[0])));
 
-  /* "sliding_moves.pyx":36
- *     cdef uint16_t[1024] moves  # Adjust size as needed
+  /* "jumping_moves.pyx":51
+ *     cdef size_t n = generate_pawn_moves(pieces, occupancy, opp_occ, color, ep_sq, &moves[0])
  * 
- *     generate_moves(pieces, occupancy, own_occ, &moves[0], &move_count, is_rook)             # <<<<<<<<<<<<<<
+ *     return [moves[i] for i in range(n)]             # <<<<<<<<<<<<<<
  * 
- *     return [moves[i] for i in range(move_count)]
- */
-  generate_moves(__pyx_v_pieces, __pyx_v_occupancy, __pyx_v_own_occ, (&(__pyx_v_moves[0])), (&__pyx_v_move_count), __pyx_v_is_rook);
-
-  /* "sliding_moves.pyx":38
- *     generate_moves(pieces, occupancy, own_occ, &moves[0], &move_count, is_rook)
  * 
- *     return [moves[i] for i in range(move_count)]             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
   { /* enter inner scope */
-    __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 51, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __pyx_v_move_count;
+    __pyx_t_2 = __pyx_v_n;
     __pyx_t_3 = __pyx_t_2;
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_7genexpr__pyx_v_i = __pyx_t_4;
-      __pyx_t_5 = __Pyx_PyInt_From_uint16_t((__pyx_v_moves[__pyx_7genexpr__pyx_v_i])); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 38, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyInt_From_uint32_t((__pyx_v_moves[__pyx_7genexpr__pyx_v_i])); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      if (unlikely(__Pyx_ListComp_Append(__pyx_t_1, (PyObject*)__pyx_t_5))) __PYX_ERR(0, 38, __pyx_L1_error)
+      if (unlikely(__Pyx_ListComp_Append(__pyx_t_1, (PyObject*)__pyx_t_5))) __PYX_ERR(0, 51, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
   } /* exit inner scope */
@@ -18334,19 +18254,472 @@ static PyObject *__pyx_pf_13sliding_moves_4generate_moves_wrapper(CYTHON_UNUSED 
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "sliding_moves.pyx":32
+  /* "jumping_moves.pyx":42
  * 
- * 
- * def generate_moves_wrapper(uint64_t pieces, uint64_t occupancy, uint64_t own_occ, int is_rook):             # <<<<<<<<<<<<<<
- *     cdef int move_count = 0
- *     cdef uint16_t[1024] moves  # Adjust size as needed
+ * # WRAPPERS
+ * def generate_pawn_moves_wrapper(uint64_t pieces,             # <<<<<<<<<<<<<<
+ *                                 uint64_t occupancy,
+ *                                 uint64_t opp_occ,
  */
 
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("sliding_moves.generate_moves_wrapper", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("jumping_moves.generate_pawn_moves_wrapper", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "jumping_moves.pyx":54
+ * 
+ * 
+ * def generate_king_moves_wrapper(uint64_t occupancy,             # <<<<<<<<<<<<<<
+ *                                 uint64_t own_occ,
+ *                                 int from_sq,
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_13jumping_moves_9generate_king_moves_wrapper(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_13jumping_moves_9generate_king_moves_wrapper = {"generate_king_moves_wrapper", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13jumping_moves_9generate_king_moves_wrapper, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_13jumping_moves_9generate_king_moves_wrapper(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  uint64_t __pyx_v_occupancy;
+  uint64_t __pyx_v_own_occ;
+  int __pyx_v_from_sq;
+  int __pyx_v_can_ks;
+  int __pyx_v_can_qs;
+  int __pyx_v_color;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[6] = {0,0,0,0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("generate_king_moves_wrapper (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_occupancy,&__pyx_n_s_own_occ,&__pyx_n_s_from_sq,&__pyx_n_s_can_ks,&__pyx_n_s_can_qs,&__pyx_n_s_color,0};
+    if (__pyx_kwds) {
+      Py_ssize_t kw_args;
+      switch (__pyx_nargs) {
+        case  6: values[5] = __Pyx_Arg_FASTCALL(__pyx_args, 5);
+        CYTHON_FALLTHROUGH;
+        case  5: values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
+        CYTHON_FALLTHROUGH;
+        case  4: values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
+        CYTHON_FALLTHROUGH;
+        case  3: values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = __Pyx_NumKwargs_FASTCALL(__pyx_kwds);
+      switch (__pyx_nargs) {
+        case  0:
+        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_occupancy)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 54, __pyx_L3_error)
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_own_occ)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 54, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("generate_king_moves_wrapper", 1, 6, 6, 1); __PYX_ERR(0, 54, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_from_sq)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[2]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 54, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("generate_king_moves_wrapper", 1, 6, 6, 2); __PYX_ERR(0, 54, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  3:
+        if (likely((values[3] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_can_ks)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[3]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 54, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("generate_king_moves_wrapper", 1, 6, 6, 3); __PYX_ERR(0, 54, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  4:
+        if (likely((values[4] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_can_qs)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[4]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 54, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("generate_king_moves_wrapper", 1, 6, 6, 4); __PYX_ERR(0, 54, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  5:
+        if (likely((values[5] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_color)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[5]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 54, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("generate_king_moves_wrapper", 1, 6, 6, 5); __PYX_ERR(0, 54, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        const Py_ssize_t kwd_pos_args = __pyx_nargs;
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "generate_king_moves_wrapper") < 0)) __PYX_ERR(0, 54, __pyx_L3_error)
+      }
+    } else if (unlikely(__pyx_nargs != 6)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
+      values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
+      values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
+      values[3] = __Pyx_Arg_FASTCALL(__pyx_args, 3);
+      values[4] = __Pyx_Arg_FASTCALL(__pyx_args, 4);
+      values[5] = __Pyx_Arg_FASTCALL(__pyx_args, 5);
+    }
+    __pyx_v_occupancy = __Pyx_PyInt_As_uint64_t(values[0]); if (unlikely((__pyx_v_occupancy == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 54, __pyx_L3_error)
+    __pyx_v_own_occ = __Pyx_PyInt_As_uint64_t(values[1]); if (unlikely((__pyx_v_own_occ == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 55, __pyx_L3_error)
+    __pyx_v_from_sq = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_from_sq == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 56, __pyx_L3_error)
+    __pyx_v_can_ks = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_can_ks == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 57, __pyx_L3_error)
+    __pyx_v_can_qs = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_can_qs == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 58, __pyx_L3_error)
+    __pyx_v_color = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_color == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 59, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("generate_king_moves_wrapper", 1, 6, 6, __pyx_nargs); __PYX_ERR(0, 54, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  {
+    Py_ssize_t __pyx_temp;
+    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
+    }
+  }
+  __Pyx_AddTraceback("jumping_moves.generate_king_moves_wrapper", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_13jumping_moves_8generate_king_moves_wrapper(__pyx_self, __pyx_v_occupancy, __pyx_v_own_occ, __pyx_v_from_sq, __pyx_v_can_ks, __pyx_v_can_qs, __pyx_v_color);
+
+  /* function exit code */
+  {
+    Py_ssize_t __pyx_temp;
+    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
+    }
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_13jumping_moves_8generate_king_moves_wrapper(CYTHON_UNUSED PyObject *__pyx_self, uint64_t __pyx_v_occupancy, uint64_t __pyx_v_own_occ, int __pyx_v_from_sq, int __pyx_v_can_ks, int __pyx_v_can_qs, int __pyx_v_color) {
+  uint32_t __pyx_v_moves[64];
+  size_t __pyx_v_n;
+  size_t __pyx_8genexpr1__pyx_v_i;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  size_t __pyx_t_2;
+  size_t __pyx_t_3;
+  size_t __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("generate_king_moves_wrapper", 1);
+
+  /* "jumping_moves.pyx":62
+ *     cdef uint32_t moves[64]  # King can max move 8 + 2 castle = 10
+ * 
+ *     cdef size_t n = generate_king_moves(occupancy, own_occ, from_sq, can_ks, can_qs, color, &moves[0])             # <<<<<<<<<<<<<<
+ * 
+ *     return [moves[i] for i in range(n)]
+ */
+  __pyx_v_n = generate_king_moves(__pyx_v_occupancy, __pyx_v_own_occ, __pyx_v_from_sq, __pyx_v_can_ks, __pyx_v_can_qs, __pyx_v_color, (&(__pyx_v_moves[0])));
+
+  /* "jumping_moves.pyx":64
+ *     cdef size_t n = generate_king_moves(occupancy, own_occ, from_sq, can_ks, can_qs, color, &moves[0])
+ * 
+ *     return [moves[i] for i in range(n)]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_XDECREF(__pyx_r);
+  { /* enter inner scope */
+    __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 64, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_2 = __pyx_v_n;
+    __pyx_t_3 = __pyx_t_2;
+    for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
+      __pyx_8genexpr1__pyx_v_i = __pyx_t_4;
+      __pyx_t_5 = __Pyx_PyInt_From_uint32_t((__pyx_v_moves[__pyx_8genexpr1__pyx_v_i])); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 64, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      if (unlikely(__Pyx_ListComp_Append(__pyx_t_1, (PyObject*)__pyx_t_5))) __PYX_ERR(0, 64, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    }
+  } /* exit inner scope */
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "jumping_moves.pyx":54
+ * 
+ * 
+ * def generate_king_moves_wrapper(uint64_t occupancy,             # <<<<<<<<<<<<<<
+ *                                 uint64_t own_occ,
+ *                                 int from_sq,
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("jumping_moves.generate_king_moves_wrapper", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "jumping_moves.pyx":67
+ * 
+ * 
+ * def generate_knight_moves_wrapper(uint64_t own_occ,             # <<<<<<<<<<<<<<
+ *                                   uint64_t pieces,
+ *                                   int color):
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_13jumping_moves_11generate_knight_moves_wrapper(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+); /*proto*/
+static PyMethodDef __pyx_mdef_13jumping_moves_11generate_knight_moves_wrapper = {"generate_knight_moves_wrapper", (PyCFunction)(void*)(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_13jumping_moves_11generate_knight_moves_wrapper, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_13jumping_moves_11generate_knight_moves_wrapper(PyObject *__pyx_self, 
+#if CYTHON_METH_FASTCALL
+PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
+#else
+PyObject *__pyx_args, PyObject *__pyx_kwds
+#endif
+) {
+  uint64_t __pyx_v_own_occ;
+  uint64_t __pyx_v_pieces;
+  int __pyx_v_color;
+  #if !CYTHON_METH_FASTCALL
+  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
+  #endif
+  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
+  PyObject* values[3] = {0,0,0};
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("generate_knight_moves_wrapper (wrapper)", 0);
+  #if !CYTHON_METH_FASTCALL
+  #if CYTHON_ASSUME_SAFE_MACROS
+  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
+  #else
+  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
+  #endif
+  #endif
+  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
+  {
+    PyObject **__pyx_pyargnames[] = {&__pyx_n_s_own_occ,&__pyx_n_s_pieces,&__pyx_n_s_color,0};
+    if (__pyx_kwds) {
+      Py_ssize_t kw_args;
+      switch (__pyx_nargs) {
+        case  3: values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = __Pyx_NumKwargs_FASTCALL(__pyx_kwds);
+      switch (__pyx_nargs) {
+        case  0:
+        if (likely((values[0] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_own_occ)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[0]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 67, __pyx_L3_error)
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_pieces)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[1]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 67, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("generate_knight_moves_wrapper", 1, 3, 3, 1); __PYX_ERR(0, 67, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_GetKwValue_FASTCALL(__pyx_kwds, __pyx_kwvalues, __pyx_n_s_color)) != 0)) {
+          (void)__Pyx_Arg_NewRef_FASTCALL(values[2]);
+          kw_args--;
+        }
+        else if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 67, __pyx_L3_error)
+        else {
+          __Pyx_RaiseArgtupleInvalid("generate_knight_moves_wrapper", 1, 3, 3, 2); __PYX_ERR(0, 67, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        const Py_ssize_t kwd_pos_args = __pyx_nargs;
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values + 0, kwd_pos_args, "generate_knight_moves_wrapper") < 0)) __PYX_ERR(0, 67, __pyx_L3_error)
+      }
+    } else if (unlikely(__pyx_nargs != 3)) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = __Pyx_Arg_FASTCALL(__pyx_args, 0);
+      values[1] = __Pyx_Arg_FASTCALL(__pyx_args, 1);
+      values[2] = __Pyx_Arg_FASTCALL(__pyx_args, 2);
+    }
+    __pyx_v_own_occ = __Pyx_PyInt_As_uint64_t(values[0]); if (unlikely((__pyx_v_own_occ == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 67, __pyx_L3_error)
+    __pyx_v_pieces = __Pyx_PyInt_As_uint64_t(values[1]); if (unlikely((__pyx_v_pieces == ((uint64_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 68, __pyx_L3_error)
+    __pyx_v_color = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_color == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 69, __pyx_L3_error)
+  }
+  goto __pyx_L6_skip;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("generate_knight_moves_wrapper", 1, 3, 3, __pyx_nargs); __PYX_ERR(0, 67, __pyx_L3_error)
+  __pyx_L6_skip:;
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L3_error:;
+  {
+    Py_ssize_t __pyx_temp;
+    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
+    }
+  }
+  __Pyx_AddTraceback("jumping_moves.generate_knight_moves_wrapper", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_13jumping_moves_10generate_knight_moves_wrapper(__pyx_self, __pyx_v_own_occ, __pyx_v_pieces, __pyx_v_color);
+
+  /* function exit code */
+  {
+    Py_ssize_t __pyx_temp;
+    for (__pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
+      __Pyx_Arg_XDECREF_FASTCALL(values[__pyx_temp]);
+    }
+  }
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_13jumping_moves_10generate_knight_moves_wrapper(CYTHON_UNUSED PyObject *__pyx_self, uint64_t __pyx_v_own_occ, uint64_t __pyx_v_pieces, int __pyx_v_color) {
+  uint32_t __pyx_v_moves[64];
+  size_t __pyx_v_n;
+  size_t __pyx_8genexpr2__pyx_v_i;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  size_t __pyx_t_2;
+  size_t __pyx_t_3;
+  size_t __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("generate_knight_moves_wrapper", 1);
+
+  /* "jumping_moves.pyx":72
+ *     cdef uint32_t moves[64]
+ * 
+ *     cdef size_t n = generate_knight_moves(pieces, own_occ, color, &moves[0])             # <<<<<<<<<<<<<<
+ * 
+ *     return [moves[i] for i in range(n)]
+ */
+  __pyx_v_n = generate_knight_moves(__pyx_v_pieces, __pyx_v_own_occ, __pyx_v_color, (&(__pyx_v_moves[0])));
+
+  /* "jumping_moves.pyx":74
+ *     cdef size_t n = generate_knight_moves(pieces, own_occ, color, &moves[0])
+ * 
+ *     return [moves[i] for i in range(n)]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_XDECREF(__pyx_r);
+  { /* enter inner scope */
+    __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_2 = __pyx_v_n;
+    __pyx_t_3 = __pyx_t_2;
+    for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
+      __pyx_8genexpr2__pyx_v_i = __pyx_t_4;
+      __pyx_t_5 = __Pyx_PyInt_From_uint32_t((__pyx_v_moves[__pyx_8genexpr2__pyx_v_i])); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 74, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      if (unlikely(__Pyx_ListComp_Append(__pyx_t_1, (PyObject*)__pyx_t_5))) __PYX_ERR(0, 74, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    }
+  } /* exit inner scope */
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "jumping_moves.pyx":67
+ * 
+ * 
+ * def generate_knight_moves_wrapper(uint64_t own_occ,             # <<<<<<<<<<<<<<
+ *                                   uint64_t pieces,
+ *                                   int color):
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_AddTraceback("jumping_moves.generate_knight_moves_wrapper", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -18491,7 +18864,7 @@ static PyType_Slot __pyx_type___pyx_array_slots[] = {
   {0, 0},
 };
 static PyType_Spec __pyx_type___pyx_array_spec = {
-  "sliding_moves.array",
+  "jumping_moves.array",
   sizeof(struct __pyx_array_obj),
   0,
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_SEQUENCE,
@@ -18537,7 +18910,7 @@ static PyBufferProcs __pyx_tp_as_buffer_array = {
 
 static PyTypeObject __pyx_type___pyx_array = {
   PyVarObject_HEAD_INIT(0, 0)
-  "sliding_moves.""array", /*tp_name*/
+  "jumping_moves.""array", /*tp_name*/
   sizeof(struct __pyx_array_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_array, /*tp_dealloc*/
@@ -18700,7 +19073,7 @@ static PyType_Slot __pyx_type___pyx_MemviewEnum_slots[] = {
   {0, 0},
 };
 static PyType_Spec __pyx_type___pyx_MemviewEnum_spec = {
-  "sliding_moves.Enum",
+  "jumping_moves.Enum",
   sizeof(struct __pyx_MemviewEnum_obj),
   0,
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC,
@@ -18710,7 +19083,7 @@ static PyType_Spec __pyx_type___pyx_MemviewEnum_spec = {
 
 static PyTypeObject __pyx_type___pyx_MemviewEnum = {
   PyVarObject_HEAD_INIT(0, 0)
-  "sliding_moves.""Enum", /*tp_name*/
+  "jumping_moves.""Enum", /*tp_name*/
   sizeof(struct __pyx_MemviewEnum_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_Enum, /*tp_dealloc*/
@@ -19010,7 +19383,7 @@ static PyType_Slot __pyx_type___pyx_memoryview_slots[] = {
   {0, 0},
 };
 static PyType_Spec __pyx_type___pyx_memoryview_spec = {
-  "sliding_moves.memoryview",
+  "jumping_moves.memoryview",
   sizeof(struct __pyx_memoryview_obj),
   0,
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC,
@@ -19056,7 +19429,7 @@ static PyBufferProcs __pyx_tp_as_buffer_memoryview = {
 
 static PyTypeObject __pyx_type___pyx_memoryview = {
   PyVarObject_HEAD_INIT(0, 0)
-  "sliding_moves.""memoryview", /*tp_name*/
+  "jumping_moves.""memoryview", /*tp_name*/
   sizeof(struct __pyx_memoryview_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_memoryview, /*tp_dealloc*/
@@ -19211,7 +19584,7 @@ static PyType_Slot __pyx_type___pyx_memoryviewslice_slots[] = {
   {0, 0},
 };
 static PyType_Spec __pyx_type___pyx_memoryviewslice_spec = {
-  "sliding_moves._memoryviewslice",
+  "jumping_moves._memoryviewslice",
   sizeof(struct __pyx_memoryviewslice_obj),
   0,
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC|Py_TPFLAGS_SEQUENCE,
@@ -19221,7 +19594,7 @@ static PyType_Spec __pyx_type___pyx_memoryviewslice_spec = {
 
 static PyTypeObject __pyx_type___pyx_memoryviewslice = {
   PyVarObject_HEAD_INIT(0, 0)
-  "sliding_moves.""_memoryviewslice", /*tp_name*/
+  "jumping_moves.""_memoryviewslice", /*tp_name*/
   sizeof(struct __pyx_memoryviewslice_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc__memoryviewslice, /*tp_dealloc*/
@@ -19360,30 +19733,29 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
     {&__pyx_n_s_View_MemoryView, __pyx_k_View_MemoryView, sizeof(__pyx_k_View_MemoryView), 0, 0, 1, 1},
     {&__pyx_kp_u__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 1, 0, 0},
-    {&__pyx_n_s__26, __pyx_k__26, sizeof(__pyx_k__26), 0, 0, 1, 1},
     {&__pyx_n_s__3, __pyx_k__3, sizeof(__pyx_k__3), 0, 0, 1, 1},
+    {&__pyx_n_s__31, __pyx_k__31, sizeof(__pyx_k__31), 0, 0, 1, 1},
     {&__pyx_kp_u__6, __pyx_k__6, sizeof(__pyx_k__6), 0, 1, 0, 0},
     {&__pyx_kp_u__7, __pyx_k__7, sizeof(__pyx_k__7), 0, 1, 0, 0},
     {&__pyx_n_s_abc, __pyx_k_abc, sizeof(__pyx_k_abc), 0, 0, 1, 1},
     {&__pyx_n_s_allocate_buffer, __pyx_k_allocate_buffer, sizeof(__pyx_k_allocate_buffer), 0, 0, 1, 1},
     {&__pyx_kp_u_and, __pyx_k_and, sizeof(__pyx_k_and), 0, 1, 0, 0},
     {&__pyx_n_s_asyncio_coroutines, __pyx_k_asyncio_coroutines, sizeof(__pyx_k_asyncio_coroutines), 0, 0, 1, 1},
+    {&__pyx_n_s_attacks, __pyx_k_attacks, sizeof(__pyx_k_attacks), 0, 0, 1, 1},
+    {&__pyx_n_s_attacks_view, __pyx_k_attacks_view, sizeof(__pyx_k_attacks_view), 0, 0, 1, 1},
     {&__pyx_n_s_base, __pyx_k_base, sizeof(__pyx_k_base), 0, 0, 1, 1},
-    {&__pyx_n_s_bishop_attacks, __pyx_k_bishop_attacks, sizeof(__pyx_k_bishop_attacks), 0, 0, 1, 1},
-    {&__pyx_n_s_bishop_attacks_view, __pyx_k_bishop_attacks_view, sizeof(__pyx_k_bishop_attacks_view), 0, 0, 1, 1},
-    {&__pyx_n_s_bishop_magics, __pyx_k_bishop_magics, sizeof(__pyx_k_bishop_magics), 0, 0, 1, 1},
-    {&__pyx_n_s_bishop_magics_view, __pyx_k_bishop_magics_view, sizeof(__pyx_k_bishop_magics_view), 0, 0, 1, 1},
-    {&__pyx_n_s_bishop_masks, __pyx_k_bishop_masks, sizeof(__pyx_k_bishop_masks), 0, 0, 1, 1},
-    {&__pyx_n_s_bishop_masks_view, __pyx_k_bishop_masks_view, sizeof(__pyx_k_bishop_masks_view), 0, 0, 1, 1},
-    {&__pyx_n_s_bishop_shifts, __pyx_k_bishop_shifts, sizeof(__pyx_k_bishop_shifts), 0, 0, 1, 1},
-    {&__pyx_n_s_bishop_shifts_view, __pyx_k_bishop_shifts_view, sizeof(__pyx_k_bishop_shifts_view), 0, 0, 1, 1},
+    {&__pyx_n_s_black_attacks, __pyx_k_black_attacks, sizeof(__pyx_k_black_attacks), 0, 0, 1, 1},
+    {&__pyx_n_s_black_attacks_view, __pyx_k_black_attacks_view, sizeof(__pyx_k_black_attacks_view), 0, 0, 1, 1},
     {&__pyx_n_s_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 0, 1, 1},
     {&__pyx_n_u_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 1, 0, 1},
+    {&__pyx_n_s_can_ks, __pyx_k_can_ks, sizeof(__pyx_k_can_ks), 0, 0, 1, 1},
+    {&__pyx_n_s_can_qs, __pyx_k_can_qs, sizeof(__pyx_k_can_qs), 0, 0, 1, 1},
     {&__pyx_n_s_class, __pyx_k_class, sizeof(__pyx_k_class), 0, 0, 1, 1},
     {&__pyx_n_s_class_getitem, __pyx_k_class_getitem, sizeof(__pyx_k_class_getitem), 0, 0, 1, 1},
     {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
     {&__pyx_n_s_collections, __pyx_k_collections, sizeof(__pyx_k_collections), 0, 0, 1, 1},
     {&__pyx_kp_s_collections_abc, __pyx_k_collections_abc, sizeof(__pyx_k_collections_abc), 0, 0, 1, 0},
+    {&__pyx_n_s_color, __pyx_k_color, sizeof(__pyx_k_color), 0, 0, 1, 1},
     {&__pyx_kp_s_contiguous_and_direct, __pyx_k_contiguous_and_direct, sizeof(__pyx_k_contiguous_and_direct), 0, 0, 1, 0},
     {&__pyx_kp_s_contiguous_and_indirect, __pyx_k_contiguous_and_indirect, sizeof(__pyx_k_contiguous_and_indirect), 0, 0, 1, 0},
     {&__pyx_n_s_count, __pyx_k_count, sizeof(__pyx_k_count), 0, 0, 1, 1},
@@ -19393,14 +19765,17 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_kp_u_enable, __pyx_k_enable, sizeof(__pyx_k_enable), 0, 1, 0, 0},
     {&__pyx_n_s_encode, __pyx_k_encode, sizeof(__pyx_k_encode), 0, 0, 1, 1},
     {&__pyx_n_s_enumerate, __pyx_k_enumerate, sizeof(__pyx_k_enumerate), 0, 0, 1, 1},
+    {&__pyx_n_s_ep_sq, __pyx_k_ep_sq, sizeof(__pyx_k_ep_sq), 0, 0, 1, 1},
     {&__pyx_n_s_error, __pyx_k_error, sizeof(__pyx_k_error), 0, 0, 1, 1},
     {&__pyx_n_s_flags, __pyx_k_flags, sizeof(__pyx_k_flags), 0, 0, 1, 1},
-    {&__pyx_n_s_flatten, __pyx_k_flatten, sizeof(__pyx_k_flatten), 0, 0, 1, 1},
     {&__pyx_n_s_format, __pyx_k_format, sizeof(__pyx_k_format), 0, 0, 1, 1},
     {&__pyx_n_s_fortran, __pyx_k_fortran, sizeof(__pyx_k_fortran), 0, 0, 1, 1},
     {&__pyx_n_u_fortran, __pyx_k_fortran, sizeof(__pyx_k_fortran), 0, 1, 0, 1},
+    {&__pyx_n_s_from_sq, __pyx_k_from_sq, sizeof(__pyx_k_from_sq), 0, 0, 1, 1},
     {&__pyx_kp_u_gc, __pyx_k_gc, sizeof(__pyx_k_gc), 0, 1, 0, 0},
-    {&__pyx_n_s_generate_moves_wrapper, __pyx_k_generate_moves_wrapper, sizeof(__pyx_k_generate_moves_wrapper), 0, 0, 1, 1},
+    {&__pyx_n_s_generate_king_moves_wrapper, __pyx_k_generate_king_moves_wrapper, sizeof(__pyx_k_generate_king_moves_wrapper), 0, 0, 1, 1},
+    {&__pyx_n_s_generate_knight_moves_wrapper, __pyx_k_generate_knight_moves_wrapper, sizeof(__pyx_k_generate_knight_moves_wrapper), 0, 0, 1, 1},
+    {&__pyx_n_s_generate_pawn_moves_wrapper, __pyx_k_generate_pawn_moves_wrapper, sizeof(__pyx_k_generate_pawn_moves_wrapper), 0, 0, 1, 1},
     {&__pyx_n_s_getstate, __pyx_k_getstate, sizeof(__pyx_k_getstate), 0, 0, 1, 1},
     {&__pyx_kp_u_got, __pyx_k_got, sizeof(__pyx_k_got), 0, 1, 0, 0},
     {&__pyx_kp_u_got_differing_extents_in_dimensi, __pyx_k_got_differing_extents_in_dimensi, sizeof(__pyx_k_got_differing_extents_in_dimensi), 0, 1, 0, 0},
@@ -19408,19 +19783,21 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_id, __pyx_k_id, sizeof(__pyx_k_id), 0, 0, 1, 1},
     {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
     {&__pyx_n_s_index, __pyx_k_index, sizeof(__pyx_k_index), 0, 0, 1, 1},
-    {&__pyx_n_s_initialize_bishop_tables, __pyx_k_initialize_bishop_tables, sizeof(__pyx_k_initialize_bishop_tables), 0, 0, 1, 1},
-    {&__pyx_n_s_initialize_rook_tables, __pyx_k_initialize_rook_tables, sizeof(__pyx_k_initialize_rook_tables), 0, 0, 1, 1},
+    {&__pyx_n_s_initialize_king_table, __pyx_k_initialize_king_table, sizeof(__pyx_k_initialize_king_table), 0, 0, 1, 1},
+    {&__pyx_n_s_initialize_knight_table, __pyx_k_initialize_knight_table, sizeof(__pyx_k_initialize_knight_table), 0, 0, 1, 1},
+    {&__pyx_n_s_initialize_pawn_tables, __pyx_k_initialize_pawn_tables, sizeof(__pyx_k_initialize_pawn_tables), 0, 0, 1, 1},
     {&__pyx_n_s_initializing, __pyx_k_initializing, sizeof(__pyx_k_initializing), 0, 0, 1, 1},
     {&__pyx_n_s_is_coroutine, __pyx_k_is_coroutine, sizeof(__pyx_k_is_coroutine), 0, 0, 1, 1},
-    {&__pyx_n_s_is_rook, __pyx_k_is_rook, sizeof(__pyx_k_is_rook), 0, 0, 1, 1},
     {&__pyx_kp_u_isenabled, __pyx_k_isenabled, sizeof(__pyx_k_isenabled), 0, 1, 0, 0},
     {&__pyx_n_s_itemsize, __pyx_k_itemsize, sizeof(__pyx_k_itemsize), 0, 0, 1, 1},
     {&__pyx_kp_s_itemsize_0_for_cython_array, __pyx_k_itemsize_0_for_cython_array, sizeof(__pyx_k_itemsize_0_for_cython_array), 0, 0, 1, 0},
+    {&__pyx_n_s_jumping_moves, __pyx_k_jumping_moves, sizeof(__pyx_k_jumping_moves), 0, 0, 1, 1},
+    {&__pyx_kp_s_jumping_moves_pyx, __pyx_k_jumping_moves_pyx, sizeof(__pyx_k_jumping_moves_pyx), 0, 0, 1, 0},
     {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
     {&__pyx_n_s_memview, __pyx_k_memview, sizeof(__pyx_k_memview), 0, 0, 1, 1},
     {&__pyx_n_s_mode, __pyx_k_mode, sizeof(__pyx_k_mode), 0, 0, 1, 1},
-    {&__pyx_n_s_move_count, __pyx_k_move_count, sizeof(__pyx_k_move_count), 0, 0, 1, 1},
     {&__pyx_n_s_moves, __pyx_k_moves, sizeof(__pyx_k_moves), 0, 0, 1, 1},
+    {&__pyx_n_s_n, __pyx_k_n, sizeof(__pyx_k_n), 0, 0, 1, 1},
     {&__pyx_n_s_name, __pyx_k_name, sizeof(__pyx_k_name), 0, 0, 1, 1},
     {&__pyx_n_s_name_2, __pyx_k_name_2, sizeof(__pyx_k_name_2), 0, 0, 1, 1},
     {&__pyx_n_s_ndim, __pyx_k_ndim, sizeof(__pyx_k_ndim), 0, 0, 1, 1},
@@ -19428,6 +19805,7 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_kp_s_no_default___reduce___due_to_non, __pyx_k_no_default___reduce___due_to_non, sizeof(__pyx_k_no_default___reduce___due_to_non), 0, 0, 1, 0},
     {&__pyx_n_s_obj, __pyx_k_obj, sizeof(__pyx_k_obj), 0, 0, 1, 1},
     {&__pyx_n_s_occupancy, __pyx_k_occupancy, sizeof(__pyx_k_occupancy), 0, 0, 1, 1},
+    {&__pyx_n_s_opp_occ, __pyx_k_opp_occ, sizeof(__pyx_k_opp_occ), 0, 0, 1, 1},
     {&__pyx_n_s_own_occ, __pyx_k_own_occ, sizeof(__pyx_k_own_occ), 0, 0, 1, 1},
     {&__pyx_n_s_pack, __pyx_k_pack, sizeof(__pyx_k_pack), 0, 0, 1, 1},
     {&__pyx_n_s_pickle, __pyx_k_pickle, sizeof(__pyx_k_pickle), 0, 0, 1, 1},
@@ -19444,20 +19822,10 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_reduce_cython, __pyx_k_reduce_cython, sizeof(__pyx_k_reduce_cython), 0, 0, 1, 1},
     {&__pyx_n_s_reduce_ex, __pyx_k_reduce_ex, sizeof(__pyx_k_reduce_ex), 0, 0, 1, 1},
     {&__pyx_n_s_register, __pyx_k_register, sizeof(__pyx_k_register), 0, 0, 1, 1},
-    {&__pyx_n_s_rook_attacks, __pyx_k_rook_attacks, sizeof(__pyx_k_rook_attacks), 0, 0, 1, 1},
-    {&__pyx_n_s_rook_attacks_view, __pyx_k_rook_attacks_view, sizeof(__pyx_k_rook_attacks_view), 0, 0, 1, 1},
-    {&__pyx_n_s_rook_magics, __pyx_k_rook_magics, sizeof(__pyx_k_rook_magics), 0, 0, 1, 1},
-    {&__pyx_n_s_rook_magics_view, __pyx_k_rook_magics_view, sizeof(__pyx_k_rook_magics_view), 0, 0, 1, 1},
-    {&__pyx_n_s_rook_masks, __pyx_k_rook_masks, sizeof(__pyx_k_rook_masks), 0, 0, 1, 1},
-    {&__pyx_n_s_rook_masks_view, __pyx_k_rook_masks_view, sizeof(__pyx_k_rook_masks_view), 0, 0, 1, 1},
-    {&__pyx_n_s_rook_shifts, __pyx_k_rook_shifts, sizeof(__pyx_k_rook_shifts), 0, 0, 1, 1},
-    {&__pyx_n_s_rook_shifts_view, __pyx_k_rook_shifts_view, sizeof(__pyx_k_rook_shifts_view), 0, 0, 1, 1},
     {&__pyx_n_s_setstate, __pyx_k_setstate, sizeof(__pyx_k_setstate), 0, 0, 1, 1},
     {&__pyx_n_s_setstate_cython, __pyx_k_setstate_cython, sizeof(__pyx_k_setstate_cython), 0, 0, 1, 1},
     {&__pyx_n_s_shape, __pyx_k_shape, sizeof(__pyx_k_shape), 0, 0, 1, 1},
     {&__pyx_n_s_size, __pyx_k_size, sizeof(__pyx_k_size), 0, 0, 1, 1},
-    {&__pyx_n_s_sliding_moves, __pyx_k_sliding_moves, sizeof(__pyx_k_sliding_moves), 0, 0, 1, 1},
-    {&__pyx_kp_s_sliding_moves_pyx, __pyx_k_sliding_moves_pyx, sizeof(__pyx_k_sliding_moves_pyx), 0, 0, 1, 0},
     {&__pyx_n_s_spec, __pyx_k_spec, sizeof(__pyx_k_spec), 0, 0, 1, 1},
     {&__pyx_n_s_start, __pyx_k_start, sizeof(__pyx_k_start), 0, 0, 1, 1},
     {&__pyx_n_s_step, __pyx_k_step, sizeof(__pyx_k_step), 0, 0, 1, 1},
@@ -19474,13 +19842,15 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_unpack, __pyx_k_unpack, sizeof(__pyx_k_unpack), 0, 0, 1, 1},
     {&__pyx_n_s_update, __pyx_k_update, sizeof(__pyx_k_update), 0, 0, 1, 1},
     {&__pyx_n_s_version_info, __pyx_k_version_info, sizeof(__pyx_k_version_info), 0, 0, 1, 1},
+    {&__pyx_n_s_white_attacks, __pyx_k_white_attacks, sizeof(__pyx_k_white_attacks), 0, 0, 1, 1},
+    {&__pyx_n_s_white_attacks_view, __pyx_k_white_attacks_view, sizeof(__pyx_k_white_attacks_view), 0, 0, 1, 1},
     {0, 0, 0, 0, 0, 0, 0}
   };
   return __Pyx_InitStrings(__pyx_string_tab);
 }
 /* #### Code section: cached_builtins ### */
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 51, __pyx_L1_error)
   __pyx_builtin___import__ = __Pyx_GetBuiltinName(__pyx_n_s_import); if (!__pyx_builtin___import__) __PYX_ERR(1, 100, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 141, __pyx_L1_error)
   __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(1, 156, __pyx_L1_error)
@@ -19637,41 +20007,74 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_tuple__18);
   __pyx_codeobj__19 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__18, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_pyx_unpickle_Enum, 1, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__19)) __PYX_ERR(1, 1, __pyx_L1_error)
 
-  /* "sliding_moves.pyx":14
+  /* "jumping_moves.pyx":19
  * 
+ * # ATTACK TABLE INITIALIZATIONS
+ * def initialize_pawn_tables( white_attacks, black_attacks):             # <<<<<<<<<<<<<<
  * 
- * def initialize_rook_tables(rook_magics, rook_masks, rook_shifts, rook_attacks):             # <<<<<<<<<<<<<<
- *     """Initialize rook tables from Python."""
- *     cdef uint64_t[:] rook_magics_view = rook_magics
+ *     cdef uint64_t[:] white_attacks_view = white_attacks
  */
-  __pyx_tuple__20 = PyTuple_Pack(8, __pyx_n_s_rook_magics, __pyx_n_s_rook_masks, __pyx_n_s_rook_shifts, __pyx_n_s_rook_attacks, __pyx_n_s_rook_magics_view, __pyx_n_s_rook_masks_view, __pyx_n_s_rook_shifts_view, __pyx_n_s_rook_attacks_view); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_tuple__20 = PyTuple_Pack(4, __pyx_n_s_white_attacks, __pyx_n_s_black_attacks, __pyx_n_s_white_attacks_view, __pyx_n_s_black_attacks_view); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 19, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__20);
   __Pyx_GIVEREF(__pyx_tuple__20);
-  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(4, 0, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_sliding_moves_pyx, __pyx_n_s_initialize_rook_tables, 14, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(2, 0, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_jumping_moves_pyx, __pyx_n_s_initialize_pawn_tables, 19, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 19, __pyx_L1_error)
 
-  /* "sliding_moves.pyx":22
- *     init_rook_tables(&rook_magics_view[0], &rook_masks_view[0], &rook_shifts_view[0], &rook_attacks_view[0])
+  /* "jumping_moves.pyx":28
  * 
- * def initialize_bishop_tables(bishop_magics, bishop_masks, bishop_shifts, bishop_attacks):             # <<<<<<<<<<<<<<
- *     """Initialize bishop tables from Python."""
- *     cdef uint64_t[:] bishop_magics_view = bishop_magics
+ * 
+ * def initialize_king_table(attacks):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks
  */
-  __pyx_tuple__22 = PyTuple_Pack(8, __pyx_n_s_bishop_magics, __pyx_n_s_bishop_masks, __pyx_n_s_bishop_shifts, __pyx_n_s_bishop_attacks, __pyx_n_s_bishop_magics_view, __pyx_n_s_bishop_masks_view, __pyx_n_s_bishop_shifts_view, __pyx_n_s_bishop_attacks_view); if (unlikely(!__pyx_tuple__22)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_tuple__22 = PyTuple_Pack(2, __pyx_n_s_attacks, __pyx_n_s_attacks_view); if (unlikely(!__pyx_tuple__22)) __PYX_ERR(0, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__22);
   __Pyx_GIVEREF(__pyx_tuple__22);
-  __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(4, 0, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_sliding_moves_pyx, __pyx_n_s_initialize_bishop_tables, 22, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_jumping_moves_pyx, __pyx_n_s_initialize_king_table, 28, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) __PYX_ERR(0, 28, __pyx_L1_error)
 
-  /* "sliding_moves.pyx":32
+  /* "jumping_moves.pyx":35
  * 
  * 
- * def generate_moves_wrapper(uint64_t pieces, uint64_t occupancy, uint64_t own_occ, int is_rook):             # <<<<<<<<<<<<<<
- *     cdef int move_count = 0
- *     cdef uint16_t[1024] moves  # Adjust size as needed
+ * def initialize_knight_table(attacks):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks
  */
-  __pyx_tuple__24 = PyTuple_Pack(7, __pyx_n_s_pieces, __pyx_n_s_occupancy, __pyx_n_s_own_occ, __pyx_n_s_is_rook, __pyx_n_s_move_count, __pyx_n_s_moves, __pyx_n_s_i); if (unlikely(!__pyx_tuple__24)) __PYX_ERR(0, 32, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__24);
-  __Pyx_GIVEREF(__pyx_tuple__24);
-  __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(4, 0, 0, 7, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_sliding_moves_pyx, __pyx_n_s_generate_moves_wrapper, 32, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_codeobj__24 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_jumping_moves_pyx, __pyx_n_s_initialize_knight_table, 35, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__24)) __PYX_ERR(0, 35, __pyx_L1_error)
+
+  /* "jumping_moves.pyx":42
+ * 
+ * # WRAPPERS
+ * def generate_pawn_moves_wrapper(uint64_t pieces,             # <<<<<<<<<<<<<<
+ *                                 uint64_t occupancy,
+ *                                 uint64_t opp_occ,
+ */
+  __pyx_tuple__25 = PyTuple_Pack(8, __pyx_n_s_pieces, __pyx_n_s_occupancy, __pyx_n_s_opp_occ, __pyx_n_s_color, __pyx_n_s_ep_sq, __pyx_n_s_moves, __pyx_n_s_n, __pyx_n_s_i); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__25);
+  __Pyx_GIVEREF(__pyx_tuple__25);
+  __pyx_codeobj__26 = (PyObject*)__Pyx_PyCode_New(5, 0, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_jumping_moves_pyx, __pyx_n_s_generate_pawn_moves_wrapper, 42, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__26)) __PYX_ERR(0, 42, __pyx_L1_error)
+
+  /* "jumping_moves.pyx":54
+ * 
+ * 
+ * def generate_king_moves_wrapper(uint64_t occupancy,             # <<<<<<<<<<<<<<
+ *                                 uint64_t own_occ,
+ *                                 int from_sq,
+ */
+  __pyx_tuple__27 = PyTuple_Pack(9, __pyx_n_s_occupancy, __pyx_n_s_own_occ, __pyx_n_s_from_sq, __pyx_n_s_can_ks, __pyx_n_s_can_qs, __pyx_n_s_color, __pyx_n_s_moves, __pyx_n_s_n, __pyx_n_s_i); if (unlikely(!__pyx_tuple__27)) __PYX_ERR(0, 54, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__27);
+  __Pyx_GIVEREF(__pyx_tuple__27);
+  __pyx_codeobj__28 = (PyObject*)__Pyx_PyCode_New(6, 0, 0, 9, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__27, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_jumping_moves_pyx, __pyx_n_s_generate_king_moves_wrapper, 54, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__28)) __PYX_ERR(0, 54, __pyx_L1_error)
+
+  /* "jumping_moves.pyx":67
+ * 
+ * 
+ * def generate_knight_moves_wrapper(uint64_t own_occ,             # <<<<<<<<<<<<<<
+ *                                   uint64_t pieces,
+ *                                   int color):
+ */
+  __pyx_tuple__29 = PyTuple_Pack(6, __pyx_n_s_own_occ, __pyx_n_s_pieces, __pyx_n_s_color, __pyx_n_s_moves, __pyx_n_s_n, __pyx_n_s_i); if (unlikely(!__pyx_tuple__29)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__29);
+  __Pyx_GIVEREF(__pyx_tuple__29);
+  __pyx_codeobj__30 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 6, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__29, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_jumping_moves_pyx, __pyx_n_s_generate_knight_moves_wrapper, 67, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__30)) __PYX_ERR(0, 67, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -19929,10 +20332,10 @@ static int __Pyx_modinit_function_import_code(void) {
 #if PY_MAJOR_VERSION >= 3
 #if CYTHON_PEP489_MULTI_PHASE_INIT
 static PyObject* __pyx_pymod_create(PyObject *spec, PyModuleDef *def); /*proto*/
-static int __pyx_pymod_exec_sliding_moves(PyObject* module); /*proto*/
+static int __pyx_pymod_exec_jumping_moves(PyObject* module); /*proto*/
 static PyModuleDef_Slot __pyx_moduledef_slots[] = {
   {Py_mod_create, (void*)__pyx_pymod_create},
-  {Py_mod_exec, (void*)__pyx_pymod_exec_sliding_moves},
+  {Py_mod_exec, (void*)__pyx_pymod_exec_jumping_moves},
   {0, NULL}
 };
 #endif
@@ -19945,7 +20348,7 @@ namespace {
   #endif
   {
       PyModuleDef_HEAD_INIT,
-      "sliding_moves",
+      "jumping_moves",
       0, /* m_doc */
     #if CYTHON_PEP489_MULTI_PHASE_INIT
       0, /* m_size */
@@ -19993,11 +20396,11 @@ namespace {
 
 
 #if PY_MAJOR_VERSION < 3
-__Pyx_PyMODINIT_FUNC initsliding_moves(void) CYTHON_SMALL_CODE; /*proto*/
-__Pyx_PyMODINIT_FUNC initsliding_moves(void)
+__Pyx_PyMODINIT_FUNC initjumping_moves(void) CYTHON_SMALL_CODE; /*proto*/
+__Pyx_PyMODINIT_FUNC initjumping_moves(void)
 #else
-__Pyx_PyMODINIT_FUNC PyInit_sliding_moves(void) CYTHON_SMALL_CODE; /*proto*/
-__Pyx_PyMODINIT_FUNC PyInit_sliding_moves(void)
+__Pyx_PyMODINIT_FUNC PyInit_jumping_moves(void) CYTHON_SMALL_CODE; /*proto*/
+__Pyx_PyMODINIT_FUNC PyInit_jumping_moves(void)
 #if CYTHON_PEP489_MULTI_PHASE_INIT
 {
   return PyModuleDef_Init(&__pyx_moduledef);
@@ -20078,7 +20481,7 @@ bad:
 }
 
 
-static CYTHON_SMALL_CODE int __pyx_pymod_exec_sliding_moves(PyObject *__pyx_pyinit_module)
+static CYTHON_SMALL_CODE int __pyx_pymod_exec_jumping_moves(PyObject *__pyx_pyinit_module)
 #endif
 #endif
 {
@@ -20101,7 +20504,7 @@ static CYTHON_SMALL_CODE int __pyx_pymod_exec_sliding_moves(PyObject *__pyx_pyin
   #if CYTHON_PEP489_MULTI_PHASE_INIT
   if (__pyx_m) {
     if (__pyx_m == __pyx_pyinit_module) return 0;
-    PyErr_SetString(PyExc_RuntimeError, "Module 'sliding_moves' has already been imported. Re-initialisation is not supported.");
+    PyErr_SetString(PyExc_RuntimeError, "Module 'jumping_moves' has already been imported. Re-initialisation is not supported.");
     return -1;
   }
   #elif PY_MAJOR_VERSION >= 3
@@ -20113,13 +20516,13 @@ static CYTHON_SMALL_CODE int __pyx_pymod_exec_sliding_moves(PyObject *__pyx_pyin
   Py_INCREF(__pyx_m);
   #else
   #if PY_MAJOR_VERSION < 3
-  __pyx_m = Py_InitModule4("sliding_moves", __pyx_methods, 0, 0, PYTHON_API_VERSION); Py_XINCREF(__pyx_m);
+  __pyx_m = Py_InitModule4("jumping_moves", __pyx_methods, 0, 0, PYTHON_API_VERSION); Py_XINCREF(__pyx_m);
   if (unlikely(!__pyx_m)) __PYX_ERR(0, 1, __pyx_L1_error)
   #elif CYTHON_USE_MODULE_STATE
   __pyx_t_1 = PyModule_Create(&__pyx_moduledef); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   {
     int add_module_result = PyState_AddModule(__pyx_t_1, &__pyx_moduledef);
-    __pyx_t_1 = 0; /* transfer ownership from __pyx_t_1 to "sliding_moves" pseudovariable */
+    __pyx_t_1 = 0; /* transfer ownership from __pyx_t_1 to "jumping_moves" pseudovariable */
     if (unlikely((add_module_result < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
     pystate_addmodule_run = 1;
   }
@@ -20143,7 +20546,7 @@ if (!__Pyx_RefNanny) {
       Py_FatalError("failed to import 'refnanny' module");
 }
 #endif
-  __Pyx_RefNannySetupContext("__Pyx_PyMODINIT_FUNC PyInit_sliding_moves(void)", 0);
+  __Pyx_RefNannySetupContext("__Pyx_PyMODINIT_FUNC PyInit_jumping_moves(void)", 0);
   if (__Pyx_check_binary_version(__PYX_LIMITED_VERSION_HEX, __Pyx_get_runtime_version(), CYTHON_COMPILING_IN_LIMITED_API) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #ifdef __Pxy_PyFrame_Initialize_Offsets
   __Pxy_PyFrame_Initialize_Offsets();
@@ -20181,14 +20584,14 @@ if (!__Pyx_RefNanny) {
   #if PY_MAJOR_VERSION < 3 && (__PYX_DEFAULT_STRING_ENCODING_IS_ASCII || __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT)
   if (__Pyx_init_sys_getdefaultencoding_params() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
-  if (__pyx_module_is_main_sliding_moves) {
+  if (__pyx_module_is_main_jumping_moves) {
     if (PyObject_SetAttr(__pyx_m, __pyx_n_s_name_2, __pyx_n_s_main) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   #if PY_MAJOR_VERSION >= 3
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "sliding_moves")) {
-      if (unlikely((PyDict_SetItemString(modules, "sliding_moves", __pyx_m) < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "jumping_moves")) {
+      if (unlikely((PyDict_SetItemString(modules, "jumping_moves", __pyx_m) < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #endif
@@ -20722,46 +21125,82 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Enum, __pyx_t_7) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-  /* "sliding_moves.pyx":14
+  /* "jumping_moves.pyx":19
  * 
+ * # ATTACK TABLE INITIALIZATIONS
+ * def initialize_pawn_tables( white_attacks, black_attacks):             # <<<<<<<<<<<<<<
  * 
- * def initialize_rook_tables(rook_magics, rook_masks, rook_shifts, rook_attacks):             # <<<<<<<<<<<<<<
- *     """Initialize rook tables from Python."""
- *     cdef uint64_t[:] rook_magics_view = rook_magics
+ *     cdef uint64_t[:] white_attacks_view = white_attacks
  */
-  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13sliding_moves_1initialize_rook_tables, 0, __pyx_n_s_initialize_rook_tables, NULL, __pyx_n_s_sliding_moves, __pyx_d, ((PyObject *)__pyx_codeobj__21)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13jumping_moves_1initialize_pawn_tables, 0, __pyx_n_s_initialize_pawn_tables, NULL, __pyx_n_s_jumping_moves, __pyx_d, ((PyObject *)__pyx_codeobj__21)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 19, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_initialize_rook_tables, __pyx_t_7) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_initialize_pawn_tables, __pyx_t_7) < 0) __PYX_ERR(0, 19, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-  /* "sliding_moves.pyx":22
- *     init_rook_tables(&rook_magics_view[0], &rook_masks_view[0], &rook_shifts_view[0], &rook_attacks_view[0])
+  /* "jumping_moves.pyx":28
  * 
- * def initialize_bishop_tables(bishop_magics, bishop_masks, bishop_shifts, bishop_attacks):             # <<<<<<<<<<<<<<
- *     """Initialize bishop tables from Python."""
- *     cdef uint64_t[:] bishop_magics_view = bishop_magics
+ * 
+ * def initialize_king_table(attacks):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks
  */
-  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13sliding_moves_3initialize_bishop_tables, 0, __pyx_n_s_initialize_bishop_tables, NULL, __pyx_n_s_sliding_moves, __pyx_d, ((PyObject *)__pyx_codeobj__23)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13jumping_moves_3initialize_king_table, 0, __pyx_n_s_initialize_king_table, NULL, __pyx_n_s_jumping_moves, __pyx_d, ((PyObject *)__pyx_codeobj__23)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_initialize_bishop_tables, __pyx_t_7) < 0) __PYX_ERR(0, 22, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_initialize_king_table, __pyx_t_7) < 0) __PYX_ERR(0, 28, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-  /* "sliding_moves.pyx":32
+  /* "jumping_moves.pyx":35
  * 
  * 
- * def generate_moves_wrapper(uint64_t pieces, uint64_t occupancy, uint64_t own_occ, int is_rook):             # <<<<<<<<<<<<<<
- *     cdef int move_count = 0
- *     cdef uint16_t[1024] moves  # Adjust size as needed
+ * def initialize_knight_table(attacks):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef uint64_t[:] attacks_view = attacks
  */
-  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13sliding_moves_5generate_moves_wrapper, 0, __pyx_n_s_generate_moves_wrapper, NULL, __pyx_n_s_sliding_moves, __pyx_d, ((PyObject *)__pyx_codeobj__25)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13jumping_moves_5initialize_knight_table, 0, __pyx_n_s_initialize_knight_table, NULL, __pyx_n_s_jumping_moves, __pyx_d, ((PyObject *)__pyx_codeobj__24)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 35, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_generate_moves_wrapper, __pyx_t_7) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_initialize_knight_table, __pyx_t_7) < 0) __PYX_ERR(0, 35, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-  /* "sliding_moves.pyx":1
- * from libc.stdint cimport uint64_t, uint8_t, uint16_t             # <<<<<<<<<<<<<<
+  /* "jumping_moves.pyx":42
+ * 
+ * # WRAPPERS
+ * def generate_pawn_moves_wrapper(uint64_t pieces,             # <<<<<<<<<<<<<<
+ *                                 uint64_t occupancy,
+ *                                 uint64_t opp_occ,
+ */
+  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13jumping_moves_7generate_pawn_moves_wrapper, 0, __pyx_n_s_generate_pawn_moves_wrapper, NULL, __pyx_n_s_jumping_moves, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_7);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_generate_pawn_moves_wrapper, __pyx_t_7) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+
+  /* "jumping_moves.pyx":54
  * 
  * 
+ * def generate_king_moves_wrapper(uint64_t occupancy,             # <<<<<<<<<<<<<<
+ *                                 uint64_t own_occ,
+ *                                 int from_sq,
+ */
+  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13jumping_moves_9generate_king_moves_wrapper, 0, __pyx_n_s_generate_king_moves_wrapper, NULL, __pyx_n_s_jumping_moves, __pyx_d, ((PyObject *)__pyx_codeobj__28)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 54, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_7);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_generate_king_moves_wrapper, __pyx_t_7) < 0) __PYX_ERR(0, 54, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+
+  /* "jumping_moves.pyx":67
+ * 
+ * 
+ * def generate_knight_moves_wrapper(uint64_t own_occ,             # <<<<<<<<<<<<<<
+ *                                   uint64_t pieces,
+ *                                   int color):
+ */
+  __pyx_t_7 = __Pyx_CyFunction_New(&__pyx_mdef_13jumping_moves_11generate_knight_moves_wrapper, 0, __pyx_n_s_generate_knight_moves_wrapper, NULL, __pyx_n_s_jumping_moves, __pyx_d, ((PyObject *)__pyx_codeobj__30)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_7);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_generate_knight_moves_wrapper, __pyx_t_7) < 0) __PYX_ERR(0, 67, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+
+  /* "jumping_moves.pyx":1
+ * from libc.stdint cimport uint64_t, uint32_t             # <<<<<<<<<<<<<<
+ * 
+ * cdef extern from "pawn_moves.h":
  */
   __pyx_t_7 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
@@ -20777,7 +21216,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_XDECREF(__pyx_t_7);
   if (__pyx_m) {
     if (__pyx_d && stringtab_initialized) {
-      __Pyx_AddTraceback("init sliding_moves", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init jumping_moves", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     #if !CYTHON_USE_MODULE_STATE
     Py_CLEAR(__pyx_m);
@@ -20791,7 +21230,7 @@ if (!__Pyx_RefNanny) {
     }
     #endif
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init sliding_moves");
+    PyErr_SetString(PyExc_ImportError, "init jumping_moves");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
@@ -26246,29 +26685,6 @@ __pyx_fail:
     return result;
 }
 
-/* ObjectToMemviewSlice */
-  static CYTHON_INLINE __Pyx_memviewslice __Pyx_PyObject_to_MemoryviewSlice_ds_nn_uint8_t(PyObject *obj, int writable_flag) {
-    __Pyx_memviewslice result = { 0, 0, { 0 }, { 0 }, { 0 } };
-    __Pyx_BufFmt_StackElem stack[1];
-    int axes_specs[] = { (__Pyx_MEMVIEW_DIRECT | __Pyx_MEMVIEW_STRIDED) };
-    int retcode;
-    if (obj == Py_None) {
-        result.memview = (struct __pyx_memoryview_obj *) Py_None;
-        return result;
-    }
-    retcode = __Pyx_ValidateAndInit_memviewslice(axes_specs, 0,
-                                                 PyBUF_RECORDS_RO | writable_flag, 1,
-                                                 &__Pyx_TypeInfo_nn_uint8_t, stack,
-                                                 &result, obj);
-    if (unlikely(retcode == -1))
-        goto __pyx_fail;
-    return result;
-__pyx_fail:
-    result.memview = NULL;
-    result.data = NULL;
-    return result;
-}
-
 /* MemviewSliceCopyTemplate */
   static __Pyx_memviewslice
 __pyx_memoryview_copy_new_contig(const __Pyx_memviewslice *from_mvs,
@@ -27005,103 +27421,299 @@ raise_neg_overflow:
     return (int) -1;
 }
 
-/* CIntToPy */
-  static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
+/* CIntFromPy */
+  static CYTHON_INLINE size_t __Pyx_PyInt_As_size_t(PyObject *x) {
 #ifdef __Pyx_HAS_GCC_DIAGNOSTIC
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
-    const int neg_one = (int) -1, const_zero = (int) 0;
+    const size_t neg_one = (size_t) -1, const_zero = (size_t) 0;
 #ifdef __Pyx_HAS_GCC_DIAGNOSTIC
 #pragma GCC diagnostic pop
 #endif
     const int is_unsigned = neg_one > const_zero;
+#if PY_MAJOR_VERSION < 3
+    if (likely(PyInt_Check(x))) {
+        if ((sizeof(size_t) < sizeof(long))) {
+            __PYX_VERIFY_RETURN_INT(size_t, long, PyInt_AS_LONG(x))
+        } else {
+            long val = PyInt_AS_LONG(x);
+            if (is_unsigned && unlikely(val < 0)) {
+                goto raise_neg_overflow;
+            }
+            return (size_t) val;
+        }
+    }
+#endif
+    if (unlikely(!PyLong_Check(x))) {
+        size_t val;
+        PyObject *tmp = __Pyx_PyNumber_IntOrLong(x);
+        if (!tmp) return (size_t) -1;
+        val = __Pyx_PyInt_As_size_t(tmp);
+        Py_DECREF(tmp);
+        return val;
+    }
     if (is_unsigned) {
-        if (sizeof(int) < sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(int) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
+#if CYTHON_USE_PYLONG_INTERNALS
+        if (unlikely(__Pyx_PyLong_IsNeg(x))) {
+            goto raise_neg_overflow;
+        } else if (__Pyx_PyLong_IsCompact(x)) {
+            __PYX_VERIFY_RETURN_INT(size_t, __Pyx_compact_upylong, __Pyx_PyLong_CompactValueUnsigned(x))
+        } else {
+            const digit* digits = __Pyx_PyLong_Digits(x);
+            assert(__Pyx_PyLong_DigitCount(x) > 1);
+            switch (__Pyx_PyLong_DigitCount(x)) {
+                case 2:
+                    if ((8 * sizeof(size_t) > 1 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) >= 2 * PyLong_SHIFT)) {
+                            return (size_t) (((((size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0]));
+                        }
+                    }
+                    break;
+                case 3:
+                    if ((8 * sizeof(size_t) > 2 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) >= 3 * PyLong_SHIFT)) {
+                            return (size_t) (((((((size_t)digits[2]) << PyLong_SHIFT) | (size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0]));
+                        }
+                    }
+                    break;
+                case 4:
+                    if ((8 * sizeof(size_t) > 3 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) >= 4 * PyLong_SHIFT)) {
+                            return (size_t) (((((((((size_t)digits[3]) << PyLong_SHIFT) | (size_t)digits[2]) << PyLong_SHIFT) | (size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0]));
+                        }
+                    }
+                    break;
+            }
+        }
+#endif
+#if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX < 0x030C00A7
+        if (unlikely(Py_SIZE(x) < 0)) {
+            goto raise_neg_overflow;
+        }
+#else
+        {
+            int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
+            if (unlikely(result < 0))
+                return (size_t) -1;
+            if (unlikely(result == 1))
+                goto raise_neg_overflow;
+        }
+#endif
+        if ((sizeof(size_t) <= sizeof(unsigned long))) {
+            __PYX_VERIFY_RETURN_INT_EXC(size_t, unsigned long, PyLong_AsUnsignedLong(x))
 #ifdef HAVE_LONG_LONG
-        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+        } else if ((sizeof(size_t) <= sizeof(unsigned PY_LONG_LONG))) {
+            __PYX_VERIFY_RETURN_INT_EXC(size_t, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
 #endif
         }
     } else {
-        if (sizeof(int) <= sizeof(long)) {
-            return PyInt_FromLong((long) value);
+#if CYTHON_USE_PYLONG_INTERNALS
+        if (__Pyx_PyLong_IsCompact(x)) {
+            __PYX_VERIFY_RETURN_INT(size_t, __Pyx_compact_pylong, __Pyx_PyLong_CompactValue(x))
+        } else {
+            const digit* digits = __Pyx_PyLong_Digits(x);
+            assert(__Pyx_PyLong_DigitCount(x) > 1);
+            switch (__Pyx_PyLong_SignedDigitCount(x)) {
+                case -2:
+                    if ((8 * sizeof(size_t) - 1 > 1 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) - 1 > 2 * PyLong_SHIFT)) {
+                            return (size_t) (((size_t)-1)*(((((size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0])));
+                        }
+                    }
+                    break;
+                case 2:
+                    if ((8 * sizeof(size_t) > 1 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 2 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) - 1 > 2 * PyLong_SHIFT)) {
+                            return (size_t) ((((((size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0])));
+                        }
+                    }
+                    break;
+                case -3:
+                    if ((8 * sizeof(size_t) - 1 > 2 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) - 1 > 3 * PyLong_SHIFT)) {
+                            return (size_t) (((size_t)-1)*(((((((size_t)digits[2]) << PyLong_SHIFT) | (size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0])));
+                        }
+                    }
+                    break;
+                case 3:
+                    if ((8 * sizeof(size_t) > 2 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 3 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) - 1 > 3 * PyLong_SHIFT)) {
+                            return (size_t) ((((((((size_t)digits[2]) << PyLong_SHIFT) | (size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0])));
+                        }
+                    }
+                    break;
+                case -4:
+                    if ((8 * sizeof(size_t) - 1 > 3 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) - 1 > 4 * PyLong_SHIFT)) {
+                            return (size_t) (((size_t)-1)*(((((((((size_t)digits[3]) << PyLong_SHIFT) | (size_t)digits[2]) << PyLong_SHIFT) | (size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0])));
+                        }
+                    }
+                    break;
+                case 4:
+                    if ((8 * sizeof(size_t) > 3 * PyLong_SHIFT)) {
+                        if ((8 * sizeof(unsigned long) > 4 * PyLong_SHIFT)) {
+                            __PYX_VERIFY_RETURN_INT(size_t, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if ((8 * sizeof(size_t) - 1 > 4 * PyLong_SHIFT)) {
+                            return (size_t) ((((((((((size_t)digits[3]) << PyLong_SHIFT) | (size_t)digits[2]) << PyLong_SHIFT) | (size_t)digits[1]) << PyLong_SHIFT) | (size_t)digits[0])));
+                        }
+                    }
+                    break;
+            }
+        }
+#endif
+        if ((sizeof(size_t) <= sizeof(long))) {
+            __PYX_VERIFY_RETURN_INT_EXC(size_t, long, PyLong_AsLong(x))
 #ifdef HAVE_LONG_LONG
-        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
+        } else if ((sizeof(size_t) <= sizeof(PY_LONG_LONG))) {
+            __PYX_VERIFY_RETURN_INT_EXC(size_t, PY_LONG_LONG, PyLong_AsLongLong(x))
 #endif
         }
     }
     {
-        unsigned char *bytes = (unsigned char *)&value;
-#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
-        if (is_unsigned) {
-            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        size_t val;
+        int ret = -1;
+#if PY_VERSION_HEX >= 0x030d00A6 && !CYTHON_COMPILING_IN_LIMITED_API
+        Py_ssize_t bytes_copied = PyLong_AsNativeBytes(
+            x, &val, sizeof(val), Py_ASNATIVEBYTES_NATIVE_ENDIAN | (is_unsigned ? Py_ASNATIVEBYTES_UNSIGNED_BUFFER | Py_ASNATIVEBYTES_REJECT_NEGATIVE : 0));
+        if (unlikely(bytes_copied == -1)) {
+        } else if (unlikely(bytes_copied > (Py_ssize_t) sizeof(val))) {
+            goto raise_overflow;
         } else {
-            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+            ret = 0;
         }
-#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        return _PyLong_FromByteArray(bytes, sizeof(int),
-                                     little, !is_unsigned);
+#elif PY_VERSION_HEX < 0x030d0000 && !(CYTHON_COMPILING_IN_PYPY || CYTHON_COMPILING_IN_LIMITED_API) || defined(_PyLong_AsByteArray)
+        int one = 1; int is_little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&val;
+        ret = _PyLong_AsByteArray((PyLongObject *)x,
+                                    bytes, sizeof(val),
+                                    is_little, !is_unsigned);
 #else
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        PyObject *from_bytes, *result = NULL;
-        PyObject *py_bytes = NULL, *arg_tuple = NULL, *kwds = NULL, *order_str = NULL;
-        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
-        if (!from_bytes) return NULL;
-        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(int));
-        if (!py_bytes) goto limited_bad;
-        order_str = PyUnicode_FromString(little ? "little" : "big");
-        if (!order_str) goto limited_bad;
-        arg_tuple = PyTuple_Pack(2, py_bytes, order_str);
-        if (!arg_tuple) goto limited_bad;
-        if (!is_unsigned) {
-            kwds = PyDict_New();
-            if (!kwds) goto limited_bad;
-            if (PyDict_SetItemString(kwds, "signed", __Pyx_NewRef(Py_True))) goto limited_bad;
+        PyObject *v;
+        PyObject *stepval = NULL, *mask = NULL, *shift = NULL;
+        int bits, remaining_bits, is_negative = 0;
+        int chunk_size = (sizeof(long) < 8) ? 30 : 62;
+        if (likely(PyLong_CheckExact(x))) {
+            v = __Pyx_NewRef(x);
+        } else {
+            v = PyNumber_Long(x);
+            if (unlikely(!v)) return (size_t) -1;
+            assert(PyLong_CheckExact(v));
         }
-        result = PyObject_Call(from_bytes, arg_tuple, kwds);
-        limited_bad:
-        Py_XDECREF(kwds);
-        Py_XDECREF(arg_tuple);
-        Py_XDECREF(order_str);
-        Py_XDECREF(py_bytes);
-        Py_XDECREF(from_bytes);
-        return result;
+        {
+            int result = PyObject_RichCompareBool(v, Py_False, Py_LT);
+            if (unlikely(result < 0)) {
+                Py_DECREF(v);
+                return (size_t) -1;
+            }
+            is_negative = result == 1;
+        }
+        if (is_unsigned && unlikely(is_negative)) {
+            Py_DECREF(v);
+            goto raise_neg_overflow;
+        } else if (is_negative) {
+            stepval = PyNumber_Invert(v);
+            Py_DECREF(v);
+            if (unlikely(!stepval))
+                return (size_t) -1;
+        } else {
+            stepval = v;
+        }
+        v = NULL;
+        val = (size_t) 0;
+        mask = PyLong_FromLong((1L << chunk_size) - 1); if (unlikely(!mask)) goto done;
+        shift = PyLong_FromLong(chunk_size); if (unlikely(!shift)) goto done;
+        for (bits = 0; bits < (int) sizeof(size_t) * 8 - chunk_size; bits += chunk_size) {
+            PyObject *tmp, *digit;
+            long idigit;
+            digit = PyNumber_And(stepval, mask);
+            if (unlikely(!digit)) goto done;
+            idigit = PyLong_AsLong(digit);
+            Py_DECREF(digit);
+            if (unlikely(idigit < 0)) goto done;
+            val |= ((size_t) idigit) << bits;
+            tmp = PyNumber_Rshift(stepval, shift);
+            if (unlikely(!tmp)) goto done;
+            Py_DECREF(stepval); stepval = tmp;
+        }
+        Py_DECREF(shift); shift = NULL;
+        Py_DECREF(mask); mask = NULL;
+        {
+            long idigit = PyLong_AsLong(stepval);
+            if (unlikely(idigit < 0)) goto done;
+            remaining_bits = ((int) sizeof(size_t) * 8) - bits - (is_unsigned ? 0 : 1);
+            if (unlikely(idigit >= (1L << remaining_bits)))
+                goto raise_overflow;
+            val |= ((size_t) idigit) << bits;
+        }
+        if (!is_unsigned) {
+            if (unlikely(val & (((size_t) 1) << (sizeof(size_t) * 8 - 1))))
+                goto raise_overflow;
+            if (is_negative)
+                val = ~val;
+        }
+        ret = 0;
+    done:
+        Py_XDECREF(shift);
+        Py_XDECREF(mask);
+        Py_XDECREF(stepval);
 #endif
+        if (unlikely(ret))
+            return (size_t) -1;
+        return val;
     }
+raise_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "value too large to convert to size_t");
+    return (size_t) -1;
+raise_neg_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "can't convert negative value to size_t");
+    return (size_t) -1;
 }
 
 /* CIntToPy */
-  static CYTHON_INLINE PyObject* __Pyx_PyInt_From_uint16_t(uint16_t value) {
+  static CYTHON_INLINE PyObject* __Pyx_PyInt_From_uint32_t(uint32_t value) {
 #ifdef __Pyx_HAS_GCC_DIAGNOSTIC
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
-    const uint16_t neg_one = (uint16_t) -1, const_zero = (uint16_t) 0;
+    const uint32_t neg_one = (uint32_t) -1, const_zero = (uint32_t) 0;
 #ifdef __Pyx_HAS_GCC_DIAGNOSTIC
 #pragma GCC diagnostic pop
 #endif
     const int is_unsigned = neg_one > const_zero;
     if (is_unsigned) {
-        if (sizeof(uint16_t) < sizeof(long)) {
+        if (sizeof(uint32_t) < sizeof(long)) {
             return PyInt_FromLong((long) value);
-        } else if (sizeof(uint16_t) <= sizeof(unsigned long)) {
+        } else if (sizeof(uint32_t) <= sizeof(unsigned long)) {
             return PyLong_FromUnsignedLong((unsigned long) value);
 #ifdef HAVE_LONG_LONG
-        } else if (sizeof(uint16_t) <= sizeof(unsigned PY_LONG_LONG)) {
+        } else if (sizeof(uint32_t) <= sizeof(unsigned PY_LONG_LONG)) {
             return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
 #endif
         }
     } else {
-        if (sizeof(uint16_t) <= sizeof(long)) {
+        if (sizeof(uint32_t) <= sizeof(long)) {
             return PyInt_FromLong((long) value);
 #ifdef HAVE_LONG_LONG
-        } else if (sizeof(uint16_t) <= sizeof(PY_LONG_LONG)) {
+        } else if (sizeof(uint32_t) <= sizeof(PY_LONG_LONG)) {
             return PyLong_FromLongLong((PY_LONG_LONG) value);
 #endif
         }
@@ -27116,7 +27728,7 @@ raise_neg_overflow:
         }
 #elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
         int one = 1; int little = (int)*(unsigned char *)&one;
-        return _PyLong_FromByteArray(bytes, sizeof(uint16_t),
+        return _PyLong_FromByteArray(bytes, sizeof(uint32_t),
                                      little, !is_unsigned);
 #else
         int one = 1; int little = (int)*(unsigned char *)&one;
@@ -27124,7 +27736,7 @@ raise_neg_overflow:
         PyObject *py_bytes = NULL, *arg_tuple = NULL, *kwds = NULL, *order_str = NULL;
         from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
         if (!from_bytes) return NULL;
-        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(uint16_t));
+        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(uint32_t));
         if (!py_bytes) goto limited_bad;
         order_str = PyUnicode_FromString(little ? "little" : "big");
         if (!order_str) goto limited_bad;
@@ -27412,6 +28024,77 @@ raise_neg_overflow:
     PyErr_SetString(PyExc_OverflowError,
         "can't convert negative value to long");
     return (long) -1;
+}
+
+/* CIntToPy */
+  static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+    const int neg_one = (int) -1, const_zero = (int) 0;
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic pop
+#endif
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(int) < sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(int) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(int) <= sizeof(long)) {
+            return PyInt_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        unsigned char *bytes = (unsigned char *)&value;
+#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
+        if (is_unsigned) {
+            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        } else {
+            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+        }
+#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        return _PyLong_FromByteArray(bytes, sizeof(int),
+                                     little, !is_unsigned);
+#else
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        PyObject *from_bytes, *result = NULL;
+        PyObject *py_bytes = NULL, *arg_tuple = NULL, *kwds = NULL, *order_str = NULL;
+        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
+        if (!from_bytes) return NULL;
+        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(int));
+        if (!py_bytes) goto limited_bad;
+        order_str = PyUnicode_FromString(little ? "little" : "big");
+        if (!order_str) goto limited_bad;
+        arg_tuple = PyTuple_Pack(2, py_bytes, order_str);
+        if (!arg_tuple) goto limited_bad;
+        if (!is_unsigned) {
+            kwds = PyDict_New();
+            if (!kwds) goto limited_bad;
+            if (PyDict_SetItemString(kwds, "signed", __Pyx_NewRef(Py_True))) goto limited_bad;
+        }
+        result = PyObject_Call(from_bytes, arg_tuple, kwds);
+        limited_bad:
+        Py_XDECREF(kwds);
+        Py_XDECREF(arg_tuple);
+        Py_XDECREF(order_str);
+        Py_XDECREF(py_bytes);
+        Py_XDECREF(from_bytes);
+        return result;
+#endif
+    }
 }
 
 /* CIntToPy */
@@ -27762,7 +28445,7 @@ __Pyx_PyType_GetName(PyTypeObject* tp)
     if (unlikely(name == NULL) || unlikely(!PyUnicode_Check(name))) {
         PyErr_Clear();
         Py_XDECREF(name);
-        name = __Pyx_NewRef(__pyx_n_s__26);
+        name = __Pyx_NewRef(__pyx_n_s__31);
     }
     return name;
 }

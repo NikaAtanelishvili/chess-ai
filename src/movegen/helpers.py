@@ -94,10 +94,10 @@ import os
 # needs update for non-sliding pieces
 def save_data(magics_fn, attacks_fn, shifts_fn, masks_fn, magics, attacks, shifts, masks):
     # Define the directories for each type of data
-    magics_dir = 'data/magics'
-    attacks_dir = 'data/attacks'
-    shifts_dir = 'data/shifts'
-    masks_dir = 'data/masks'
+    magics_dir = '../data/magics'
+    attacks_dir = '../data/attacks'
+    shifts_dir = '../data/shifts'
+    masks_dir = '../data/masks'
 
     # Create directories if they don't exist
     os.makedirs(magics_dir, exist_ok=True)

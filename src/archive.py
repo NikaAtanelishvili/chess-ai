@@ -1,359 +1,404 @@
-import math
+import os
+import time
+from typing import Tuple
+
 import chess
+import numpy as np
+from chess import KNIGHT
 
-KNIGHT_MOVES = {}
-KING_MOVES = {}
-
-# True for White, False for Black
-PAWN_SINGLE_MOVES = {True: [0] * 64, False: [0] * 64}
-PAWN_DOUBLE_MOVES = {True: [0] * 64, False: [0] * 64}
-PAWN_ATTACKS = {True: [0] * 64, False: [0] * 64}
+from src.jumping_moves.jumping_moves import generate_knight_moves_wrapper, generate_pawn_moves_wrapper, \
+    initialize_knight_table, initialize_pawn_tables, initialize_king_table, generate_king_moves_wrapper
 
 
-# KNIGHT | GENERATES ILLEGAL AND LEGAL MOVES
-def init_knight_moves():
-    global KNIGHT_MOVES
+class King:
+    def __init__(self):
+        self.ATTACKS = np.zeros(64, dtype=np.uint64)
+        self.OFFSETS = [(1, 0), (-1, 0), (0, 1), (0, -1),
+                       (1, 1), (1, -1), (-1, 1), (-1, -1)]
 
-    for square in chess.SQUARES:
-        moves = 0
-        rank, file = divmod(square, 8)  # instead of nested loop
 
-        # Knight move offsets as (delta_rank, delta_file)
-        offsets = [(2, 1), (2, -1), (-2, 1), (-2, -1),
+    @staticmethod
+    def extract_king_state(board: chess.Board, color: bool):
+        occupancy = np.uint64(board.occupied)
+        own_occ = np.uint64(board.occupied_co[color])
+
+        king_bb = board.king(color)
+        from_sq = (king_bb & -king_bb).bit_length() - 1
+
+        can_ks = board.has_kingside_castling_rights(color)
+        can_qs = board.has_queenside_castling_rights(color)
+
+        return occupancy, own_occ, from_sq, can_ks, can_qs
+
+
+    def generate_attack_table(self):
+        for square in chess.SQUARES:
+            moves = np.uint64(0)
+
+            rank, file = divmod(square, 8)
+            for dr, df in self.OFFSETS:
+                nr, nf = rank + dr, file + df
+                if 0 <= nr < 8 and 0 <= nf < 8:
+                    bit_pos = nr * 8 + nf
+                    moves |= np.uint64(1) << np.uint64(bit_pos)
+
+            self.ATTACKS[square] = moves
+
+
+    def generate_move(self, board: chess.Board, color: bool):
+        occupancy, own_occ, from_sq, can_ks, can_qs = self.extract_king_state(board, color)
+
+        raw_moves = generate_king_moves_wrapper(occupancy, own_occ, from_sq, can_ks, can_qs, color)
+
+        # from_sq = ((raw_moves >> 6) & 0x3F).astype(np.uint8)
+        # to_sq = (raw_moves & 0x3F).astype(np.uint8)
+        #
+        # legal_moves = [
+        #     chess.Move(f, t)
+        #     for f, t in zip(from_sq, to_sq)
+        #     if board.is_legal(chess.Move(f, t))
+        # ]
+        #
+        # return legal_moves
+
+        legal_moves = []
+
+        for move in raw_moves:
+            from_sq = (move >> 6) & 0x3F
+            to_sq = move & 0x3F
+            mv = chess.Move(from_sq, to_sq)
+            if board.is_legal(mv):
+                legal_moves.append(mv)
+
+        return legal_moves
+
+
+    def save_data(self):
+        try:
+            attacks_fn = f"king_attacks"
+
+            # Define the directory
+            attacks_dir = 'data/attacks'
+
+            # Create directories if they don't exist
+            os.makedirs(attacks_dir, exist_ok=True)
+
+            np.save(os.path.join(attacks_dir, attacks_fn), self.ATTACKS)
+
+            print(f"King attack tables saved to '{os.path.join(attacks_dir, attacks_fn)}'")
+        except Exception as e:
+            print(f"Failed to save king attack tables: {e}")
+
+
+    def load_data(self):
+        data_file = f"data/attacks/king_attacks.npy"
+
+        if not os.path.exists(data_file):
+            print("The following required file is missing:")
+            print(f" - {data_file}")
+            ans = input("Do you want to initialize and save the data? [y/N]: ").lower()
+            if ans == "y":
+                self.generate_attack_table()
+            else:
+                return  # Exit the function if the user declines
+
+        try:
+            attacks = np.load(data_file).astype(np.uint64)
+            initialize_king_table(attacks)
+            print("King's Attacks loaded")
+        except Exception as e:
+            print(f"Failed to load king's attacks: {e}")
+
+
+class Knight:
+    def __init__(self):
+        self.ATTACKS = np.zeros(64, dtype=np.uint64)
+        self.OFFSETS = [(2, 1), (2, -1), (-2, 1), (-2, -1),
                    (1, 2), (1, -2), (-1, 2), (-1, -2)]
 
-        for dr, df in offsets:
-            nr, nf = rank + dr, file + df # new rank and file
-            if 0 <= nr < 8 and 0 <= nf < 8:
-                moves |= 1 << (nr * 8 + nf) # bitboard representation
 
-            KNIGHT_MOVES[square] = moves
+    @staticmethod
+    def extract_knight_state(board: chess.Board, color: bool):
+        own_occ = np.uint64(board.occupied_co[color])
 
-# KING | GENERATES ILLEGAL AND LEGAL MOVES
-def init_king_moves():
-    global KING_MOVES
+        pieces = np.uint64(board.pieces(chess.KNIGHT, color))
 
-    for square in chess.SQUARES:
-        moves = 0
-        rank, file = divmod(square, 8)
-
-        offsets = [(1, 0), (-1, 0), (0, 1), (0, -1),
-                   (1, 1), (1, -1), (-1, 1), (-1, -1)]
-        for dr, df in offsets:
-            nr, nf = rank + dr, file + df
-            if 0 <= nr < 8 and 0 <= nf < 8:
-                moves |= 1 << (nr * 8 + nf)
-                # (nr * 8 + nf) computes the target square index (0–63).
-                # 1 << (nr * 8 + nf) shifts the binary 1 to the target square’s position.
-                # moves |= ... sets the bit at that position in moves.
-        KING_MOVES[square] = moves
-
-# PAWN | GENERATES ILLEGAL AND LEGAL MOVES
-def init_pawn_moves():
-    """
-    Precompute pawn move tables for white and black.
-
-    On an empty board:
-      - A white pawn can push one square forward (if not on rank 8).
-      - From its initial rank (rank 2, index 1) a white pawn can push two squares.
-      - Its capture moves are one square diagonally (taking care of file boundaries).
-
-    Black moves are the mirror image.
-    """
-    for square in range(64):
-        rank, file = divmod(square, 8)
-
-        # WHITE moves:
-        white_single = 0
-        white_double = 0
-        white_attacks = 0
-
-        if rank < 7:  # Can always push one square if not on last rank.
-            white_single |= 1 << (square + 8) # Single-square push
-            # Diagonal captures (avoid wrap‐around on files).
-            if file > 0:
-                white_attacks |= 1 << (square + 7) # Left capture
-            if file < 7:
-                white_attacks |= 1 << (square + 9) # Right capture
-            # From the initial rank (rank index 1 = 2nd rank), two‐square push is possible.
-            if rank == 1:
-                white_double |= 1 << (square + 16) # double-square push
-
-        PAWN_SINGLE_MOVES[True][square] = white_single
-        PAWN_DOUBLE_MOVES[True][square] = white_double
-        PAWN_ATTACKS[True][square] = white_attacks
-
-        # BLACK moves:
-        black_single = 0
-        black_double = 0
-        black_attacks = 0
-
-        if rank > 0:  # Can push one square backward (downwards)
-            black_single |= 1 << (square - 8)
-            # Diagonal captures for black:
-            if file > 0:
-                black_attacks |= 1 << (square - 9)
-            if file < 7:
-                black_attacks |= 1 << (square - 7)
-            # From the initial rank for black (rank index 6 = 7th rank)
-            if rank == 6:
-                black_double |= 1 << (square - 16)
-
-        PAWN_SINGLE_MOVES[False][square] = black_single
-        PAWN_DOUBLE_MOVES[False][square] = black_double
-        PAWN_ATTACKS[False][square] = black_attacks
-
-# QUEEN, BISHOP, ROOK | GENERATES ONLY LEGAL MOVES
-def generate_slider_moves(board: chess.Board, square: int, color: bool, directions):
-    moves = []
-
-    occupancy = board.occupied
-
-    own_occ = 0 # bitboard of all squares occupied by our own pieces.
-    for pt in chess.PIECE_TYPES:
-        own_occ |= int(board.pieces(pt, color)) # bitboard of all pieces of type pt for color
-
-    rank, file = divmod(square, 8)
-
-    for dr, df in directions:
-        r, f = rank, file
-
-        while True:
-            r += dr
-            f += df
-            if not (0 <= r < 8 and 0 <= f < 8):
-                break
-            target = r * 8 + f
-            target_bit = 1 << target
-            if own_occ & target_bit:
-                # Our own piece is blocking the ray.
-                break
-            moves.append(chess.Move(square, target))
-            if occupancy & target_bit:
-                # There's an enemy piece; can capture but not go beyond.
-                break
-    return moves
-
-init_pawn_moves()
-init_knight_moves()
-init_king_moves()
+        return own_occ, pieces
 
 
+    def generate_attack_table(self):
+        for square in chess.SQUARES:
+            moves = np.uint64(0)
+
+            rank, file = divmod(square, 8)
+
+            for dr, df in self.OFFSETS:
+                nr, nf = rank + dr, file + df
+                if 0 <= nr < 8 and 0 <= nf < 8:
+                    bit_pos = nr * 8 + nf
+                    moves |= np.uint64(1) << np.uint64(bit_pos)
+
+            self.ATTACKS[square] = moves
 
 
+    def generate_move(self, board: chess.Board, color: bool):
+        own_occ, pieces = self.extract_knight_state(board, color)
 
-# -----------------------------------------------------------------------------
-# Bitboard Move Generation for Each Piece Type
-# -----------------------------------------------------------------------------
+        raw_moves = generate_knight_moves_wrapper(pieces, own_occ, color)
+        #
+        # from_sq = ((raw_moves >> 6) & 0x3F).astype(np.uint8)
+        # to_sq = (raw_moves & 0x3F).astype(np.uint8)
+        #
+        # legal_moves = [
+        #     mv for f, t in zip(from_sq, to_sq)
+        #     if board.is_legal(mv := chess.Move(f, t))
+        # ]
 
-def generate_knight_moves_bitboard(board: chess.Board, color: bool):
-    moves = []
+        legal_moves = []
 
-    own_occ = 0
+        for move in raw_moves:
+            from_sq = (move >> 6) & 0x3F
+            to_sq = move & 0x3F
+            mv = chess.Move(from_sq, to_sq)
+            if board.is_legal(mv):
+                legal_moves.append(mv)
 
-    for pt in chess.PIECE_TYPES:
-        own_occ |= int(board.pieces(pt, color))
+        return legal_moves
 
-    knights = int(board.pieces(chess.KNIGHT, color))
+    def save_data(self):
+        try:
+            attacks_fn = f"knight_attacks"
 
-    for square in bit_scan(knights):
-        # ~own_occ - bitmask of empty and opponent-occupied squares
-        candidate_bb = KNIGHT_MOVES[square] & ~own_occ #  filters out squares occupied by the player's own pieces
-        for target in bit_scan(candidate_bb): # valid target squares
-            moves.append(chess.Move(square, target))
+            # Define the directory
+            attacks_dir = 'data/attacks'
 
-    return moves
+            # Create directories if they don't exist
+            os.makedirs(attacks_dir, exist_ok=True)
 
+            np.save(os.path.join(attacks_dir, attacks_fn), self.ATTACKS)
 
-def generate_king_moves_bitboard(board: chess.Board, color: bool):
-    moves = []
-    own_occ = 0
-
-    for pt in chess.PIECE_TYPES:
-        own_occ |= int(board.pieces(pt, color))
-
-    kings = int(board.pieces(chess.KING, color))
-
-    for square in bit_scan(kings):
-        candidate_bb = KING_MOVES[square] & ~own_occ
-        for target in bit_scan(candidate_bb):
-            moves.append(chess.Move(square, target))
-
-    return moves
-
-
-def generate_rook_moves_bitboard(board: chess.Board, color: bool):
-    moves = []
-    rooks = int(board.pieces(chess.ROOK, color))
-    # Rook directions: horizontal & vertical.
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-    for square in bit_scan(rooks):
-        moves.extend(generate_slider_moves(board, square, color, directions))
-    return moves
+            print(f"Knight attack tables saved to '{os.path.join(attacks_dir, attacks_fn)}'")
+        except Exception as e:
+            print(f"Failed to save knight attack tables: {e}")
 
 
-def generate_bishop_moves_bitboard(board: chess.Board, color: bool):
-    moves = []
-    bishops = int(board.pieces(chess.BISHOP, color))
-    # Bishop directions: diagonals.
-    directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-    for square in bit_scan(bishops):
-        moves.extend(generate_slider_moves(board, square, color, directions))
-    return moves
+    def load_data(self):
+        data_file = f"data/attacks/knight_attacks.npy"
 
-
-def generate_queen_moves_bitboard(board: chess.Board, color: bool):
-    moves = []
-    queens = int(board.pieces(chess.QUEEN, color))
-    # Queen combines rook and bishop directions.
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0),
-                  (1, 1), (1, -1), (-1, 1), (-1, -1)]
-    for square in bit_scan(queens):
-        moves.extend(generate_slider_moves(board, square, color, directions))
-    return moves
-
-
-def generate_pawn_moves_bitboard(board: chess.Board, color: bool):
-    """
-    Generate pawn moves using precomputed move tables and bitboard filtering.
-
-    This function handles:
-      - Single pawn pushes (only if the destination is empty).
-      - Double pushes from the initial rank (if both the intermediate
-        and destination squares are empty).
-      - Captures (only if the target square is occupied by an enemy piece).
-      - Promotions (if a push or capture ends on the promotion rank).
-      - En passant captures (if board.ep_square is set).
-
-    The board is assumed to provide:
-      - board.pieces(piece_type, color): returns a bitboard (int) of that piece.
-      - board.occupied: bitboard of all pieces.
-      - board.ep_square: en passant target square (or None if not available).
-    """
-    moves = []
-    pawn_bb = int(board.pieces(chess.PAWN, color))
-    # Compute the bitboard of all empty squares.
-    empty = ~board.occupied & 0xFFFFFFFFFFFFFFFF
-
-    # Compute opponent occupancy (for capture moves).
-    opp_occ = 0
-    for pt in chess.PIECE_TYPES:
-        opp_occ |= int(board.pieces(pt, not color))
-
-    for square in bit_scan(pawn_bb):
-        # --- Single Push Moves ---
-        single_push = PAWN_SINGLE_MOVES[color][square] & empty
-        for target in bit_scan(single_push):
-            # Check for promotion (white promotes on rank 8, black on rank 1).
-            if (color and chess.square_rank(target) == 7) or (not color and chess.square_rank(target) == 0):
-                # For promotions, generate one move per possible promotion piece.
-                for promo in [chess.QUEEN, chess.ROOK, chess.BISHOP, chess.KNIGHT]:
-                    moves.append(chess.Move(square, target, promotion=promo))
+        if not os.path.exists(data_file):
+            print("The following required file is missing:")
+            print(f" - {data_file}")
+            ans = input("Do you want to initialize and save the data? [y/N]: ").lower()
+            if ans == "y":
+                self.generate_attack_table()
             else:
-                moves.append(chess.Move(square, target))
+                return  # Exit the function if the user declines
 
-        # --- Double Push Moves ---
-        # Only possible if pawn is on its starting rank.
-        if (color and chess.square_rank(square) == 1) or (not color and chess.square_rank(square) == 6):
-            # Determine the intermediate and destination squares.
-            inter_square = square + 8 if color else square - 8
-            dest_square = square + 16 if color else square - 16
-            # Both squares must be empty.
-            if (empty & (1 << inter_square)) and (empty & (1 << dest_square)):
-                moves.append(chess.Move(square, dest_square))
+        try:
+            attacks = np.load(data_file).astype(np.uint64)
+            initialize_knight_table(attacks)
+            print("Attacks loaded")
+        except Exception as e:
+            print(f"Failed to load attack table: {e}")
 
-        # --- Capture Moves ---
-        pawn_caps = PAWN_ATTACKS[color][square] & opp_occ
-        for target in bit_scan(pawn_caps):
-            if (color and chess.square_rank(target) == 7) or (not color and chess.square_rank(target) == 0):
-                for promo in [chess.QUEEN, chess.ROOK, chess.BISHOP, chess.KNIGHT]:
-                    moves.append(chess.Move(square, target, promotion=promo))
+
+class Pawn:
+    def __init__(self):
+        self.ATTACKS_WHITE = np.zeros(64, dtype=np.uint64)
+        self.ATTACKS_BLACK = np.zeros(64, dtype=np.uint64)
+
+
+    @staticmethod
+    def extract_pawn_state(board: chess.Board, color: bool) -> Tuple[np.uint64, np.uint64, np.uint64, int]:
+
+        occupancy = np.uint64(board.occupied)
+
+        pieces = np.uint64(board.pieces(chess.PAWN, color))  # occupancy of pawns
+
+        opp_occ = np.uint64(board.occupied_co[not color])  # occupancy board of enemy time
+
+        ep_sq = board.ep_square if board.ep_square is not None else -1 # en-passant square
+
+        return occupancy, pieces, opp_occ, ep_sq
+
+
+    def generate_attack_table_white(self):
+        for square in chess.SQUARES:
+
+            moves = np.uint64(0)
+
+            rank, file = divmod(square, 8)
+
+            if rank < 7:  # Can always push one square if not on last rank.
+                if file > 0:
+                    moves |= np.uint64(1) << np.uint64(square + 7) # Left capture
+                if file < 7:
+                    moves |= np.uint64(1) << np.uint64(square + 9) # Right capture
+
+            self.ATTACKS_WHITE[square] = moves
+
+
+    def generate_attack_table_black(self):
+        for square in chess.SQUARES:
+
+            moves = np.uint64(0)
+
+            rank, file = divmod(square, 8)
+
+            if rank > 0:
+                if file > 0:
+                    moves |= np.uint64(1) << np.uint64(square - 9)
+                if file < 7:
+                    moves |= np.uint64(1) << np.uint64(square - 7)
+
+            self.ATTACKS_BLACK[square] = moves
+
+
+    def generate_move(self, board: chess.Board, color: bool):
+        occupancy, pieces, opp_occ, ep_sq = self.extract_pawn_state(board, color)
+
+        raw_moves = generate_pawn_moves_wrapper(pieces, occupancy, opp_occ, color, ep_sq)
+
+        legal_moves = []
+        for move in raw_moves:
+            from_sq = (move >> 6) & 0x3F
+            to_sq = move & 0x3F
+            promo = (move >> 12) & 0x7
+
+            # reconstruct python-chess Move
+            mv = chess.Move(from_sq, to_sq,
+                            promotion=(promo if promo else None))
+            if board.is_legal(mv):
+                legal_moves.append(mv)
+        return legal_moves
+
+
+    def save_data(self):
+        try:
+            attacks_fn = f"pawn_attacks"
+
+            # Define the directory
+            attacks_dir = 'data/attacks'
+
+            # Create directories if they don't exist
+            os.makedirs(attacks_dir, exist_ok=True)
+
+            attack_dict = {
+                'white': self.ATTACKS_WHITE,
+                'black': self.ATTACKS_BLACK
+            }
+
+            np.savez_compressed(os.path.join(attacks_dir, attacks_fn), **attack_dict)
+
+            print(f"Pawn attack tables saved to '{os.path.join(attacks_dir, attacks_fn)}'")
+
+        except Exception as e:
+            print(f"Failed to save pawn attack tables: {e}")
+
+
+    def load_data(self):
+        data_file = f"data/attacks/pawn_attacks.npz"
+
+        if not os.path.exists(data_file):
+            print("The following required file is missing:")
+            print(f" - {data_file}")
+            ans = input("Do you want to initialize and save the data? [y/N]: ").lower()
+            if ans == "y":
+                self.generate_attack_table_white()
+                self.generate_attack_table_black()
             else:
-                moves.append(chess.Move(square, target))
+                return  # Exit the function if the user declines
 
-        # --- En Passant ---
-        if board.ep_square is not None:
-            if PAWN_ATTACKS[color][square] & (1 << board.ep_square):
-                moves.append(chess.Move(square, board.ep_square))
-
-    return moves
-
-
-def generate_castling_moves(board: chess.Board, color: bool):
-    moves = []
-    opponent = not color
-
-    # king's starting square
-    king_square = list(board.pieces(chess.KING, color))[0]
-
-    if color:  # White
-        # Kingside castling: e1 -> g1
-        if board.has_kingside_castling_rights(chess.WHITE):
-            # Squares f1 (square 5) and g1 (square 6) must be empty.
-            if not board.occupied & ((1 << chess.F1) | (1 << chess.G1)):
-                # e1, f1, and g1 must not be attacked.
-                if (not board.is_attacked_by(opponent, chess.E1) and
-                    not board.is_attacked_by(opponent, chess.F1) and
-                    not board.is_attacked_by(opponent, chess.G1)):
-                    moves.append(chess.Move(chess.E1, chess.G1))
-        # Queen side castling: e1 -> c1
-        if board.has_queenside_castling_rights(chess.WHITE):
-            # Squares b1 (square 1), c1 (square 2), and d1 (square 3) must be empty.
-            if not board.occupied & ((1 << chess.B1) | (1 << chess.C1) | (1 << chess.D1)):
-                # e1, d1, and c1 must not be attacked.
-                if (not board.is_attacked_by(opponent, chess.E1) and
-                    not board.is_attacked_by(opponent, chess.D1) and
-                    not board.is_attacked_by(opponent, chess.C1)):
-                    moves.append(chess.Move(chess.E1, chess.C1))
-    else:  # Black
-        # King side castling: e8 -> g8
-        if board.has_kingside_castling_rights(chess.BLACK):
-            # Squares f8 (square 61) and g8 (square 62) must be empty.
-            if not board.occupied & ((1 << chess.F8) | (1 << chess.G8)):
-                # e8, f8, and g8 must not be attacked.
-                if (not board.is_attacked_by(opponent, chess.E8) and
-                    not board.is_attacked_by(opponent, chess.F8) and
-                    not board.is_attacked_by(opponent, chess.G8)):
-                    moves.append(chess.Move(chess.E8, chess.G8))
-        # Queen side castling: e8 -> c8
-        if board.has_queenside_castling_rights(chess.BLACK):
-            # Squares b8 (square 57), c8 (square 58), and d8 (square 59) must be empty.
-            if not board.occupied & ((1 << chess.B8) | (1 << chess.C8) | (1 << chess.D8)):
-                # e8, d8, and c8 must not be attacked.
-                if (not board.is_attacked_by(opponent, chess.E8) and
-                    not board.is_attacked_by(opponent, chess.D8) and
-                    not board.is_attacked_by(opponent, chess.C8)):
-                    moves.append(chess.Move(chess.E8, chess.C8))
-    return moves
+        try:
+            attacks = np.load(data_file)
+            attacks_white = attacks['white']
+            attacks_black = attacks['black']
+            initialize_pawn_tables(attacks_white, attacks_black)
+            print("Attacks loaded")
+        except Exception as e:
+            print(f"Failed to load attack table: {e}")
 
 
-def generate_moves_bitboard(board: chess.Board, color: bool):
-    moves = []
-    moves.extend(generate_knight_moves_bitboard(board, color))
-    moves.extend(generate_king_moves_bitboard(board, color))
-    moves.extend(generate_rook_moves_bitboard(board, color))
-    moves.extend(generate_bishop_moves_bitboard(board, color))
-    moves.extend(generate_queen_moves_bitboard(board, color))
-    moves.extend(generate_pawn_moves_bitboard(board, color))
-    moves.extend(generate_castling_moves(board, color))
-    # Pawn moves (and special moves like castling/en passant) require additional handling.
 
-    legal_moves = []
-    for move in moves:
-        board.push(move)
-        if not board.is_check():
-            legal_moves.append(move)
-        board.pop()
+def print_bitboard(bitboard):
+    """Prints a 64-bit bitboard as  8x8 chessboard."""
+    bit_string = format(bitboard & 0xFFFFFFFFFFFFFFFF, '064b')
+    print(bit_string)
 
-    return legal_moves
-
-# -----------------------------------------------------------------------------
-# Example Usage
-# -----------------------------------------------------------------------------
+    # Reverse the order to match a chessboard layout
+    for rank in range(7, -1, -1):  # Start from rank 7 (top) down to rank 0 (bottom)
+        row = bit_string[rank * 8 : (rank + 1) * 8]  # Extract 8 bits per rank
+        print(row.replace('0', '.').replace('1', 'X'))  # Replace 1s with 'X' for visibility
 
 if __name__ == "__main__":
     board = chess.Board()
+
+    # Clear pieces between the king and rook
+    # board.remove_piece_at(chess.F1)
+    # board.remove_piece_at(chess.G1)
+    # board.set_piece_at(chess.F3, chess.Piece(chess.KNIGHT, chess.BLACK))
+
+    # print(KING_MOVES)
+    # print_bitboard(KING_MOVES[60])
+
+    # king = King()
+    # king.generate_attack_table()
+
+    # pawn = Pawn()
+    # pawn.generate_attack_table_white()
+    # pawn.generate_attack_table_black()
+    # pawn.save_data()
+    #
+    # king = King()
+    # king.generate_attack_table()
+    # king.save_data()
+    #
+    # knight = Knight()
+    # knight.generate_attack_table()
+    # knight.save_data()
+
+    # pawn = Pawn()
+    # pawn.load_data()
+    # moves = pawn.generate_move(board, True)
+
+    knight = Pawn()
+    knight.load_data()
+    # moves = knight.generate_move(board, True)
+
+    start5 = time.time()
+    moves5 = knight.generate_move(board, True)
+    end5 = time.time()
+
+    start6 = time.time()
+    moves6 = knight.generate_move(board, True)
+    end6 = time.time()
+
+    start7 = time.time()
+    moves7 = knight.generate_move(board, True)
+    end7 = time.time()
+
+    start8 = time.time()
+    moves8 = knight.generate_move(board, True)
+    end8 = time.time()
+
+    #
+    # # bishop_attacks = bishop.generate_attacks(27, 0)
+    # for move in moves:
+    #     print(move)
+    #
+    #
+    print(f'{end5 - start5:.10f} seconds')
+    print(f'{end6 - start6:.10f} seconds')
+    print(f'{end7 - start7:.10f} seconds')
+    print(f'{end8 - start8:.10f} seconds')
+# 0.00014-8
+    #
+    # print(moves)
+    #
+    # for move in pawn.ATTACKS_WHITE:
+    #     print_bitboard(move)
+    # board = chess.Board()
     # Generate moves for White using our bitboard method.
-    white_moves = generate_moves_bitboard(board, chess.WHITE)
-    for move in white_moves:
-        print(move.uci())
+    # white_moves = generate_moves_bitboard(board, chess.WHITE)
+    # for move in white_moves:
+    #     print(move.uci())

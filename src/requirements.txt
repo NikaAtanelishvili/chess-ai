@@ -1,0 +1,5 @@
+chess==1.11.2
+Cython==3.0.12
+numpy==2.2.3
+setuptools==76.0.0
+tqdm==4.67.1

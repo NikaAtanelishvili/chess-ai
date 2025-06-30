@@ -8,7 +8,7 @@ class Node:
         self.fen = fen               # Board position FEN
         self.parent = parent         # Parent node
         self.children = {}           # move_uci -> Node
-        self.P = {}                  # Prior policy P(s,a)
+        self.P = {}                  # Prior policy P(s,a) | move_uci -> (P, v)
         self.N = 0                   # Visit count
         self.W = 0.0                 # Total value
         self.Q = 0.0                 # Mean value W/N
@@ -81,13 +81,13 @@ class ChessAI:
         node = root
         path = [node]
 
-        # --- Selection ---
+        # Selection
         while node.is_expanded and list(node.children):
             move_uci, node = self._select_child(node)
             board.push_uci(move_uci)
             path.append(node)
 
-        # --- Evaluation & Expansion ---
+        # Evaluation & Expansion
         if board.is_game_over():
             v = self._terminal_value(board)
         else:
@@ -95,7 +95,7 @@ class ChessAI:
             node.P = policy
             self._expand(node, board)
 
-        # --- Backpropagation ---
+        # Backpropagation
         self._backpropagate(path, v)
 
     def _select_child(self, node):
@@ -170,7 +170,6 @@ class ChessAI:
         }
 
     def _backpropagate(self, path, value):
-        """Propagate evaluation up the tree."""
         for node in reversed(path):
             node.N += 1
             node.W += value

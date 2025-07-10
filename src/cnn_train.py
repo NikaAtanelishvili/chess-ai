@@ -1,3 +1,5 @@
+import time
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -20,28 +22,74 @@ class Trainer:
         self.criterion_value = nn.MSELoss()
         self.history = {'policy_loss': [], 'value_loss': []}
 
-    def train_epoch(self):
+    # def train_epoch(self):
+    #     self.model.train()
+    #     total_policy_loss = 0
+    #     total_value_loss = 0
+    #     for x_batch, pi_batch, v_batch in self.loader:
+    #         x_batch = x_batch.to(self.device)
+    #         # Convert one-hot policy to index
+    #         target_idx = pi_batch.argmax(dim=1).to(self.device)
+    #         v_batch = v_batch.to(self.device)
+    #
+    #         self.optimizer.zero_grad()
+    #         log_p, v_pred = self.model(x_batch)
+    #         policy_loss = self.criterion_policy(log_p, target_idx)
+    #         value_loss = self.criterion_value(v_pred, v_batch)
+    #         (policy_loss + value_loss).backward()
+    #         self.optimizer.step()
+    #
+    #         total_policy_loss += policy_loss.item()
+    #         total_value_loss += value_loss.item()
+    #
+    #     avg_pl = total_policy_loss / len(self.loader)
+    #     avg_vl = total_value_loss / len(self.loader)
+    #     self.history['policy_loss'].append(avg_pl)
+    #     self.history['value_loss'].append(avg_vl)
+    #     return avg_pl, avg_vl
+
+    def train(self, num_epochs: int):
+        for epoch in range(1, num_epochs + 1):
+            avg_pl, avg_vl = self.train_epoch(epoch, num_epochs)
+            # final summary line for this epoch
+            print(f"Epoch {epoch}/{num_epochs}  "
+                  f"— avg policy loss: {avg_pl:.4f}, "
+                  f"avg value loss: {avg_vl:.4f}")
+
+    def train_epoch(self, epoch: int, num_epochs: int):
         self.model.train()
-        total_policy_loss = 0
-        total_value_loss = 0
-        for x_batch, pi_batch, v_batch in self.loader:
-            x_batch = x_batch.to(self.device)
-            # Convert one-hot policy to index
+        total_policy_loss = 0.0
+        total_value_loss  = 0.0
+        samples_done      = 0
+
+        for batch_idx, (x_batch, pi_batch, v_batch) in enumerate(self.loader, start=1):
+            x_batch    = x_batch.to(self.device)
             target_idx = pi_batch.argmax(dim=1).to(self.device)
-            v_batch = v_batch.to(self.device)
+            v_batch    = v_batch.to(self.device)
 
             self.optimizer.zero_grad()
-            log_p, v_pred = self.model(x_batch)
-            policy_loss = self.criterion_policy(log_p, target_idx)
-            value_loss = self.criterion_value(v_pred, v_batch)
+            log_p, v_pred       = self.model(x_batch)
+            policy_loss         = self.criterion_policy(log_p, target_idx)
+            value_loss          = self.criterion_value(v_pred, v_batch)
             (policy_loss + value_loss).backward()
             self.optimizer.step()
 
             total_policy_loss += policy_loss.item()
-            total_value_loss += value_loss.item()
+            total_value_loss  += value_loss.item()
+
+            # update sample count and print progress
+            samples_done += x_batch.size(0)
+            print(
+                f"\rEpoch {epoch}/{num_epochs}  "
+                f"Samples {samples_done}/{self.num_samples}",
+                end=""
+            )
+
+        # finish the line
+        print()
 
         avg_pl = total_policy_loss / len(self.loader)
-        avg_vl = total_value_loss / len(self.loader)
+        avg_vl = total_value_loss  / len(self.loader)
         self.history['policy_loss'].append(avg_pl)
         self.history['value_loss'].append(avg_vl)
         return avg_pl, avg_vl
@@ -95,18 +143,39 @@ def saliency_map(model, x, action_idx):
 
 # Example training script
 def main():
-    pgn_paths = ['lichess_db_standard_rated_eval_test_2013-01.pgn']
+    pgn_paths = ['lichess_test.pgn']
     dataset = LichessPGNDataset(pgn_paths)
+    print(len(dataset))
+    print(dataset[0])
+    # loader = DataLoader(dataset, batch_size=1, shuffle=True)
+    # print(next(loader))
+    return
+
     model = CNN(num_blocks=2)
-    trainer = Trainer(model, dataset)
+    x, policy_target, value_target = dataset[0]
+    x = x.unsqueeze(0)  # Add batch dimension -> (1,26,8,8)
+    model.eval()
+    with torch.no_grad():
+        start = time.time()
+        log_probs, value = model(x)  # log_probs: (1,4672), value: (1,)
+        end = time.time()
+    # if you just want the 1D outputs:
+    log_probs = log_probs.squeeze(0)  # -> (4672,)
+    value = value.item()  # -> float
 
-    epochs = 1
-    for epoch in range(1, epochs+1):
-        pl, vl = trainer.train_epoch()
-        print(f"Epoch {epoch}: Policy Loss={pl:.4f}, Value Loss={vl:.4f}")
+    print(f'{end - start:.6f}')
 
-    trainer.save('chess_model.pth')
-    plot_losses(trainer.history, save_path='loss_plot.png')
+
+    print(log_probs, value)
+    # trainer = Trainer(model, dataset)
+
+    # epochs = 1
+    # for epoch in range(1, epochs+1):
+    #     pl, vl = trainer.train_epoch()
+    #     print(f"Epoch {epoch}: Policy Loss={pl:.4f}, Value Loss={vl:.4f}")
+    #
+    # trainer.save('chess_model.pth')
+    # plot_losses(trainer.history, save_path='loss_plot.png')
 
 if __name__ == '__main__':
     main()

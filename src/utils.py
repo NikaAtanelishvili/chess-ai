@@ -34,12 +34,12 @@ def filter_evaluated_games(input_path: str, output_path: str, game_limit = None)
         if game_limit is not None and len(valid_games) >= game_limit:
             break
 
-
+    print(len(valid_games))
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n\n'.join(valid_games))
         f.write('\n')  # end with newline
 
-filter_evaluated_games('lichess_db_standard_rated_2013-01.pgn', 'lichess_db_standard_rated_eval_test_2013-01.pgn', game_limit=32)
+filter_evaluated_games('lichess_db_standard_rated_2013-01.pgn', 'lichess_test.pgn')
 
 def board_to_tensor(history: list[chess.Board]):
     """
@@ -100,6 +100,33 @@ def board_to_tensor(history: list[chess.Board]):
 
     return torch.from_numpy(data)
 
+# board=chess.Board()
+# print(board_to_tensor([board]).size())
+
+def create_board_history(board: chess.Board):
+    board_history = []  # 4 past + current
+    history_length = 4
+
+    move_stack = board.move_stack
+    num_moves = len(move_stack)
+
+    # Determine how many placeholders we need
+    missing = history_length - min(history_length, num_moves)
+
+    # Add None placeholders for missing history
+    for _ in range(missing):
+        board_history.append(None)
+
+    # Add actual past board states
+    for i in range(-min(history_length, num_moves), 0):
+        tmp = chess.Board()
+        for m in move_stack[:i + len(move_stack)]:
+            tmp.push(m)
+        board_history.append(tmp)
+
+    board_history.append(board.copy())
+
+    return board_history
 
 def iter_games(pgn_paths):
     """

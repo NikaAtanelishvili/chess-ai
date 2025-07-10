@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
+from collections import deque
+
 import chess
 import numpy as np
 import math
 import random
 
 from chess.polyglot import zobrist_hash
+
+from src.utils import board_to_tensor, create_board_history
+
 
 def mirror_move(move: chess.Move) -> chess.Move:
     from_sq = chess.square_mirror(move.from_square)
@@ -14,7 +19,7 @@ def mirror_move(move: chess.Move) -> chess.Move:
 # Action encoding: 8×8×73 directional move representation
 DELTAS = [(1,0),(1,1),(0,1),(-1,1),(-1,0),(-1,-1),(0,-1),(1,-1)]
 KNIGHT_DELTAS = [(2,1),(1,2),(-1,2),(-2,1),(-2,-1),(-1,-2),(1,-2),(2,-1)]
-ACTIONS = []
+ACTIONS = [] # (dx, dy, is_promotion, promotion_piece)
 
 # Sliding moves: 8 directions × distances 1–7
 for dx, dy in DELTAS:
@@ -36,6 +41,7 @@ POLICY_SIZE = 64 * len(ACTIONS)  # 4672
 
 # Move-index conversions
 def move_to_index(move: chess.Move) -> int:
+    # from_square and to_square are zero based
     from_sq = move.from_square
     to_sq = move.to_square
 
@@ -98,12 +104,20 @@ class TranspositionTable:
     def put(self, node: Node):
         self.table[node.key] = node
 
+def call_count(func):
+    def wrapper(self, *args, **kwargs):
+        wrapper.call_count +=1
+        return func(self, *args, **kwargs)
+    wrapper.call_count = 0
+    return wrapper
+
 class CNN:
     def __init__(self, model_path=None):
         # TODO: trained network here (PyTorch)
         pass
 
     # DUMMY EVALUATION
+    @call_count
     def evaluate(self, board: chess.Board):
         """
         Returns:
@@ -113,7 +127,6 @@ class CNN:
         v = random.uniform(-1, 1)
         policy = np.zeros(POLICY_SIZE, dtype=np.float32)
 
-        print(board.turn)
         for move in board.legal_moves:
             idx = move_to_index(move)
             policy[idx] = 1.0
@@ -122,7 +135,6 @@ class CNN:
         policy /= total
 
         return v, policy
-
 
 class ChessAI:
     def __init__(self, model, color=chess.WHITE, sims=800, c_puct=1.0):
@@ -141,8 +153,12 @@ class ChessAI:
 
         self.tt.put(root)
 
+        # Build history everytime select_move is called
+        game_history = create_board_history(board)
+
         # Initial evaluation
-        v_root, policy_root = self._evaluate(canon)
+        v_root, policy_root = self._evaluate(canon, game_history)
+
 
         if use_dirichlet:
             policy_root = self._add_dirichlet_noise(policy_root)
@@ -155,7 +171,7 @@ class ChessAI:
         # MCTS simulations
         for _ in range(self.sims):
             board_copy = canon.copy()
-            self._simulate(root, board_copy)
+            self._simulate(root, board_copy, game_history)
         
         # NOTE: parallelism is guaranteed in this specific case, but only in modern Python versions.
         # As of Python 3.7+, the built-in dict maintains insertion order as an official language feature.
@@ -176,29 +192,32 @@ class ChessAI:
             best = np.random.choice(len(actions), p=probabilities)  # Sampling
 
         chosen_move = index_to_move(actions[best])
-
         return mirror_move(chosen_move) if self.color == chess.BLACK else chosen_move
 
-    def _simulate(self, root, board):
+    def _simulate(self, root, board, game_history):
         node = root
         path = []  # list of (node, action)
 
-        # --- Selection ---
+        # Selection
         while node.is_expanded and list(node.children):
             action, node = self._select_child(node)
             move = index_to_move(action)
             board.push(move)
             path.append((node, action))
 
-        # --- Evaluation & Expansion ---
+        #  Evaluation & Expansion
         if board.is_game_over():
             v = self._terminal_value(board)
         else:
-            v, policy = self._evaluate(board)
+            leaf_history = game_history.copy()
+            leaf_history.popleft()
+            leaf_history.append(board.copy())
+            print('leaf', leaf_history)
+            v, policy = self._evaluate(board, leaf_history)
             node.P = policy
             self._expand(node, board)
 
-        # --- Backpropagation ---
+        # Backpropagation
         self._backpropagate(path, v)
 
     def _select_child(self, node):
@@ -223,6 +242,7 @@ class ChessAI:
 
     def _expand(self, node: Node, board: chess.Board):
         """Generate children for node using board position."""
+
         for move in board.legal_moves:
             action = move_to_index(move)
             board.push(move)
@@ -240,14 +260,16 @@ class ChessAI:
 
         node.is_expanded = True
 
-    def _evaluate(self, board: chess.Board):
+    def _evaluate(self, board: chess.Board, history):
         """Cache-aware CNN evaluation."""
         key = zobrist_hash(board)
 
         if key in self.cache:
             return self.cache[key]
 
-        v, policy = self.model.evaluate(board)
+        input = board_to_tensor(history)
+
+        v, policy = self.model.evaluate(input)
 
         v = max(-1.0, min(1.0, v))
 
@@ -279,10 +301,10 @@ class ChessAI:
 
 def main():
     board = chess.Board()
-    ai = ChessAI(CNN(), color=chess.WHITE, sims=10, c_puct=1.5)
-
+    ai = ChessAI(CNN(), color=chess.WHITE, sims=1, c_puct=1.5)
+    # ai.select_move(board, use_dirichlet=False, temperature=0.0)
     i = 0
-    while not board.is_game_over() or i < 10:
+    while not board.is_game_over() or i < 5:
         print(board)
         i+=1
         if board.turn == ai.color:

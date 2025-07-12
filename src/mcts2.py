@@ -8,15 +8,48 @@ import random
 
 from chess.polyglot import zobrist_hash
 
+from src.cnn import CNN
+from src.cnn_inference import CNNInference
 from src.utils import board_to_tensor, create_board_history
 
 
 def mirror_move(move: chess.Move) -> chess.Move:
-    from_sq = chess.square_mirror(move.from_square)
-    to_sq = chess.square_mirror(move.to_square)
-    return chess.Move(from_sq, to_sq, promotion=move.promotion)
+    return chess.Move(
+        chess.square_mirror(move.from_square),
+        chess.square_mirror(move.to_square),
+        promotion=move.promotion,
+        drop=move.drop,  # for variants that support drops
+    )
 
-# Action encoding: 8×8×73 directional move representation
+
+def canonicalize_board(board: chess.Board, ai_color: chess.Color) -> chess.Board:
+
+    if ai_color == chess.BLACK:
+        canon = board.mirror()  # new Board with pieces, castling, ep, and turn flipped
+    else:
+        canon = board.copy()  # new Board identical to the original
+
+    # Now ensure it’s White to move (root call should always be on AI’s turn)
+    canon.turn = chess.WHITE
+    return canon
+
+
+def canonicalize_move(move: chess.Move, ai_color: chess.Color) -> chess.Move:
+    if ai_color == chess.BLACK:
+        return mirror_move(move)
+    return move
+
+
+def uncanonicalize_move(move: chess.Move, ai_color: chess.Color) -> chess.Move:
+    """
+    Map a move from the canonical board back into the original
+    board’s coordinate system.
+    """
+    if ai_color == chess.BLACK:
+        return mirror_move(move)
+    return move
+
+# deltas for actions
 DELTAS = [(1,0),(1,1),(0,1),(-1,1),(-1,0),(-1,-1),(0,-1),(1,-1)]
 KNIGHT_DELTAS = [(2,1),(1,2),(-1,2),(-2,1),(-2,-1),(-1,-2),(1,-2),(2,-1)]
 ACTIONS = [] # (dx, dy, is_promotion, promotion_piece)
@@ -30,7 +63,10 @@ for dx, dy in DELTAS:
 for dx, dy in KNIGHT_DELTAS:
     ACTIONS.append((dx, dy, False, None))
 
-UNDERPROM_DIRS = [(0,1),(1,1),(-1,1)]  # relative to white; board is canonicalized
+# UNDERPROM_DIRS = [(0,1),(1,1),(-1,1)]  # relative to white; board is
+# new
+UNDERPROM_DIRS = [(1,0),(1,1),(1,-1)]
+
 for promo_piece in (chess.ROOK, chess.BISHOP, chess.KNIGHT):
     for dx, dy in UNDERPROM_DIRS:
         ACTIONS.append((dx, dy, True, promo_piece))
@@ -39,56 +75,155 @@ assert len(ACTIONS) == 73, f"Expected 73 actions, got {len(ACTIONS)}"
 
 POLICY_SIZE = 64 * len(ACTIONS)  # 4672
 
-# Move-index conversions
-def move_to_index(move: chess.Move) -> int:
-    # from_square and to_square are zero based
-    from_sq = move.from_square
-    to_sq = move.to_square
+# encoding
+def move_to_index(move: chess.Move, board: chess.Board) -> int:
+    # Mirror into white‐to‐move perspective if needed
+    if board.turn == chess.BLACK:
+        from_sq = chess.square_mirror(move.from_square)
+        to_sq   = chess.square_mirror(move.to_square)
+        promotion = move.promotion
+    else:
+        from_sq, to_sq = move.from_square, move.to_square
+        promotion      = move.promotion
 
     fr_r, fr_c = divmod(from_sq, 8)
-    to_r, to_c = divmod(to_sq, 8)
+    to_r, to_c = divmod(to_sq,   8)
+    dx, dy     = to_r - fr_r, to_c - fr_c
 
-    dx, dy = to_r - fr_r, to_c - fr_c
-
-    is_promo = move.promotion is not None
+    # Only underpromos get promo_flag=True
+    is_promo = (promotion is not None and promotion != chess.QUEEN)
 
     for aid, (adx, ady, promo_flag, promo_piece) in enumerate(ACTIONS):
         if (adx, ady, promo_flag) == (dx, dy, is_promo):
-            if promo_flag:
-                if move.promotion == promo_piece:
-                    return from_sq * len(ACTIONS) + aid
-            else:
+            # match the right piece for underpromos
+            if (not promo_flag) or (promotion == promo_piece):
                 return from_sq * len(ACTIONS) + aid
 
-    raise ValueError(f"Illegal move for ACTIONS: {move}")
+    raise ValueError(f"Illegal move for ACTIONS: {move.uci()}")
 
-def index_to_move(index: int) -> chess.Move:
-    n = len(ACTIONS)
-    from_sq = index // n
-    aid = index % n
+
+# decoding
+def index_to_move(index: int, turn: chess.Color) -> chess.Move:
+    n        = len(ACTIONS)
+    from_sq  = index // n
+    aid      = index % n
     dx, dy, promo_flag, promo_piece = ACTIONS[aid]
 
     fr_r, fr_c = divmod(from_sq, 8)
     to_r, to_c = fr_r + dx, fr_c + dy
 
+    # off‐board?
     if not (0 <= to_r < 8 and 0 <= to_c < 8):
         return None
 
     to_sq = to_r * 8 + to_c
 
+    # start with underpromo if flagged
     promotion = promo_piece if promo_flag else None
 
-    # any sliding ACTION with promo_flag=False that moves a pawn onto the last rank will by convention be treated
-    # as a *queen* promotion. When you push it on a board where a pawn arrives at the last rank,
-    # python-chess will default that promotion to a queen.
-    return chess.Move(from_sq, to_sq, promotion=promotion)
+    # detect *queen* promotions: a one‐step pawn move onto rank 7 (canonical)
+    # (dx==1, abs(dy)<=1, started on rank 6)
+    if not promo_flag and fr_r == 6 and dx == 1 and abs(dy) <= 1:
+        promotion = chess.QUEEN
+
+    # build the canonical‐white move
+    mv = chess.Move(from_sq, to_sq, promotion=promotion)
+
+    # mirror back for Black
+    if turn == chess.BLACK:
+        mv = chess.Move(
+            chess.square_mirror(mv.from_square),
+            chess.square_mirror(mv.to_square),
+            promotion=mv.promotion
+        )
+    return mv
+# Action encoding: 8×8×73 directional move representation
+# DELTAS = [(1,0),(1,1),(0,1),(-1,1),(-1,0),(-1,-1),(0,-1),(1,-1)]
+# KNIGHT_DELTAS = [(2,1),(1,2),(-1,2),(-2,1),(-2,-1),(-1,-2),(1,-2),(2,-1)]
+# ACTIONS = [] # (dx, dy, is_promotion, promotion_piece)
+#
+# # Sliding moves: 8 directions × distances 1–7
+# for dx, dy in DELTAS:
+#     for dist in range(1, 8):
+#         ACTIONS.append((dx * dist, dy * dist, False, None))
+#
+# # Knight jumps: 8
+# for dx, dy in KNIGHT_DELTAS:
+#     ACTIONS.append((dx, dy, False, None))
+#
+# UNDERPROM_DIRS = [(0,1),(1,1),(-1,1)]  # relative to white; board is canonicalized
+# for promo_piece in (chess.ROOK, chess.BISHOP, chess.KNIGHT):
+#     for dx, dy in UNDERPROM_DIRS:
+#         ACTIONS.append((dx, dy, True, promo_piece))
+#
+# assert len(ACTIONS) == 73, f"Expected 73 actions, got {len(ACTIONS)}"
+#
+# POLICY_SIZE = 64 * len(ACTIONS)  # 4672
+#
+# # I am tyring to use directional move encodoing. Promotional moves in ACTIONS include 9 different elemment(rook, bishop, knight*3 direction).
+# # I know thats the standard because canonicalization is basically nessesay all arount my MCTS-CNN. I am having problems with promotion encoding and decoding
+# # for example: move_to_index fails, because c2b1r is illigle move. Find the problem, and fix it
+#
+# # Move-index conversions
+# def index_to_move(index: int, turn: chess.Color) -> chess.Move:
+#     n = len(ACTIONS)
+#     from_sq = index // n
+#     aid     = index % n
+#     dx, dy, promo_flag, promo_piece = ACTIONS[aid]
+#
+#     fr_r, fr_c = divmod(from_sq, 8)
+#     to_r, to_c = fr_r + dx, fr_c + dy
+#     to_sq = to_r * 8 + to_c
+#     promotion = promo_piece if promo_flag else None
+#
+#     # build the canonical (white-to-move) move
+#     mv = chess.Move(from_sq, to_sq, promotion=promotion)
+#
+#     # if we originally mirrored for Black, mirror back:
+#     if turn == chess.BLACK:
+#         mv = chess.Move(
+#             chess.square_mirror(mv.from_square),
+#             chess.square_mirror(mv.to_square),
+#             promotion=mv.promotion
+#         )
+#     return mv
+#
+#
+# def move_to_index(move: chess.Move, board: chess.Board) -> int:
+#     # 1) mirror squares if Black
+#     if not board.turn:
+#         orig_from, orig_to = move.from_square, move.to_square
+#         from_sq = chess.square_mirror(orig_from)
+#         to_sq   = chess.square_mirror(orig_to)
+#         promotion = move.promotion
+#     else:
+#         from_sq, to_sq = move.from_square, move.to_square
+#         promotion = move.promotion
+#
+#     fr_r, fr_c = divmod(from_sq, 8)
+#     to_r, to_c = divmod(to_sq, 8)
+#     dx, dy = to_r - fr_r, to_c - fr_c
+#
+#     # 2) only underpromotions are treated as promo=True
+#     is_promo = (promotion is not None
+#                 and promotion != chess.QUEEN)
+#
+#     for aid, (adx, ady, promo_flag, promo_piece) in enumerate(ACTIONS):
+#         if (adx, ady, promo_flag) == (dx, dy, is_promo):
+#             # queen promotions now go into the sliding moves
+#             if not promo_flag or promotion == promo_piece:
+#                 # use the *mirrored* from_sq for indexing
+#                 return from_sq * len(ACTIONS) + aid
+#
+#     raise ValueError(f"Illegal move for ACTIONS: {move}")
 
 class Node:
     def __init__(self, key: int, parent=None):
         self.key = key                                      # Zobrist hash of position
         self.parent = parent                                # Parent node
         self.children = {}                                  # action_index -> Node
-        self.P = np.zeros(POLICY_SIZE, dtype=np.float32)    # Prior policy P(s,a) | Prior probability vector
+        # self.P = np.zeros(POLICY_SIZE, dtype=np.float32)    # Prior policy P(s,a) | Prior probability vector
+        self.P = 0.0
         self.N = 0                                          # Visit count
         self.W = 0.0                                        # Total value
         self.Q = 0.0                                        # Mean value W/N
@@ -111,31 +246,6 @@ def call_count(func):
     wrapper.call_count = 0
     return wrapper
 
-class CNN:
-    def __init__(self, model_path=None):
-        # TODO: trained network here (PyTorch)
-        pass
-
-    # DUMMY EVALUATION
-    @call_count
-    def evaluate(self, board: chess.Board):
-        """
-        Returns:
-          v: float in [-1,1]
-          policy: np.array of shape (POLICY_SIZE,) summing to 1
-        """
-        v = random.uniform(-1, 1)
-        policy = np.zeros(POLICY_SIZE, dtype=np.float32)
-
-        for move in board.legal_moves:
-            idx = move_to_index(move)
-            policy[idx] = 1.0
-
-        total = policy.sum() or 1.0
-        policy /= total
-
-        return v, policy
-
 class ChessAI:
     def __init__(self, model, color=chess.WHITE, sims=800, c_puct=1.0):
         self.model = model
@@ -146,7 +256,7 @@ class ChessAI:
         self.cache = {}             # key:int -> (v, policy)
 
     def select_move(self, board: chess.Board, use_dirichlet=False, temperature=0.0) -> chess.Move:
-        canon = board.mirror() if self.color == chess.BLACK else board
+        canon = canonicalize_board(board, self.color)
         root_key = zobrist_hash(canon)
         root = self.tt.get(root_key) or Node(root_key)
         root.parent = None
@@ -154,7 +264,8 @@ class ChessAI:
         self.tt.put(root)
 
         # Build history everytime select_move is called
-        game_history = create_board_history(board)
+        # game_history = create_board_history(board)
+        game_history = self._create_canonical_history(board)
 
         # Initial evaluation
         v_root, policy_root = self._evaluate(canon, game_history)
@@ -191,8 +302,16 @@ class ChessAI:
             probabilities /= probabilities.sum()             # Normalization
             best = np.random.choice(len(actions), p=probabilities)  # Sampling
 
-        chosen_move = index_to_move(actions[best])
-        return mirror_move(chosen_move) if self.color == chess.BLACK else chosen_move
+        # Get the canonical move from the action index
+        canonical_move = index_to_move(actions[best], canon.turn)
+
+        # Convert back to the original board perspective
+        chosen_move = uncanonicalize_move(canonical_move, self.color)
+
+        return chosen_move
+
+        # chosen_move = index_to_move(actions[best])
+        # return mirror_move(chosen_move) if self.color == chess.BLACK else chosen_move
 
     def _simulate(self, root, board, game_history):
         node = root
@@ -201,7 +320,7 @@ class ChessAI:
         # Selection
         while node.is_expanded and list(node.children):
             action, node = self._select_child(node)
-            move = index_to_move(action)
+            move = index_to_move(action, board.turn)
             board.push(move)
             path.append((node, action))
 
@@ -211,10 +330,13 @@ class ChessAI:
         else:
             leaf_history = game_history.copy()
             leaf_history.popleft()
-            leaf_history.append(board.copy())
-            print('leaf', leaf_history)
+            canon_leaf = canonicalize_board(board, self.color)
+            leaf_history.append(canon_leaf)
+            # leaf_history.append(board.copy())
+            # print('leaf', leaf_history)
             v, policy = self._evaluate(board, leaf_history)
             node.P = policy
+
             self._expand(node, board)
 
         # Backpropagation
@@ -244,7 +366,7 @@ class ChessAI:
         """Generate children for node using board position."""
 
         for move in board.legal_moves:
-            action = move_to_index(move)
+            action = move_to_index(move, board)
             board.push(move)
             key = zobrist_hash(board)
             board.pop()
@@ -267,9 +389,10 @@ class ChessAI:
         if key in self.cache:
             return self.cache[key]
 
-        input = board_to_tensor(history)
+        input = board_to_tensor(list(history))
 
-        v, policy = self.model.evaluate(input)
+        policy, v = self.model.evaluate(input)
+        # v, policy = evaluate(input)
 
         v = max(-1.0, min(1.0, v))
 
@@ -298,14 +421,32 @@ class ChessAI:
         # Stalemate or draw
         return 0.0
 
+    def _create_canonical_history(self, board: chess.Board):
+        # This is a placeholder - implement based on your create_board_history function
+        # Make sure to canonicalize each board state in the history
+        history = deque([None]*5, maxlen=5)  # Adjust maxlen as needed
+
+        # Example implementation:
+        current_board = board.copy()
+        for _ in range(5):  # Or however many history states you need
+            canonical_board = canonicalize_board(current_board, self.color)
+            history.append(canonical_board)
+            if len(current_board.move_stack) == 0:
+                break
+            current_board.pop()
+
+        return history
 
 def main():
     board = chess.Board()
-    ai = ChessAI(CNN(), color=chess.WHITE, sims=1, c_puct=1.5)
+    cnn = CNNInference(CNN(num_blocks=2), 'cpu', 'chess_model.pth')
+    cnn.init_model()
+    ai = ChessAI(cnn, color=chess.WHITE, sims=2, c_puct=1.5)
     # ai.select_move(board, use_dirichlet=False, temperature=0.0)
+
     i = 0
-    while not board.is_game_over() or i < 5:
-        print(board)
+    while not board.is_game_over() and i < 200:
+        print(board, i)
         i+=1
         if board.turn == ai.color:
             move = ai.select_move(board, use_dirichlet=False, temperature=0.0)

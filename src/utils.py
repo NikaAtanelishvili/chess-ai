@@ -1,4 +1,5 @@
 import re
+from collections import deque
 
 import chess
 import chess.pgn
@@ -100,11 +101,8 @@ def board_to_tensor(history: list[chess.Board]):
 
     return torch.from_numpy(data)
 
-# board=chess.Board()
-# print(board_to_tensor([board]).size())
-
 def create_board_history(board: chess.Board):
-    board_history = []  # 4 past + current
+    board_history = deque(maxlen=5)  # 4 past + current
     history_length = 4
 
     move_stack = board.move_stack

@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from src.mcts2 import POLICY_SIZE
 
+POLICY_SIZE = 4672
 
 class ResidualBlock(nn.Module):
     def __init__(self, channels):
@@ -23,20 +23,21 @@ class CNN(nn.Module):
     def __init__(self, in_planes=26, num_blocks=10):
         super().__init__()
         self.stem = nn.Sequential(
-            nn.Conv2d(in_planes, 256, kernel_size=3, padding=1),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(in_planes, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
             nn.ReLU(inplace=True)
         )
-        self.res_blocks = nn.Sequential(*[ResidualBlock(256) for _ in range(num_blocks)])
+        self.res_blocks = nn.Sequential(*[ResidualBlock(128) for _ in range(num_blocks)])
         # Policy head
-        self.policy_conv = nn.Conv2d(256, 2*73, kernel_size=1)
-        self.policy_bn = nn.BatchNorm2d(2*73)
-        self.policy_fc = nn.Linear(2*73*8*8, POLICY_SIZE)
+        self.policy_conv = nn.Conv2d(128, 73, kernel_size=1)
+        self.policy_bn = nn.BatchNorm2d(73)
+        self.policy_fc = nn.Linear(73*8*8, POLICY_SIZE)
         # Value head
-        self.value_conv = nn.Conv2d(256, 1, kernel_size=1)
+        self.value_conv = nn.Conv2d(128, 1, kernel_size=1)
         self.value_bn = nn.BatchNorm2d(1)
-        self.value_fc1 = nn.Linear(1*8*8, 256)
-        self.value_fc2 = nn.Linear(256, 1)
+        self.value_fc1 = nn.Linear(1*8*8, 128)
+        self.value_fc2 = nn.Linear(128, 1)
+
 
     def forward(self, x):
         # x: (batch,26,8,8)

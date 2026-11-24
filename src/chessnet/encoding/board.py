@@ -81,11 +81,17 @@ CELL_SQUARES: Final[tuple[chess.Square, ...]] = tuple(
 def perspective_board(board: chess.Board) -> chess.Board:
     """Return ``board`` as seen by the side to move, which is White afterwards.
 
-    Black-to-move boards are mirrored with :meth:`chess.Board.mirror` (a new board without
-    move stack). White-to-move boards are returned as they are, not copied, so the result
-    must not be modified.
+    Black-to-move boards are mirrored as :meth:`chess.Board.mirror` does (into a new board
+    without move stack). White-to-move boards are returned as they are, not copied, so the
+    result must not be modified.
     """
-    return board.mirror() if board.turn == chess.BLACK else board
+    if board.turn == chess.WHITE:
+        return board
+    # Board.mirror() copies the whole move stack and then discards it; copying without the
+    # stack keeps the cost independent of the game's length.
+    view = board.copy(stack=False)
+    view.apply_mirror()
+    return view
 
 
 def castling_flags(view: chess.Board) -> tuple[bool, bool, bool, bool]:

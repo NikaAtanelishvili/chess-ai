@@ -384,9 +384,45 @@ No checkpoint has ever been committed.
 
 None of these belong in git (bytecode, data, checkpoint, IDE state), so none were committed
 when freezing. `legacy-v0` tags the last pushed commit, whose code is identical to the
-working tree. The index was left untouched so the owner can decide what to do with the
-index-only checkpoint. A root `.gitignore` now covers data, checkpoints, logs, environments,
+working tree. A root `.gitignore` now covers data, checkpoints, logs, environments,
 caches, IDE files and `.env`/`kaggle.json`.
+
+Resolution (owner decision): the bytecode, the PGNs and the invalid index-only checkpoint
+were unstaged and the checkpoint discarded. The three tracked PGNs were removed from the
+tree with `git rm --cached`; they remain in history and in `legacy-v0`. Published history
+is left untouched (no rewrite).
+
+---
+
+## 7. Lessons for the rebuild
+
+Each legacy failure mode below gets a permanent, explicitly named regression test in the
+new code base, so it cannot come back silently.
+
+1. **Training target = the move that led here (X1).** The legacy dataset pushed the move
+   and then encoded the resulting position with that same move as its label. Rule: a
+   training record is `(position before the move, move played from it, outcome)`.
+   Guard: a regression test that, for every record produced from a fixture game, decodes
+   the policy target in the encoded position and asserts it is (a) the move actually
+   played *from* that position and (b) legal in it.
+2. **Reversed or invented history (X4).** The legacy search built its history list newest
+   first while the encoder read the last element as the current position, and leaf
+   histories ignored the moves along the search path. Rule: anything that depends on the
+   past (repetition detection, any future history planes) is derived from the real move
+   stack of the board being evaluated, never reconstructed. Guard: an MCTS test that
+   reaches a threefold repetition through moves played in the game *and* inside the
+   search tree and asserts it is scored as a draw.
+3. **Perspective is decided by the side to move, in one place (B1, B2, B5).** Legacy code
+   mirrored by the AI's colour, forced the turn flag, and mirrored boards and move indices
+   in different functions. Guard: colour-symmetry tests on boards and on move indices.
+4. **Backup sign (B4).** Guard: mate-in-1 tests for both colours with a stub evaluator,
+   and a hand-built two-ply tree whose root Q must equal the negated leaf value.
+5. **One move index, versioned (B6, X3, X7).** Three copies of the index drifted apart, and
+   an unversioned checkpoint silently met a different index. Guard: a single encoder and
+   decoder module with a round-trip test over all legal moves, and checkpoints that refuse
+   to load under a different encoding version.
+6. **Code that cannot run is not a pipeline (X2).** No import-time side effects; every
+   entry point is exercised by a test in CI.
 
 ---
 

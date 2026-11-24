@@ -127,6 +127,28 @@ def pack_position(board: chess.Board, move: chess.Move, wdl: int, *, elo: int = 
     return records
 
 
+def unpack_board(record: np.void) -> chess.Board:
+    """The position of a record as the mover saw it (White to move; see ``perspective_board``).
+
+    Only what a record stores is restored: pieces, castling rights, a legal en-passant
+    square, the halfmove clock (clipped at 255) and the move number derived from ``ply``.
+    """
+    board = chess.Board.empty()
+    for index, bitboard in enumerate(record["bb"].tolist()):
+        color = chess.WHITE if index < len(PIECE_TYPES) else chess.BLACK
+        piece = chess.Piece(PIECE_TYPES[index % len(PIECE_TYPES)], color)
+        for square in chess.SquareSet(bitboard):
+            board.set_piece_at(square, piece)
+    castle = int(record["castle"])
+    rights = "".join(symbol for bit, symbol in enumerate("KQkq") if castle >> bit & 1)
+    board.set_castling_fen(rights or "-")
+    ep_square = int(record["ep"])
+    board.ep_square = ep_square if ep_square >= 0 else None
+    board.halfmove_clock = int(record["halfmove"])
+    board.fullmove_number = int(record["ply"]) // 2 + 1
+    return board
+
+
 @dataclass(frozen=True, slots=True)
 class PackedBatch:
     """Packed records as int64 tensors of shape ``(N, 12)`` (bitboards) or ``(N,)``.

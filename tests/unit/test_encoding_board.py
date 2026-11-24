@@ -143,3 +143,24 @@ def test_perspective_board_keeps_white_and_mirrors_black() -> None:
 @pytest.mark.parametrize("fen", positions.ALL_FIXTURES)
 def test_fixtures_are_valid_positions(fen: str) -> None:
     assert chess.Board(fen).is_valid()
+
+
+def test_perspective_board_does_not_copy_the_move_stack(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Board.mirror() copies the whole move stack before discarding it, which made encoding
+    # cost grow with the length of the game.
+    board = chess.Board()
+    for _ in range(41):
+        board.push(next(iter(board.legal_moves)))
+    assert board.turn == chess.BLACK
+    stack_arguments: list[object] = []
+    original_copy = chess.Board.copy
+
+    def spy(self: chess.Board, *, stack: bool | int = True) -> chess.Board:
+        stack_arguments.append(stack)
+        return original_copy(self, stack=stack)
+
+    monkeypatch.setattr(chess.Board, "copy", spy)
+    view = perspective_board(board)
+    assert stack_arguments == [False]
+    assert view.move_stack == []
+    assert view.fen() == board.mirror().fen()

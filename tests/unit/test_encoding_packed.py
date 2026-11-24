@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import torch
 
-from chessnet.encoding.board import encode_board
+from chessnet.encoding.board import encode_board, perspective_board
 from chessnet.encoding.moves import index_to_move, move_to_index
 from chessnet.encoding.packed import (
     PACKED_DTYPE,
@@ -16,6 +16,7 @@ from chessnet.encoding.packed import (
     pack_into,
     pack_position,
     unpack_batch_torch,
+    unpack_board,
 )
 from chessnet.encoding.value import DRAW, LOSS, WIN, wdl_from_result
 
@@ -206,3 +207,21 @@ def test_special_lines_cover_every_special_move_for_both_colours() -> None:
 def test_invalid_examples_raise(move: chess.Move, wdl: int, elo: int, message: str) -> None:
     with pytest.raises(ValueError, match=message):
         pack_position(chess.Board(), move, wdl, elo=elo)
+
+
+@pytest.mark.parametrize("fen", positions.ALL_FIXTURES)
+def test_unpack_board_restores_the_movers_view(fen: str) -> None:
+    board = chess.Board(fen)
+    record = pack_position(board, next(iter(board.legal_moves)), DRAW)[0]
+    view = unpack_board(record)
+    assert view.turn == chess.WHITE
+    assert view.fen() == perspective_board(board).fen()
+
+
+def test_unpack_board_on_played_games() -> None:
+    for fen, line in SPECIAL_LINES:
+        for board, move in played_positions(fen, line):
+            record = pack_position(board, move, DRAW)[0]
+            view = unpack_board(record)
+            assert view.fen() == perspective_board(board).fen()
+            assert index_to_move(int(record["move"]), view) in view.legal_moves

@@ -8,11 +8,16 @@ from collections import Counter
 
 import chess
 import numpy as np
-from hypothesis import given
+from hypothesis import assume, given
 
-from chessnet.encoding.board import encode_board
+from chessnet.encoding.board import encode_board, perspective_board
 from chessnet.encoding.moves import index_to_move, legal_mask, mirror_move, move_to_index
-from chessnet.encoding.packed import batch_from_records, pack_position, unpack_batch_torch
+from chessnet.encoding.packed import (
+    batch_from_records,
+    pack_position,
+    unpack_batch_torch,
+    unpack_board,
+)
 from chessnet.encoding.value import DRAW
 
 from helpers.strategies import boards, boards_with_move, sample_positions
@@ -30,6 +35,26 @@ def test_black_to_move_encodes_like_its_mirror_image(board: chess.Board) -> None
     white = black.mirror()
     assert white.turn == chess.WHITE
     assert encode_board(black).tobytes() == encode_board(white).tobytes()
+
+
+@given(boards())
+def test_fast_mirroring_matches_board_mirror(board: chess.Board) -> None:
+    """perspective_board mirrors without copying the move stack; it must equal Board.mirror().
+
+    Boards here carry their game history, which is where the two code paths differ.
+    """
+    while board.turn == chess.WHITE or not board.move_stack:  # at most two moves
+        moves = list(board.legal_moves)
+        assume(moves)
+        board.push(moves[0])
+    reference = board.mirror()
+    view = perspective_board(board)
+    assert view is not board
+    assert view.fen(en_passant="fen") == reference.fen(en_passant="fen")  # raw ep square too
+    assert view.castling_rights == reference.castling_rights
+    assert view.promoted == reference.promoted
+    assert view.move_stack == reference.move_stack == []
+    assert view == reference
 
 
 @given(boards())
@@ -72,6 +97,15 @@ def test_unpacked_record_equals_encoded_board(example: tuple[chess.Board, chess.
     board, move = example
     planes = unpack_batch_torch(batch_from_records(pack_position(board, move, DRAW)))
     assert planes[0].numpy().tobytes() == encode_board(board).tobytes()
+
+
+@given(boards_with_move())
+def test_unpack_board_inverts_packing(example: tuple[chess.Board, chess.Move]) -> None:
+    board, move = example
+    record = pack_position(board, move, DRAW)[0]
+    view = unpack_board(record)
+    assert view.fen() == perspective_board(board).fen()
+    assert index_to_move(int(record["move"]), view) in view.legal_moves
 
 
 def test_all_legal_moves_in_a_large_sample_are_representable() -> None:

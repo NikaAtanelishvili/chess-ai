@@ -47,6 +47,8 @@ dev = [
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.6",
+    # kaggle 2.2.5 (latest) imports six without declaring it; drop once kaggle declares it.
+    "six>=1.17",
     "types-pyyaml>=6.0.12.20261122",
 ]
 

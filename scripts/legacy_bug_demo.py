@@ -4,13 +4,15 @@ Throwaway script backing the evidence in ``docs/AUDIT.md``; the bug-class
 labels printed below are defined in that file. It will be removed together
 with the legacy code.
 
-Run from the repository root with the legacy environment:
+Run from the repository root:
 
-    .venv/bin/python scripts/legacy_bug_demo.py
+    uv run python scripts/legacy_bug_demo.py
 
-The legacy ``src/utils.py`` runs a PGN filter at import time (reading and
-rewriting PGN files in the current directory). This script loads that module
-with the top-level call stripped, so running it touches no files.
+The legacy modules live in ``legacy/`` but import each other as ``src.*``;
+this script aliases ``src`` to ``legacy/`` so they load unmodified. The legacy
+``utils.py`` runs a PGN filter at import time (reading and rewriting PGN files
+in the current directory). This script loads that module with the top-level
+call stripped, so running it touches no files.
 """
 
 from __future__ import annotations
@@ -24,12 +26,19 @@ from pathlib import Path
 sys.dont_write_bytecode = True  # keep src/__pycache__ untouched
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+LEGACY = ROOT / "legacy"
+
+
+def _alias_legacy_package() -> None:
+    """Make ``import src.<module>`` resolve to ``legacy/<module>.py``."""
+    package = types.ModuleType("src")
+    package.__path__ = [str(LEGACY)]
+    sys.modules["src"] = package
 
 
 def _load_legacy_utils() -> types.ModuleType:
-    """Import src/utils.py without its import-time side effect."""
-    path = ROOT / "src" / "utils.py"
+    """Import legacy/utils.py without its import-time side effect."""
+    path = LEGACY / "utils.py"
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     tree.body = [
         node
@@ -42,8 +51,7 @@ def _load_legacy_utils() -> types.ModuleType:
     return module
 
 
-import src  # noqa: E402  (namespace package rooted at the repo)
-
+_alias_legacy_package()
 sys.modules["src.utils"] = _load_legacy_utils()
 
 import chess  # noqa: E402

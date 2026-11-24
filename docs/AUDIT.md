@@ -1,7 +1,8 @@
 # Legacy code audit
 
-Snapshot audited: tag **`legacy-v0`** → commit `f083561` (identical to `origin/master`
-at audit time, 15 commits). All `file:line` references below are against that tag.
+Snapshot audited: tag **`legacy-v0`** → commit `f083561` (identical to the default branch
+at audit time, 15 commits). All `file:line` references below are against that tag, where
+the code lived in `src/`; it has since moved unchanged to `legacy/` (GUI removed).
 Run `scripts/legacy_bug_demo.py` (see [Reproducing](#reproducing-the-findings)) to see
 the main defects happen.
 

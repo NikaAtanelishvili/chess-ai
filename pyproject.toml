@@ -3,6 +3,8 @@ name = "chessnet"
 dynamic = ["version"]
 description = "AlphaZero-style chess engine (CNN + MCTS) trained on Lichess games"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -44,7 +46,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]

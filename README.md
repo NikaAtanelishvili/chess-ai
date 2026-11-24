@@ -44,3 +44,7 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/) usin
 `feat`, `fix`, `refactor`, `perf`, `style`, `test`, `docs`, `build`, `ops` and `chore`
 (enforced by a commit-msg hook). Design decisions are logged in
 [docs/DECISIONS.md](docs/DECISIONS.md).
+
+## License
+
+[MIT](LICENSE).

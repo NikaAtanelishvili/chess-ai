@@ -14,6 +14,7 @@ All notable changes to this project are documented here. The format follows
   gitleaks secret scanning; pull request title check.
 - pre-commit hooks, including a Conventional Commits message check.
 - Audit of the legacy engine (`docs/AUDIT.md`) and a decision log (`docs/DECISIONS.md`).
+- MIT license.
 
 ### Changed
 

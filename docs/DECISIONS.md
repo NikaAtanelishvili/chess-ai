@@ -44,6 +44,9 @@ keeps the preinstalled CUDA torch because the metadata asks for no specific buil
 
 **Decision.** `.python-version` pins 3.11 (close to Kaggle's images); `requires-python =
 ">=3.11"`; CI tests both 3.11 and 3.12.
+**Follow-up.** When the Kaggle training kernel is set up, check the Python version of
+Kaggle's current GPU image. If it is newer than the pin, align `.python-version` (and add
+that version to the CI matrix).
 
 ## 2026-11-24: Dependencies and extras
 

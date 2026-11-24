@@ -148,3 +148,28 @@ environment variable is set) the profile is derandomized, so a failure reproduce
 locally it explores new examples. Generated positions come from random playouts, with
 every move drawn through hypothesis, from the standard start and from promotion-,
 castling- and en-passant-rich positions.
+
+## 2026-11-25: Nightly property runs
+
+**Context.** The derandomized pull-request profile always tries the same 200 examples.
+**Decision.** A `nightly` hypothesis profile (2000 examples, fresh random seeds, a
+reproduction blob printed on failure) runs every property test in the nightly workflow:
+`pytest -m hypothesis --hypothesis-profile=nightly`. Hypothesis marks every `@given` test
+with `hypothesis` automatically. Pull requests keep the fixed-seed profile.
+
+## 2026-11-25: GPU tests and the Kaggle parity check
+
+**Decision.** Tests that need CUDA carry the `gpu` marker. Without a GPU they are skipped,
+unless `--require-gpu` is passed, in which case they run and fail. `pytest -m gpu
+--require-gpu` therefore passes only on a machine where every GPU test passed.
+**Follow-up.** The first Kaggle training kernel checks out the pinned commit and runs
+`pytest -m gpu --require-gpu` before training starts (the tests are not part of the
+installed package). This exercises the GPU unpacking path, which CI cannot.
+
+## 2026-11-25: Sign-safe bitboard handling
+
+**Context.** In torch, bitboards are int64, so a piece on h8 (bit 63) makes the value
+negative.
+**Decision.** Bits are always extracted with shifts and `& 1`, never with sign-dependent
+tests such as `> 0`. Corner-square tests (a1, h1, a8, h8; mover and opponent; both
+colours) and extreme bitboards (only bit 63 set, all bits set) guard this on the CPU path.

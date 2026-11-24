@@ -11,7 +11,6 @@ from chessnet.config import DataConfig
 from chessnet.data.shards import (
     MANIFEST_NAME,
     RECORD_DTYPE_DESCRIPTION,
-    EncodingVersionError,
     GameCounts,
     Manifest,
     ShardWriter,
@@ -19,11 +18,12 @@ from chessnet.data.shards import (
     Split,
     SplitInfo,
     load_shard,
+    manifest_hash,
     read_manifest,
     split_of_site,
     write_manifest,
 )
-from chessnet.encoding import ENCODING_VERSION
+from chessnet.encoding import ENCODING_VERSION, EncodingVersionError
 from chessnet.encoding.packed import RECORD_SIZE, empty_records
 
 # Fixture games 09 and 10 were given URLs that hash into the val and test splits.
@@ -163,6 +163,7 @@ def test_manifest_round_trip(tmp_path: Path) -> None:
     assert path == tmp_path / MANIFEST_NAME
     assert not list(tmp_path.glob("*.tmp"))
     assert read_manifest(tmp_path) == manifest
+    assert manifest_hash(tmp_path) == hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_data_from_another_encoding_version_is_refused(tmp_path: Path) -> None:

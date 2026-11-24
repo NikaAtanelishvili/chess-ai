@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Policy/value network: SE-ResNet trunk with a convolutional policy head (in move-index
+  order) and a WDL value head; `tiny`, `small` and `base` presets.
+- Checkpoints with full training state that refuse weights from another encoding version,
+  an inference wrapper, and ONNX export (`onnx` extra).
 - `chessnet preprocess`: streams a Lichess `.pgn.zst` dump from a URL or a file (resuming
   dropped connections), filters games on their raw headers, parses survivors in parallel,
   splits by game, and writes globally shuffled shards with a `manifest.json`. A Kaggle CPU

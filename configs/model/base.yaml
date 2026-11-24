@@ -1,0 +1,6 @@
+# base model: the default Kaggle model.
+blocks: 10
+filters: 128
+se_ratio: 4          # squeeze-excitation reduction (null disables it)
+value_channels: 32
+value_hidden: 128

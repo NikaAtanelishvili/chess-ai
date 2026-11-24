@@ -26,6 +26,11 @@ dependencies = [
 train = [
     "tensorboard>=2.16",
 ]
+onnx = [
+    "onnx>=1.17",
+    "onnxruntime>=1.20",
+    "onnxscript>=0.2",
+]
 
 [project.scripts]
 chessnet = "chessnet.cli:app"

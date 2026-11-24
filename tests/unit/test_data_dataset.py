@@ -8,7 +8,8 @@ import torch
 from chessnet.config import DataConfig
 from chessnet.data.dataset import ShardDataset, make_loader
 from chessnet.data.pipeline import preprocess
-from chessnet.data.shards import MANIFEST_NAME, EncodingVersionError
+from chessnet.data.shards import MANIFEST_NAME
+from chessnet.encoding import EncodingVersionError
 from chessnet.encoding.packed import PackedBatch, unpack_batch_torch
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"

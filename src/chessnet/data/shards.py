@@ -25,7 +25,7 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 from chessnet.config import DataConfig
-from chessnet.encoding import ENCODING_VERSION
+from chessnet.encoding import ENCODING_VERSION, EncodingVersionError
 from chessnet.encoding.packed import PACKED_DTYPE, PackedRecords
 
 MANIFEST_NAME = "manifest.json"
@@ -50,10 +50,6 @@ def split_of_site(site: str) -> Split:
     if bucket < SPLIT_BUCKETS[Split.TRAIN]:
         return Split.TRAIN
     return Split.VAL if bucket == SPLIT_BUCKETS[Split.TRAIN] else Split.TEST
-
-
-class EncodingVersionError(ValueError):
-    """Data was written with a different ``ENCODING_VERSION`` than the running code."""
 
 
 class ShardInfo(BaseModel):
@@ -131,6 +127,11 @@ def read_manifest(directory: Path) -> Manifest:
             f"version {ENCODING_VERSION}; regenerate the dataset"
         )
     return Manifest.model_validate(raw)
+
+
+def manifest_hash(directory: Path) -> str:
+    """SHA-256 of a dataset's manifest, which identifies the dataset (stored in checkpoints)."""
+    return _sha256(directory / MANIFEST_NAME)
 
 
 def _sha256(path: Path) -> str:

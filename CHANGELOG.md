@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-25
+
+First release of the rebuild: board and move encoding, the Lichess data pipeline and the
+policy/value network. There are no trained weights yet.
+
 ### Added
 
 - Policy/value network: SE-ResNet trunk with a convolutional policy head (in move-index
@@ -37,3 +42,6 @@ All notable changes to this project are documented here. The format follows
 
 - The legacy PyQt GUI.
 - Tracked Lichess PGN dumps (still available in history and in the `legacy-v0` tag).
+
+[Unreleased]: https://github.com/NikaAtanelishvili/chess-ai/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/NikaAtanelishvili/chess-ai/releases/tag/v0.1.0

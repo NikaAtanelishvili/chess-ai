@@ -10,9 +10,14 @@ import chess
 import numpy as np
 from hypothesis import given
 
-from chessnet.encoding.board import encode_board
+from chessnet.encoding.board import encode_board, perspective_board
 from chessnet.encoding.moves import index_to_move, legal_mask, mirror_move, move_to_index
-from chessnet.encoding.packed import batch_from_records, pack_position, unpack_batch_torch
+from chessnet.encoding.packed import (
+    batch_from_records,
+    pack_position,
+    unpack_batch_torch,
+    unpack_board,
+)
 from chessnet.encoding.value import DRAW
 
 from helpers.strategies import boards, boards_with_move, sample_positions
@@ -72,6 +77,15 @@ def test_unpacked_record_equals_encoded_board(example: tuple[chess.Board, chess.
     board, move = example
     planes = unpack_batch_torch(batch_from_records(pack_position(board, move, DRAW)))
     assert planes[0].numpy().tobytes() == encode_board(board).tobytes()
+
+
+@given(boards_with_move())
+def test_unpack_board_inverts_packing(example: tuple[chess.Board, chess.Move]) -> None:
+    board, move = example
+    record = pack_position(board, move, DRAW)[0]
+    view = unpack_board(record)
+    assert view.fen() == perspective_board(board).fen()
+    assert index_to_move(int(record["move"]), view) in view.legal_moves
 
 
 def test_all_legal_moves_in_a_large_sample_are_representable() -> None:

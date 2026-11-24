@@ -1,0 +1,34 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  conventional-title:
+    runs-on: ubuntu-latest
+    steps:
+      # The PR title becomes the squash-merge commit subject.
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            refactor
+            perf
+            style
+            test
+            docs
+            build
+            ops
+            chore
+          requireScope: false
+          subjectPattern: ^[a-z].*[^.]$
+          subjectPatternError: >
+            The subject "{subject}" must start with a lowercase letter and must not end
+            with a period.

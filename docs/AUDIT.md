@@ -355,15 +355,20 @@ typing_extensions==4.14.0
 ## 6. Repository hygiene
 
 **Secrets: none found.**
-- `gitleaks` has **not** been run yet: it is not installed on this machine. Until it is, the
-  following substitute scan was done:
+- **gitleaks (first CI run, 2026-11-24):** gitleaks v8.30.1 full-history scan in the
+  `Secret scan` workflow ([run 45466564835](https://github.com/NikaAtanelishvili/chess-ai/actions/runs/45466564835),
+  head `619cf87`): **27 commits scanned (~96.9 MB), no leaks found.** That covers all 15
+  legacy commits plus the commits that followed. The gitleaks Action's incremental scan of the
+  pull request range (v8.24.3, 8 commits) also found no leaks.
+- Before that, gitleaks was not available locally, so the audit ran a substitute scan:
   - Every blob of all 15 commits (PGN data excluded) was regex-scanned for AWS, GitHub,
     Slack, OpenAI/Anthropic, Hugging Face and Google API keys, private-key headers and JWTs,
     plus `api_key|secret|password|token|kaggle|wandb` assignments: **0 hits**.
   - No sensitive file names (`.env`, `kaggle.json`, keys, credentials) were ever committed.
   - Working-tree scan: 0 hits. The local `.env` holds a single non-secret username variable;
     it is gitignored and has never been committed.
-- To do: run `gitleaks detect` (all history) and `gitleaks detect --no-git` once it is installed.
+- Ongoing: gitleaks runs on every push and pull request (full history), weekly, and as a
+  pre-commit hook on staged changes.
 
 **Large files in history** (the full history is 118 MB, public):
 

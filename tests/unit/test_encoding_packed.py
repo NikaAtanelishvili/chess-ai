@@ -86,10 +86,7 @@ def test_record_layout() -> None:
     "device",
     [
         "cpu",
-        pytest.param(
-            "cuda",
-            marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU"),
-        ),
+        pytest.param("cuda", marks=pytest.mark.gpu),
     ],
 )
 def test_unpack_of_pack_equals_encode(device: str) -> None:

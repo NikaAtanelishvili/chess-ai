@@ -1,0 +1,54 @@
+# Secrets and local config
+.env
+.env.*
+kaggle.json
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+
+# Build output
+build/
+dist/
+*.egg-info/
+
+# Data (anchored so the package's data/ module is not ignored)
+/data/
+/shards/
+*.pgn
+*.pgn.*
+*.zst
+*.npy
+*.npz
+*.csv.zst
+# small hand-checked test fixtures are committed
+!/tests/fixtures/**
+
+# Checkpoints and exported models
+/checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.keras
+*.onnx
+*.safetensors
+
+# Experiment logs
+/runs/
+wandb/
+tb/
+
+# Editors
+.idea/
+.vscode/

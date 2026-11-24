@@ -1,8 +1,8 @@
 # Architecture
 
-This document describes the conventions the code relies on. It grows with the project; for
-now it covers the encoding layer (`chessnet.encoding`), which every other component builds
-on.
+This document describes the conventions the code relies on. It grows with the project; it
+covers the encoding layer (`chessnet.encoding`), which every other component builds on, and
+the network (`chessnet.model`).
 
 ## Encoding (`ENCODING_VERSION = 1`)
 
@@ -124,3 +124,66 @@ and batching plus unpacking about 230k positions/s on the CPU.
 Any change to the planes, the move index or the packed format bumps `ENCODING_VERSION`
 (`encoding/__init__.py`). That is a breaking change: datasets are regenerated and models
 retrained, and old data and checkpoints must fail to load.
+
+## Network (`chessnet.model`)
+
+### Architecture
+
+An SE-ResNet in the style of Leela Chess Zero, with `F` filters and `B` residual blocks:
+
+```
+planes (N, 19, 8, 8)
+  -> 3x3 conv (19 -> F), BN, ReLU                                    stem
+  -> B x [3x3 conv, BN, ReLU, 3x3 conv, BN, SE, + skip, ReLU]        trunk
+  -> policy head: 3x3 conv (F -> F), BN, ReLU, 1x1 conv (F -> 73)    -> (N, 73, 8, 8) -> (N, 4672)
+  -> value head:  1x1 conv (F -> 32), BN, ReLU, FC 2048 -> 128, ReLU, FC 128 -> 3
+```
+
+- **Squeeze-excitation:** global average pooling, then FC `F -> F/4` (ReLU) and
+  `F/4 -> 2F`. Half of the output is a per-channel sigmoid scale, the other half a
+  per-channel bias. `se_ratio: null` disables it.
+- **Policy output:** 4672 logits. The head's `(73, 8, 8)` output is flattened row-major,
+  giving `plane * 64 + 8 * rank + file = plane * 64 + square`, exactly the index of
+  `encoding/moves.py`. There is no dense layer in between, and a test lights single cells
+  for every legal move of a set of positions and checks they land on `move_to_index`.
+- **Value output:** win/draw/loss logits for the side to move. `scalar_value` turns them
+  into `P(win) - P(loss)` for search.
+- Convolutions use Kaiming-normal initialisation; the forward pass returns
+  `PolicyValue(policy, value)`, both logits.
+
+### Presets
+
+`configs/model/*.yaml` (and `chessnet.config.MODEL_PRESETS`):
+
+| Preset | Blocks x filters | Parameters | Use |
+|--------|------------------|------------|-----|
+| `tiny` | 4 x 64 | 626,380 | tests, CI, smoke runs |
+| `small` | 6 x 128 | 2,294,092 | cheaper training run |
+| `base` | 10 x 128 | 3,526,092 | default Kaggle model |
+
+All three use squeeze-excitation (ratio 4). For `base`, the trunk holds 3,080,000
+parameters, the policy head 157,129, the value head 266,819 and the stem 22,144.
+
+### Checkpoints
+
+`model/checkpoint.py` saves one `torch.save` dictionary per checkpoint, written atomically:
+
+- weights; optimizer, scheduler and grad-scaler states; step and epoch;
+- Python, NumPy and torch (CPU and CUDA) RNG states;
+- the run config, with the model config always under `config["model"]`;
+- metrics, and the SHA-256 of the dataset manifest;
+- `encoding_version`, the package version, the git commit and a timestamp.
+
+Checkpoints are loaded with `torch.load(..., weights_only=True)`, so opening a downloaded
+file cannot run code. **A checkpoint whose `encoding_version` differs from the code's is
+refused** (`EncodingVersionError`), as is data built with another version.
+`load_network(path)` rebuilds the network from the stored model config.
+
+### Inference and export
+
+- `InferenceModel` puts a network in eval mode and runs it under `torch.inference_mode()`,
+  optionally through `torch.compile`.
+- `export_onnx` writes a single ONNX file (opset 18, minimum 17) with a dynamic batch
+  dimension, for fast CPU play later. Inputs: `planes`; outputs: `policy`, `value`. It
+  needs the `onnx` extra (`onnx`, `onnxscript`; `onnxruntime` to run the result). A slow
+  test checks that onnxruntime reproduces PyTorch's outputs.

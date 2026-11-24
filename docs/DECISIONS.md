@@ -303,3 +303,37 @@ assumption is written down.
 manifests would have had no git commit.
 **Decision.** `git_commit()` asks git in the directory a local install came from before
 falling back to the package's own source tree.
+
+## 2026-11-25: Network details
+
+**Decision.**
+- Every preset uses Leela-style squeeze-excitation (a learned per-channel scale and bias,
+  reduction 4), not only `base`. The presets then differ in size only, and the tiny model
+  in the tests exercises the same code paths as the Kaggle model.
+- Both heads have BN and ReLU after their first convolution.
+- The policy head is fully convolutional: the `(73, 8, 8)` output is flattened directly
+  into the move-index order. A dense 4672-way layer (as in the legacy code, 21.8M
+  parameters) is avoided.
+- Parameter counts per preset are pinned by a test, so architecture changes are deliberate.
+
+## 2026-11-25: Checkpoint format
+
+**Decision.**
+- Checkpoints are plain dictionaries with a format number, loaded with `weights_only=True`.
+  RNG states are therefore stored as plain values (the NumPy state as a list), not as
+  pickled objects.
+- Files are written to a temporary name and renamed, so a session killed mid-save (Kaggle's
+  12-hour limit) never leaves a corrupt checkpoint.
+- The model config is always embedded, so `load_network` needs nothing but the file.
+- `EncodingVersionError` now lives in `chessnet.encoding` and is raised both for datasets and
+  for checkpoints of another encoding version.
+
+## 2026-11-25: Inference and ONNX
+
+**Decision.**
+- Inference code (`InferenceModel`, `export_onnx`) lives in `model/inference.py`, a module
+  the original layout did not list.
+- ONNX export uses torch's current dynamo-based exporter with a dynamic batch dimension,
+  opset 18 and `external_data=False` (one self-contained file).
+- Its dependencies (`onnx`, `onnxscript`, `onnxruntime`) form an optional `onnx` extra.
+- The ONNX parity and `torch.compile` tests are marked slow and run nightly.

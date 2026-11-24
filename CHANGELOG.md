@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Encoding layer (`ENCODING_VERSION` 1): side-to-move board planes, the 4672-way
+  AlphaZero move index with mirroring and legal-move mask, win/draw/loss targets, and a
+  106-byte packed record format that unpacks to the same planes on CPU or GPU.
 - `chessnet` package skeleton with a `chessnet` command-line entry point (`--help`, `--version`).
 - uv-managed project (`pyproject.toml`, `uv.lock`, Python 3.11 pin) with CPU PyTorch by default.
 - CI: ruff, mypy and tests on Python 3.11 and 3.12 with a coverage gate; nightly slow tests;

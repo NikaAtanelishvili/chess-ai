@@ -86,3 +86,65 @@ runs on the PR that introduces or changes it.
 - Local tests and evaluation stay memory-light: the tiny model in tests, memory-mapped
   shards, and no loading of whole datasets.
 - lichess-bot is out of scope for now.
+
+## 2026-11-24: Move-index layout details (encoding version 1)
+
+**Context.** The 8x8x73 layout fixes the move-type groups but not their internal order.
+**Decision.**
+- Queen-like directions run clockwise from N (towards the opponent): N, NE, E, SE, S,
+  SW, W, NW, each with distances 1-7, so `plane = 7 * direction + distance - 1`.
+- Knight jumps run clockwise from (+2 ranks, +1 file).
+- Underpromotions are direction-major: `64 + 3 * direction + piece`, with directions
+  (towards the a-file, straight, towards the h-file) and pieces (knight, bishop, rook).
+- `index_to_move` turns a queen-like step of the mover's pawn onto the last rank into a
+  queen promotion. Underpromotion planes are valid only from the 7th rank. 1858 indices
+  decode to on-board moves; the rest raise `ValueError`.
+
+Golden indices in the unit tests pin all of this.
+
+## 2026-11-24: En passant only when a capture is legal
+
+**Context.** python-chess keeps a potential en-passant square after every double pawn push,
+even when no pawn can capture.
+**Decision.** Plane 16 (and the packed `ep` field) is set only if
+`board.has_legal_en_passant()`. That is the only case where it matters for move choice,
+and it matches python-chess's repetition key, so positions that are the same for
+repetition purposes encode identically.
+
+## 2026-11-24: Halfmove clock storage
+
+**Decision.** Records store the clock clipped to 255 (one byte). The plane value
+`min(clock, 100) / 100` comes from a single read-only float32 table used by both
+`encode_board` and the torch unpacker, so the CPU and GPU paths agree bit for bit.
+
+## 2026-11-24: Packed record details
+
+**Decision.**
+- The dtype is unaligned and little-endian, so a record is 106 bytes rather than the
+  ~108 first estimated.
+- `ply` comes from the original board, because `mirror()` shifts `Board.ply()` for
+  Black-to-move positions.
+- `pack_into` rejects moves that are not legal in the board being packed. This makes the
+  legacy mislabelling (the position after the move, labelled with that move) impossible,
+  at about 17 µs per record including the check.
+- In torch, bitboards are int64 tensors holding the uint64 bits unchanged, because torch's
+  uint64 support is limited. Arithmetic right shifts still give the right bit after `& 1`.
+- Torch is imported lazily inside the torch-facing functions, so preprocessing workers that
+  only pack records never load it.
+- `batch_from_records` copies into freshly allocated arrays. `np.ascontiguousarray` can
+  return the strided field view itself (for a single record), which torch rejects.
+
+## 2026-11-24: Value targets in `encoding/value.py`
+
+**Decision.** The result-to-WDL mapping (`wdl_from_result`) and the class constants live in
+their own small module next to the other encodings, not in the data pipeline. Packing,
+training and search share one definition of "win for the side to move". Unfinished games
+(`*`) raise instead of being guessed.
+
+## 2026-11-24: Property-test settings
+
+**Decision.** Hypothesis runs 200 examples per property with no deadline. In CI (the `CI`
+environment variable is set) the profile is derandomized, so a failure reproduces exactly;
+locally it explores new examples. Generated positions come from random playouts, with
+every move drawn through hypothesis, from the standard start and from promotion-,
+castling- and en-passant-rich positions.

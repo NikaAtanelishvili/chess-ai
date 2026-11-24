@@ -2,6 +2,8 @@
 .env
 .env.*
 kaggle.json
+access_token
+access_token.txt
 
 # Python environments and caches
 .venv/

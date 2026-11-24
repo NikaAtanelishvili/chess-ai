@@ -108,8 +108,11 @@ warn_return_any = true
 minversion = "8.0"
 testpaths = ["tests"]
 pythonpath = ["tests"]
-addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
-markers = ["slow: long-running tests, excluded from the default CI job"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib", "-p", "pytester"]
+markers = [
+    "slow: long-running tests, excluded from the default CI job",
+    "gpu: needs a CUDA device; skipped without one unless --require-gpu is given",
+]
 xfail_strict = true
 
 [tool.coverage.run]

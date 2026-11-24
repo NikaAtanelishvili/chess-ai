@@ -8,7 +8,7 @@ from collections import Counter
 
 import chess
 import numpy as np
-from hypothesis import given
+from hypothesis import assume, given
 
 from chessnet.encoding.board import encode_board, perspective_board
 from chessnet.encoding.moves import index_to_move, legal_mask, mirror_move, move_to_index
@@ -35,6 +35,26 @@ def test_black_to_move_encodes_like_its_mirror_image(board: chess.Board) -> None
     white = black.mirror()
     assert white.turn == chess.WHITE
     assert encode_board(black).tobytes() == encode_board(white).tobytes()
+
+
+@given(boards())
+def test_fast_mirroring_matches_board_mirror(board: chess.Board) -> None:
+    """perspective_board mirrors without copying the move stack; it must equal Board.mirror().
+
+    Boards here carry their game history, which is where the two code paths differ.
+    """
+    while board.turn == chess.WHITE or not board.move_stack:  # at most two moves
+        moves = list(board.legal_moves)
+        assume(moves)
+        board.push(moves[0])
+    reference = board.mirror()
+    view = perspective_board(board)
+    assert view is not board
+    assert view.fen(en_passant="fen") == reference.fen(en_passant="fen")  # raw ep square too
+    assert view.castling_rights == reference.castling_rights
+    assert view.promoted == reference.promoted
+    assert view.move_stack == reference.move_stack == []
+    assert view == reference
 
 
 @given(boards())

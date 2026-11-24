@@ -8,3 +8,7 @@ and refuse to load under a different one.
 from typing import Final
 
 ENCODING_VERSION: Final = 1
+
+
+class EncodingVersionError(ValueError):
+    """Data or weights were produced with a different ``ENCODING_VERSION`` than this code."""

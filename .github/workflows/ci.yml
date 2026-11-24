@@ -44,10 +44,13 @@ jobs:
         run: uv run mypy
 
       - name: mypy --strict (core packages)
-        run: uv run mypy --strict src/chessnet/encoding
+        run: uv run mypy --strict src/chessnet/encoding src/chessnet/model
 
       - name: Tests
         run: uv run pytest -m "not slow" --cov=chessnet --cov-report=term --cov-fail-under=80
 
       - name: Coverage of the encoding package (100%)
         run: uv run coverage report --include="*/chessnet/encoding/*" --fail-under=100
+
+      - name: Coverage of the model package (80%)
+        run: uv run coverage report --include="*/chessnet/model/*" --fail-under=80

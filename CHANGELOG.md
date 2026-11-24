@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `chessnet preprocess`: streams a Lichess `.pgn.zst` dump from a URL or a file (resuming
+  dropped connections), filters games on their raw headers, parses survivors in parallel,
+  splits by game, and writes globally shuffled shards with a `manifest.json`. A Kaggle CPU
+  kernel runs it.
+- `ShardDataset`: memory-mapped shards yielding packed batches for training.
 - Encoding layer (`ENCODING_VERSION` 1): side-to-move board planes, the 4672-way
   AlphaZero move index with mirroring and legal-move mask, win/draw/loss targets, and a
   106-byte packed record format that unpacks to the same planes on CPU or GPU.

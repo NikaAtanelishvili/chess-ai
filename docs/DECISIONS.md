@@ -173,3 +173,114 @@ negative.
 **Decision.** Bits are always extracted with shifts and `& 1`, never with sign-dependent
 tests such as `> 0`. Corner-square tests (a1, h1, a8, h8; mover and opponent; both
 colours) and extreme bitboards (only bit 63 set, all bits set) guard this on the CPU path.
+
+## 2026-11-25: Data pipeline structure
+
+**Decision.** `chessnet.data` holds `pgn_stream` (sources and game splitting), `filters`,
+`shards` (splits, shuffle, manifest) and `dataset` (loading). It also holds `pipeline`, the
+orchestrator behind `chessnet preprocess`, which the original layout did not list. Two
+top-level helpers were added: `chessnet.config` (pydantic models loaded from YAML) and
+`chessnet.provenance` (the git commit for manifests and, later, checkpoints).
+
+## 2026-11-25: Streaming sources
+
+**Decision.**
+- HTTP uses the standard library (`urllib`) rather than `requests`, so there are no extra
+  dependencies.
+- A dropped connection, or a body shorter than its `Content-Length`, is resumed with a
+  `Range: bytes=<offset>-` request after an exponential backoff (1 s, 2 s, 4 s, ... up to
+  8 retries). A server that ignores `Range` stops the run instead of silently restarting.
+  Client errors (4xx except 408/429) are not retried. (`http.client` reports a premature
+  end of the body as a normal end of file, so the length is checked explicitly.)
+- Compression is detected from the zstd magic number, so `.pgn.zst` and plain `.pgn` both
+  work. Lichess dumps start with a zstd *skippable* frame and consist of many frames, so
+  skippable-frame magics count as zstd too, and the decompressor reads across frames.
+  (python-zstandard's default stops at the end of the first frame.) Windows up to 2 GiB
+  are allowed.
+- Input that shows no game within its first 64 MiB is refused, and the skipped bytes are
+  not buffered.
+- Games are split on raw bytes at `\n[Event `, and the header filter reads raw bytes too.
+  Most games are rejected without decoding text or running python-chess.
+
+## 2026-11-25: Parallel parsing and determinism
+
+**Decision.** Games that pass the header filter go in chunks of 64 to a `spawn`-started
+process pool, with at most two chunks per worker in flight (`Pool.imap` would read the
+whole dump into memory). Results are consumed in submission order, and bucket assignment
+uses seeded generators, so the same source, config and seed give byte-identical shards.
+`max_games` stops at exactly that many kept games. The byte and scan counters in the
+manifest include the few chunks read ahead. `--workers 0` parses in-process, for tests and
+debugging.
+
+## 2026-11-25: Filter semantics
+
+**Decision.**
+- Results other than `1-0`, `0-1` and `1/2-1/2`, and games with `Variant`, `FEN` or
+  `SetUp` headers, are always rejected; neither is configurable.
+- Unknown ratings (`?`) are rejected even with a rating floor of 0.
+- Each rejected game is counted under its first failing check, in this order: rated,
+  variant, result, termination, time control, rating, URL. Parse errors and games shorter
+  than `min_plies` are counted by the workers.
+
+## 2026-11-25: Split hash
+
+**Decision.** The split is decided by BLAKE2b (8 bytes) of the full `Site` string, mod 100:
+0-97 train, 98 val, 99 test. Python's built-in `hash()` is randomised per process, so it
+cannot be used. Recent dumps use `https://lichess.org/game/<id>` URLs where older ones used
+`https://lichess.org/<id>`, so the same game would land in different splits across URL
+formats. That only matters when mixing months with different formats, which the pipeline
+does not do.
+
+## 2026-11-25: Shuffle and shard layout
+
+**Decision.**
+- Pass 1 appends records to random bucket files per split: `num_buckets` for train, and
+  proportionally fewer for val and test, at least one each.
+- Pass 2 permutes each bucket, deletes it at once, and cuts the stream of permuted buckets
+  into shards of exactly `shard_size` positions (only the last shard of a split is
+  shorter). Uniform shard sizes keep loading simple.
+- Peak disk use is about one dataset plus one bucket, and peak memory about one bucket plus
+  one shard.
+
+## 2026-11-25: Manifest and failure handling
+
+**Decision.**
+- The manifest is a pydantic model, written atomically and **last**, so a directory without
+  one is an incomplete run.
+- It records the encoding version and record layout, config, source and byte counts,
+  per-reason rejection counts, per-split game and position counts, a SHA-256 per shard,
+  the package version, the git commit (from the installer record for `pip install
+  git+...`, otherwise from git, with `-dirty` for uncommitted changes) and timings.
+- Reading data built with another encoding version raises.
+- If any move was unrepresentable, the run fails before writing a manifest.
+
+## 2026-11-25: Training data loader
+
+**Decision.**
+- `ShardDataset` is an `IterableDataset` over memory-mapped shards, yielding `PackedBatch`
+  objects (CPU tensors) of consecutive records.
+- Each epoch permutes the shard order and starts every shard at a random offset below the
+  batch size, both derived from `(seed, epoch)`.
+- With DataLoader workers, each worker reads a disjoint subset of the shards.
+- Pinned memory and resuming mid-epoch are left to the training loop, which is where they
+  are needed.
+
+## 2026-11-25: Pipeline test fixture
+
+**Decision.**
+- The fixture is 20 real games from the October 2026 dump (CC0), anonymized: player
+  names and game URLs are replaced and title headers dropped.
+- Game URLs are chosen so that one kept game lands in each of val and test.
+- A few headers are edited so that every rejected game fails exactly one check, and so that
+  cases absent from the rated dump (casual, unfinished, Chess960) are covered.
+- The expected outcome of every game is tabulated in `tests/fixtures/README.md`.
+
+## 2026-11-25: Mirroring without copying the move stack
+
+**Context.** python-chess's `Board.mirror()` copies the board including its whole move stack,
+then clears the stack. On a board that carries its game history (replayed games in the data
+pipeline, game positions in search), each mirror cost O(game length).
+**Decision.** `perspective_board` copies with `stack=False` and mirrors in place
+(`apply_mirror`). The result is identical, and the preprocessing pipeline became 1.75x faster
+(533 instead of 305 kept games/s on the development machine). A regression test checks
+that the stack is not copied.

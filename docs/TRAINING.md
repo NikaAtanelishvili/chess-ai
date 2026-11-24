@@ -74,14 +74,36 @@ uv run chessnet preprocess --config configs/data/lichess_2000plus.yaml \
     --source tests/fixtures/mini.pgn.zst --out /tmp/shards
 ```
 
+### Kaggle CLI setup
+
+The Kaggle CLI (pinned in the `dev` group, `uv run kaggle ...`) authenticates with an API
+token:
+
+1. On <https://www.kaggle.com/settings/api>, click *Generate New Token* under *API* and copy
+   the token.
+2. Give it to the CLI in one of two ways:
+   - **Token file (recommended):** save it to `~/.kaggle/access_token`
+     (`%USERPROFILE%\.kaggle\access_token` on Windows), readable only by you:
+     `chmod 600 ~/.kaggle/access_token`.
+   - **Environment variable:** `export KAGGLE_API_TOKEN=<token>`. It may also hold the
+     path of a file that contains the token.
+3. Check it: `uv run kaggle kernels list --mine`.
+
+The CLI looks for `KAGGLE_API_TOKEN` first, then `~/.kaggle/access_token`. The legacy
+`~/.kaggle/kaggle.json` key and OAuth (`uv run kaggle auth login`) still work, but are not
+needed. Keep tokens outside the repository; `.gitignore` excludes `kaggle.json` and
+`access_token` files in case one is copied in.
+
 ### On Kaggle (CPU kernel)
 
 `kaggle/preprocess/` is a script kernel: CPU only, internet on, so it does not use GPU
 quota (sessions are still capped at 12 h).
 
-1. In `kaggle/preprocess/preprocess.py`, set `CHESSNET_REF` to a tag or commit SHA. In
-   `kernel-metadata.json`, replace `<kaggle-username>`.
-2. Push and start it: `uv run kaggle kernels push -p kaggle/preprocess`.
+1. `kaggle/preprocess/preprocess.py` pins `CHESSNET_REF` to the commit it installs (a tag or
+   commit SHA, never a branch), and `kernel-metadata.json` names the kernel
+   `<kaggle-username>/chessnet-preprocess`. Update both when pinning a new version or using
+   another account.
+2. Push and start it from the repository root: `uv run kaggle kernels push -p kaggle/preprocess`.
 3. Follow it with `uv run kaggle kernels status <kaggle-username>/chessnet-preprocess`, or
    watch the live log on the kernel's page.
 4. When it finishes, `/kaggle/working/shards` is the kernel's output. Turn it into the

@@ -38,6 +38,11 @@ Common commands:
 PyTorch is installed from the CPU wheel index by default. Dependencies are declared in
 `pyproject.toml` and pinned in `uv.lock`; add them with `uv add` (or `uv add --group dev`).
 
+Data preparation and training run on Kaggle through the Kaggle CLI (`uv run kaggle ...`).
+It authenticates with an API token from <https://www.kaggle.com/settings/api>, saved to
+`~/.kaggle/access_token` or exported as `KAGGLE_API_TOKEN`; see
+[docs/TRAINING.md](docs/TRAINING.md#kaggle-cli-setup).
+
 ## Contributing
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/) using the types

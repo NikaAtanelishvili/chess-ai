@@ -1,0 +1,17 @@
+# Lichess standard rated games in which both players are rated 2000 or more, blitz or slower.
+# Used by `chessnet preprocess --config configs/data/lichess_2000plus.yaml`.
+
+filters:
+  rated_only: true
+  min_elo: 2000            # both players
+  min_base_time: 180       # seconds; drops bullet
+  terminations: ["Normal", "Time forfeit"]   # drops "Abandoned" and "Rules infraction"
+  min_plies: 20
+
+# Games to keep; at ~75 positions per game this is ~75M positions (~8 GB of shards).
+# The training throughput benchmark may revise it.
+max_games: 1000000
+
+shard_size: 1000000        # positions per shard (~106 MB)
+num_buckets: 80            # shuffle buckets for the train split (~1M positions each)
+seed: 20261125

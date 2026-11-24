@@ -76,6 +76,7 @@ select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "PT", "RUF", "N"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["chessnet"]
+known-local-folder = ["helpers"]
 
 # --- mypy --------------------------------------------------------------------
 [tool.mypy]
@@ -106,6 +107,7 @@ warn_return_any = true
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
+pythonpath = ["tests"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 markers = ["slow: long-running tests, excluded from the default CI job"]
 xfail_strict = true

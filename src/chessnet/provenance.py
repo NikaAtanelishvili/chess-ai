@@ -6,27 +6,43 @@ import json
 import subprocess
 from importlib import metadata
 from pathlib import Path
+from typing import Any
+from urllib.parse import unquote, urlparse
 
 
 def git_commit() -> str | None:
     """Commit of the running chessnet code, or ``None`` if it cannot be determined.
 
-    For ``pip install git+...@<ref>`` installs (e.g. on Kaggle) the commit comes from the
-    installer's record. Otherwise git is asked in the source tree; ``-dirty`` is appended when
-    tracked files have uncommitted changes.
+    Sources, in order:
+
+    1. the installer's record of a VCS install (``pip install git+...@<ref>``);
+    2. git in the directory a local install came from (``pip install /path/to/checkout``,
+       as the Kaggle kernels do);
+    3. git in the package's own source tree (editable installs, development).
+
+    ``-dirty`` is appended when git reports uncommitted changes to tracked files.
     """
-    return _commit_from_install_record() or _commit_from_git(Path(__file__).resolve().parent)
+    record = _install_record()
+    commit = record.get("vcs_info", {}).get("commit_id")
+    if isinstance(commit, str):
+        return commit
+    url = record.get("url")
+    if isinstance(url, str) and url.startswith("file://"):
+        source = Path(unquote(urlparse(url).path))
+        commit = _commit_from_git(source)
+        if commit is not None:
+            return commit
+    return _commit_from_git(Path(__file__).resolve().parent)
 
 
-def _commit_from_install_record() -> str | None:
+def _install_record() -> dict[str, Any]:
+    """The installer's ``direct_url.json`` for chessnet (PEP 610), or an empty dict."""
     try:
-        record = metadata.distribution("chessnet").read_text("direct_url.json")
+        text = metadata.distribution("chessnet").read_text("direct_url.json")
     except metadata.PackageNotFoundError:
-        return None
-    if not record:
-        return None
-    commit = json.loads(record).get("vcs_info", {}).get("commit_id")
-    return commit if isinstance(commit, str) else None
+        return {}
+    record = json.loads(text) if text else {}
+    return record if isinstance(record, dict) else {}
 
 
 def _commit_from_git(directory: Path) -> str | None:

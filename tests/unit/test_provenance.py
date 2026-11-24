@@ -48,8 +48,36 @@ def test_missing_distribution(monkeypatch: pytest.MonkeyPatch) -> None:
         raise metadata.PackageNotFoundError(name)
 
     monkeypatch.setattr(provenance.metadata, "distribution", missing)
-    assert provenance._commit_from_install_record() is None
+    assert provenance._install_record() == {}
 
 
 def test_outside_a_repository_there_is_no_commit(tmp_path: Path) -> None:
     assert provenance._commit_from_git(tmp_path) is None
+
+
+def test_local_directory_installs_ask_git_in_the_source_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # e.g. the Kaggle kernel: pip install /tmp/chessnet (a clone at a pinned commit).
+    record = json.dumps({"url": tmp_path.as_uri(), "dir_info": {}})
+    monkeypatch.setattr(provenance.metadata, "distribution", lambda _: _FakeDistribution(record))
+    asked: list[Path] = []
+
+    def fake_git(directory: Path) -> str | None:
+        asked.append(directory)
+        return "abc" if directory == tmp_path else None
+
+    monkeypatch.setattr(provenance, "_commit_from_git", fake_git)
+    assert provenance.git_commit() == "abc"
+    assert asked == [tmp_path]
+
+
+def test_local_directory_without_git_falls_back_to_the_package(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    record = json.dumps({"url": tmp_path.as_uri(), "dir_info": {}})
+    monkeypatch.setattr(provenance.metadata, "distribution", lambda _: _FakeDistribution(record))
+    monkeypatch.setattr(
+        provenance, "_commit_from_git", lambda directory: None if directory == tmp_path else "pkg"
+    )
+    assert provenance.git_commit() == "pkg"

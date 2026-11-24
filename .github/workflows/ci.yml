@@ -34,6 +34,10 @@ jobs:
       - name: Install
         run: uv sync --locked --all-groups --all-extras
 
+      # Guards against undeclared runtime dependencies of the Kaggle CLI (no credentials needed).
+      - name: Kaggle CLI starts
+        run: uv run kaggle --version
+
       - name: Ruff lint
         run: uv run ruff check --output-format=github .
 

@@ -9,6 +9,8 @@
 - Types: `uv run mypy src`
 - Fast tests: `uv run pytest -m "not slow"`
 - All tests: `uv run pytest`
+- Kaggle CLI: `uv run kaggle ...`; it authenticates with a token in `~/.kaggle/access_token`
+  or `KAGGLE_API_TOKEN`. Never put tokens in the repository.
 
 ## Invariants (never break these)
 

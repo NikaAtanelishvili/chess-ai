@@ -337,3 +337,13 @@ falling back to the package's own source tree.
   opset 18 and `external_data=False` (one self-contained file).
 - Its dependencies (`onnx`, `onnxscript`, `onnxruntime`) form an optional `onnx` extra.
 - The ONNX parity and `torch.compile` tests are marked slow and run nightly.
+
+## 2026-11-25: Kaggle CLI dependencies and authentication
+
+**Context.** kaggle 2.2.5, the latest release, imports `six` without declaring it, so
+`uv run kaggle` crashed once nothing else pulled `six` in. Kaggle now issues API tokens
+instead of `kaggle.json` keys.
+**Decision.** `six` is in the `dev` group, with a comment to drop it once kaggle declares it,
+and CI runs `uv run kaggle --version`, which needs no credentials. The docs describe the
+token in `~/.kaggle/access_token` or `KAGGLE_API_TOKEN` as the way to authenticate, which
+2.2.5 checks first. Token files are gitignored.

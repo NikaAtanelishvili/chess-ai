@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The Kaggle preprocessing kernel installs v0.1.0. Kaggle CLI setup is documented with API
+  tokens (`~/.kaggle/access_token` or `KAGGLE_API_TOKEN`).
+
+### Fixed
+
+- `uv run kaggle` crashed because the Kaggle CLI imports `six` without declaring it; `six`
+  is now in the `dev` group, and CI checks that the CLI starts.
+
 ## [0.1.0] - 2026-11-25
 
 First release of the rebuild: board and move encoding, the Lichess data pipeline and the

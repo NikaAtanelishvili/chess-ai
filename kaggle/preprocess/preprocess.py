@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "<tag-or-commit-sha>"
+CHESSNET_REF = "873a1af741407d94bcd2c20a0de915574caa6f96"  # v0.1.0
 SOURCE = "https://database.lichess.org/standard/lichess_db_standard_rated_2026-10.pgn.zst"
 CONFIG = "configs/data/lichess_2000plus.yaml"
 CHECKOUT = "/tmp/chessnet"  # outside /kaggle/working, so it is not saved as output

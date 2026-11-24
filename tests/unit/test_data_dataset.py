@@ -12,7 +12,7 @@ from chessnet.data.shards import MANIFEST_NAME, EncodingVersionError
 from chessnet.encoding.packed import PackedBatch, unpack_batch_torch
 
 FIXTURES = Path(__file__).parents[1] / "fixtures"
-TRAIN_POSITIONS = 862
+TRAIN_POSITIONS = 942  # fixture games 01-08, 11 and 18
 
 
 @pytest.fixture(scope="module")
@@ -35,7 +35,7 @@ def tags(batches: list[PackedBatch]) -> list[tuple[int, int, int]]:
 def test_unshuffled_pass_covers_the_split(dataset_dir: Path) -> None:
     dataset = ShardDataset(dataset_dir, "train", batch_size=64, shuffle=False, drop_last=False)
     assert dataset.positions == TRAIN_POSITIONS
-    assert len(dataset.shard_paths) == 9
+    assert len(dataset.shard_paths) == 10  # 100 positions per shard
     batches = list(dataset)
     assert sum(len(batch) for batch in batches) == TRAIN_POSITIONS
     assert all(batch.bitboards.shape == (len(batch), 12) for batch in batches)

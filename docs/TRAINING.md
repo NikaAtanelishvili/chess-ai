@@ -15,7 +15,7 @@ stops as soon as it has kept enough games.
 
 | Check | Kept when |
 |-------|-----------|
-| Event | contains `Rated` |
+| Rated | assumed: the source must be a rated-games dump. The Event header is not checked, so rated Swiss games (`Blitz swiss ...`) are kept. |
 | Variant | standard chess from the normal start (no `Variant`, `FEN` or `SetUp` header) |
 | Result | `1-0`, `0-1` or `1/2-1/2` |
 | Termination | `Normal` or `Time forfeit` (abandoned games and rules infractions are dropped) |
@@ -111,8 +111,10 @@ From the 20,000-game run:
 
 - Each kept game has 79.6 positions on average; 1,592,852 positions took 162 MB of shards.
 - Kept games cost 5.3 KB of compressed download each: 325k games scanned for 106 MB read.
-- Rejections: rating 55.5%, time control 37.4%, rated check 0.4%, termination 0.3%,
-  result < 0.1%; 259 games were too short.
+- Rejections: rating 55.5%, time control 37.4%, termination 0.3%, result < 0.1%; 259
+  games were too short. This run still checked Event for `Rated`, which rejected 0.4%
+  (rated Swiss games). That check has since been dropped, which keeps about 0.2-0.3% more
+  games.
 - Val and test received 206 and 182 games (about 1% each, as intended).
 - No move was unrepresentable.
 - The main process peaked at 320 MB resident memory.

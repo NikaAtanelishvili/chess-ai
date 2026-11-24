@@ -12,12 +12,12 @@ class FilterConfig(BaseModel):
     """Which games are kept for training.
 
     The result must be ``1-0``, ``0-1`` or ``1/2-1/2``, and the game must start from the
-    standard position; neither is configurable.
+    standard position; neither is configurable. Games are assumed to be rated, because the
+    source is a rated-games dump; the Event header is not checked.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    rated_only: bool = True
     min_elo: int = Field(default=2000, ge=0, description="minimum rating of both players")
     min_base_time: int = Field(default=180, ge=0, description="minimum base time, seconds")
     terminations: tuple[str, ...] = ("Normal", "Time forfeit")

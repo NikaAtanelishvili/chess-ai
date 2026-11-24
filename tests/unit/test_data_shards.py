@@ -141,6 +141,7 @@ def make_manifest(**overrides: object) -> Manifest:
         "created_at": "2026-11-25T00:00:00+00:00",
         "elapsed_seconds": 1.0,
         "config": DataConfig(),
+        "assumptions": ("test assumption",),
         "source": SourceInfo(
             location="x.pgn",
             kind="path",

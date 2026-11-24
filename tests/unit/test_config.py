@@ -11,7 +11,6 @@ REPO = Path(__file__).parents[2]
 def test_defaults_match_the_documented_filters() -> None:
     config = DataConfig()
     assert config.filters == FilterConfig(
-        rated_only=True,
         min_elo=2000,
         min_base_time=180,
         terminations=("Normal", "Time forfeit"),

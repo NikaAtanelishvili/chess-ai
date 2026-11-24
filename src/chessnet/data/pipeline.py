@@ -26,7 +26,7 @@ import chess.pgn
 
 from chessnet import __version__
 from chessnet.config import DataConfig
-from chessnet.data.filters import HeaderFilter, Rejection
+from chessnet.data.filters import RATED_SOURCE_ASSUMPTION, HeaderFilter, Rejection
 from chessnet.data.pgn_stream import PGNSource
 from chessnet.data.shards import (
     MANIFEST_NAME,
@@ -301,6 +301,7 @@ def preprocess(
         created_at=datetime.now(UTC).isoformat(timespec="seconds"),
         elapsed_seconds=round(time.monotonic() - started, 1),
         config=config,
+        assumptions=(RATED_SOURCE_ASSUMPTION,),
         source=source_info,
         games=GameCounts(
             scanned=progress.scanned,

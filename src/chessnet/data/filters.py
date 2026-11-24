@@ -3,6 +3,9 @@
 Header checks run on the raw bytes of each game in the main process, so most games are
 rejected before python-chess ever parses them. Checks that need the moves (the game length)
 run later, in the parsing workers.
+
+Whether a game is rated is not checked: the source is assumed to be a rated-games dump
+(see :data:`RATED_SOURCE_ASSUMPTION`).
 """
 
 from __future__ import annotations
@@ -12,12 +15,18 @@ from enum import StrEnum
 
 from chessnet.config import FilterConfig
 
+#: Recorded in every dataset manifest.
+RATED_SOURCE_ASSUMPTION = (
+    "The source is a rated-games dump (lichess_db_standard_rated_*), so every game is rated "
+    "and the Event header is not checked. Rated Swiss games, whose Event reads e.g. "
+    "'Blitz swiss ...' without 'Rated', are kept; casual games in another source would be too."
+)
+
 
 class Rejection(StrEnum):
     """Why a game was not kept (counted in the dataset manifest)."""
 
     MALFORMED = "malformed"  # no header block or no movetext
-    NOT_RATED = "not_rated"
     VARIANT = "variant"  # non-standard variant or custom start position
     RESULT = "result"  # unfinished or unknown result
     TERMINATION = "termination"  # e.g. abandoned, rules infraction
@@ -61,8 +70,6 @@ class HeaderFilter:
     def check(self, headers: dict[bytes, bytes]) -> Rejection | None:
         """The first failing check, or ``None`` if the game passes every header check."""
         config = self._config
-        if config.rated_only and b"Rated" not in headers.get(b"Event", b""):
-            return Rejection.NOT_RATED
         if (
             headers.get(b"Variant", b"Standard") != b"Standard"
             or b"FEN" in headers

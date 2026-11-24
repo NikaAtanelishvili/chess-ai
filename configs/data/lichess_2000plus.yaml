@@ -1,8 +1,9 @@
 # Lichess standard rated games in which both players are rated 2000 or more, blitz or slower.
 # Used by `chessnet preprocess --config configs/data/lichess_2000plus.yaml`.
 
+# The source must be a rated-games dump: games are assumed rated (Event is not checked, so
+# rated Swiss games are kept).
 filters:
-  rated_only: true
   min_elo: 2000            # both players
   min_base_time: 180       # seconds; drops bullet
   terminations: ["Normal", "Time forfeit"]   # drops "Abandoned" and "Rules infraction"

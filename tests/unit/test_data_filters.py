@@ -1,7 +1,19 @@
+import io
+from pathlib import Path
+
 import pytest
 
 from chessnet.config import FilterConfig
-from chessnet.data.filters import HeaderFilter, Rejection, base_time, parse_headers
+from chessnet.data.filters import (
+    RATED_SOURCE_ASSUMPTION,
+    HeaderFilter,
+    Rejection,
+    base_time,
+    parse_headers,
+)
+from chessnet.data.pgn_stream import iter_game_blocks
+
+FIXTURES = Path(__file__).parents[1] / "fixtures"
 
 GOOD = {
     b"Event": b"Rated Blitz game",
@@ -25,7 +37,6 @@ def test_good_game_passes() -> None:
 @pytest.mark.parametrize(
     ("change", "reason"),
     [
-        ({b"Event": b"Casual Blitz game"}, Rejection.NOT_RATED),
         ({b"Variant": b"Chess960"}, Rejection.VARIANT),
         ({b"Variant": b"From Position"}, Rejection.VARIANT),
         ({b"FEN": b"8/8/8/8/8/8/8/K6k w - - 0 1"}, Rejection.VARIANT),
@@ -49,7 +60,6 @@ def test_each_header_check(change: dict[bytes, bytes], reason: Rejection) -> Non
 @pytest.mark.parametrize(
     ("missing", "reason"),
     [
-        (b"Event", Rejection.NOT_RATED),
         (b"Result", Rejection.RESULT),
         (b"Termination", Rejection.TERMINATION),
         (b"TimeControl", Rejection.TIME_CONTROL),
@@ -65,8 +75,6 @@ def test_missing_headers_are_rejected(missing: bytes, reason: Rejection) -> None
 def test_filters_are_configurable() -> None:
     no_forfeits = HeaderFilter(FilterConfig(terminations=("Normal",)))
     assert no_forfeits.check({**GOOD, b"Termination": b"Time forfeit"}) == Rejection.TERMINATION
-    casual_too = HeaderFilter(FilterConfig(rated_only=False))
-    assert casual_too.check({**GOOD, b"Event": b"Casual Blitz game"}) is None
     lower_floor = HeaderFilter(FilterConfig(min_elo=1800, min_base_time=60))
     assert lower_floor.check({**GOOD, b"WhiteElo": b"1800", b"TimeControl": b"60+0"}) is None
 
@@ -108,3 +116,26 @@ def test_headers_without_movetext_are_malformed() -> None:
 def test_rejection_of_a_raw_block() -> None:
     lines = b"\n".join(b'[%s "%s"]' % item for item in GOOD.items())
     assert DEFAULT.rejection(lines + b"\n\n1. e4 0-1\n") is None
+
+
+@pytest.mark.parametrize(
+    "event",
+    [
+        b"Blitz swiss https://lichess.org/swiss/abcdefgh",
+        b"Rapid swiss https://lichess.org/swiss/abcdefgh",
+        b"Rated Blitz game",
+        b"Casual Blitz game",
+        b"",
+    ],
+)
+def test_event_is_not_checked(event: bytes) -> None:
+    # Rated-ness comes from the source (a rated-games dump), so Swiss games are kept.
+    assert DEFAULT.check({**GOOD, b"Event": event}) is None
+    assert "Swiss" in RATED_SOURCE_ASSUMPTION
+
+
+def test_rated_swiss_fixture_game_passes() -> None:
+    blocks = list(iter_game_blocks(io.BytesIO((FIXTURES / "mini.pgn").read_bytes()).read))
+    swiss = blocks[17]  # fixture game 18: a real rated Swiss game
+    assert b'[Event "Rapid swiss' in swiss
+    assert DEFAULT.rejection(swiss) is None

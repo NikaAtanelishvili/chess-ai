@@ -18,12 +18,13 @@
   exactly one check. Game 08 keeps its real underpromotion (`...h1=R`).
 - Game 16's correspondence game header is replaced by a blitz time control (only the
   termination should fail).
-- Games 18-20 reuse the moves of games 01-03 with one header changed each. These cases do
-  not occur in the rated standard dump.
+- Games 19 and 20 reuse the moves of games 02 and 03 with one header changed each. These
+  cases do not occur in the rated standard dump.
+- Game 18 is a real rated Swiss game: its Event (`Rapid swiss ...`) has no `Rated` in it.
 
-**Expected outcome** with the default filters (rated, both players 2000+, base time at
-least 180 s, termination Normal or Time forfeit, result decided or drawn, at least 20 plies,
-standard chess):
+**Expected outcome** with the default filters (both players 2000+, base time at least
+180 s, termination Normal or Time forfeit, result decided or drawn, at least 20 plies,
+standard chess). Rated-ness is not checked; the source is assumed to be a rated-games dump.
 
 | # | Event | Time control | Elo (W/B) | Termination | Result | Plies | Outcome | Split |
 |---|-------|--------------|-----------|-------------|--------|------:|---------|-------|
@@ -44,12 +45,12 @@ standard chess):
 | 15 | Rated Blitz | 180+0 | 2252/2280 | Normal | 1-0 | 13 | rejected: too short | |
 | 16 | Rated Blitz | 300+0* | 2010/2020* | Rules infraction | 0-1 | 16 | rejected: termination | |
 | 17 | Rated Correspondence | - | 2101/2077* | Normal | 0-1 | 30 | rejected: time control | |
-| 18 | Casual Blitz* | 180+2 | 2103/2125 | Normal | 1-0 | 76 | rejected: not rated | |
+| 18 | Rapid swiss | 480+2 | 2062/2204 | Time forfeit | 0-1 | 80 | kept (rated Swiss) | train |
 | 19 | Rated Blitz | 180+0 | 2205/2156 | Normal | `*`* | 88 | rejected: result | |
 | 20 | Rated Rapid, `Variant "Chess960"`* | 600+0 | 2087/2189 | Normal | 1/2-1/2 | 111 | rejected: variant | |
 
 \* edited header (see above).
 
-Totals: 20 games scanned, 12 pass the header filter, 11 kept. Positions: 1018
-(train 862 from 9 games, val 95, test 61). Rejections: time control 2, termination 2,
-Elo 1, too short 1, not rated 1, result 1, variant 1.
+Totals: 20 games scanned, 13 pass the header filter, 12 kept. Positions: 1098
+(train 942 from 10 games, val 95, test 61). Rejections: time control 2, termination 2,
+Elo 1, too short 1, result 1, variant 1.

@@ -20,6 +20,7 @@ from chessnet.cli import app
 from chessnet.config import DataConfig
 from chessnet.data import pipeline
 from chessnet.data.dataset import ShardDataset, make_loader
+from chessnet.data.filters import RATED_SOURCE_ASSUMPTION
 from chessnet.data.pipeline import PreprocessError, preprocess
 from chessnet.data.shards import MANIFEST_NAME, Manifest, Split, load_shard
 from chessnet.encoding import ENCODING_VERSION
@@ -31,12 +32,11 @@ FIXTURES = REPO / "tests" / "fixtures"
 MINI = FIXTURES / "mini.pgn"
 MINI_ZST = FIXTURES / "mini.pgn.zst"
 CONFIG = DataConfig(shard_size=200, num_buckets=4, seed=7)
-KEPT_GAMES = {f"white{number:02d}" for number in range(1, 12)}  # fixture games 01-11
+KEPT_GAMES = {f"white{number:02d}" for number in (*range(1, 12), 18)}  # games 01-11, 18
 
-EXPECTED_SPLITS = {Split.TRAIN: (9, 862), Split.VAL: (1, 95), Split.TEST: (1, 61)}
+EXPECTED_SPLITS = {Split.TRAIN: (10, 942), Split.VAL: (1, 95), Split.TEST: (1, 61)}
 EXPECTED_REJECTIONS = {
     "elo": 1,
-    "not_rated": 1,
     "result": 1,
     "termination": 2,
     "time_control": 2,
@@ -64,8 +64,8 @@ def test_counts_match_the_hand_checked_fixture(built: tuple[Path, Manifest]) -> 
     _, manifest = built
     assert manifest.encoding_version == ENCODING_VERSION
     assert manifest.games.scanned == 20
-    assert manifest.games.passed_header_filter == 12
-    assert manifest.games.kept == 11
+    assert manifest.games.passed_header_filter == 13
+    assert manifest.games.kept == 12
     assert manifest.games.rejected == EXPECTED_REJECTIONS
     assert manifest.skipped_positions == 0
     for split, (games, positions) in EXPECTED_SPLITS.items():
@@ -84,6 +84,7 @@ def test_manifest_describes_source_and_code(built: tuple[Path, Manifest]) -> Non
     assert manifest.source.bytes_decompressed == MINI.stat().st_size
     assert manifest.source.stopped_because == "end_of_source"
     assert manifest.config == CONFIG
+    assert manifest.assumptions == (RATED_SOURCE_ASSUMPTION,)
     assert manifest.git_commit is not None
     assert re.fullmatch(r"[0-9a-f]{40}(-dirty)?", manifest.git_commit)
 
@@ -103,8 +104,8 @@ def test_shards_match_the_manifest(built: tuple[Path, Manifest]) -> None:
     assert {path.name for path in directory.iterdir()} == listed
 
 
-def expected_examples() -> Counter[tuple[str, str, int, int, int]]:
-    """Replay the kept fixture games independently of the pipeline.
+def expected_examples(games: set[str] = KEPT_GAMES) -> Counter[tuple[str, str, int, int, int]]:
+    """Replay fixture games (by White player name) independently of the pipeline.
 
     One entry per position: (position before the move as the mover sees it, the move played
     from it in the mover's frame, WDL for the mover, ply, mover's rating).
@@ -117,7 +118,7 @@ def expected_examples() -> Counter[tuple[str, str, int, int, int]]:
     examples: Counter[tuple[str, str, int, int, int]] = Counter()
     handle = io.StringIO(MINI.read_text(encoding="utf-8"))
     while (game := chess.pgn.read_game(handle)) is not None:
-        if game.headers["White"] not in KEPT_GAMES:
+        if game.headers["White"] not in games:
             continue
         rating = {
             chess.WHITE: int(game.headers["WhiteElo"]),
@@ -170,7 +171,8 @@ def test_underpromotion_survives_the_pipeline(built: tuple[Path, Manifest]) -> N
 
 def test_runs_are_reproducible(built: tuple[Path, Manifest], tmp_path: Path) -> None:
     _, manifest = built
-    again = preprocess(CONFIG, str(MINI_ZST), tmp_path / "again", workers=0)
+    # 13 games pass the header filter: one exactly full chunk, so chunking cannot matter.
+    again = preprocess(CONFIG, str(MINI_ZST), tmp_path / "again", workers=0, chunk_games=13)
     for split in Split:
         first = [shard.sha256 for shard in manifest.splits[split].shards]
         assert [shard.sha256 for shard in again.splits[split].shards] == first
@@ -269,11 +271,24 @@ def test_cli_preprocess(tmp_path: Path) -> None:
         ],
     )
     assert result.exit_code == 0, result.output
-    assert "train: 9 games, 862 positions, 1 shards" in result.output
+    assert "train: 10 games, 942 positions, 1 shards" in result.output
     assert (tmp_path / "out" / MANIFEST_NAME).exists()
 
 
 def test_default_worker_count(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(pipeline.os, "cpu_count", lambda: None)  # unknown: one worker
     manifest = preprocess(CONFIG, str(MINI_ZST), tmp_path / "out")
-    assert manifest.games.kept == 11
+    assert manifest.games.kept == 12
+
+
+def test_rated_swiss_games_are_kept(built: tuple[Path, Manifest]) -> None:
+    """Fixture game 18 is a real rated Swiss game; its Event has no 'Rated' in it."""
+    directory, manifest = built
+    swiss = expected_examples({"white18"})
+    assert sum(swiss.values()) == 80  # every position of the 80-ply game
+    stored: Counter[tuple[str, str, int, int, int]] = Counter()
+    for record in stored_records(directory, manifest):
+        view = unpack_board(record)
+        move = index_to_move(int(record["move"]), view).uci()
+        stored[(view.fen(), move, int(record["wdl"]), int(record["ply"]), int(record["elo"]))] += 1
+    assert not swiss - stored  # all of them were stored

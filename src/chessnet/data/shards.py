@@ -105,6 +105,7 @@ class Manifest(BaseModel):
     created_at: str  # ISO 8601, UTC
     elapsed_seconds: float
     config: DataConfig
+    assumptions: tuple[str, ...]  # about the source, which the filters rely on
     source: SourceInfo
     games: GameCounts
     skipped_positions: int

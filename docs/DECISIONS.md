@@ -218,9 +218,9 @@ debugging.
 - Results other than `1-0`, `0-1` and `1/2-1/2`, and games with `Variant`, `FEN` or
   `SetUp` headers, are always rejected; neither is configurable.
 - Unknown ratings (`?`) are rejected even with a rating floor of 0.
-- Each rejected game is counted under its first failing check, in this order: rated,
-  variant, result, termination, time control, rating, URL. Parse errors and games shorter
-  than `min_plies` are counted by the workers.
+- Each rejected game is counted under its first failing check, in this order: variant,
+  result, termination, time control, rating, URL. Parse errors and games shorter than
+  `min_plies` are counted by the workers.
 
 ## 2026-11-25: Split hash
 
@@ -284,3 +284,22 @@ pipeline, game positions in search), each mirror cost O(game length).
 (`apply_mirror`). The result is identical, and the preprocessing pipeline became 1.75x faster
 (533 instead of 305 kept games/s on the development machine). A regression test checks
 that the stack is not copied.
+
+## 2026-11-25: Rated games are assumed from the source (owner decision)
+
+**Context.** The first filter kept games whose Event contained `Rated`. Lichess names
+rated Swiss games `Blitz swiss ...`, so that check dropped rated games: 0.4% of the dump,
+about 0.2-0.3% of the usable data.
+**Decision.** Rated-ness is not checked. The source must be a rated-games dump
+(`lichess_db_standard_rated_*`); every manifest records this assumption under
+`assumptions`, and the standard-variant check stays. A real rated Swiss game is part of the
+pipeline fixture. Casual games in some other source would be kept, which is why the
+assumption is written down.
+
+## 2026-11-25: Commit provenance for local installs
+
+**Context.** The Kaggle kernels install the package from a clone (`pip install
+/tmp/chessnet`). The installer then records the source directory, not a VCS commit, so
+manifests would have had no git commit.
+**Decision.** `git_commit()` asks git in the directory a local install came from before
+falling back to the package's own source tree.

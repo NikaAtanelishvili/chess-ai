@@ -1,0 +1,6 @@
+# tiny model: tests, CI and smoke runs.
+blocks: 4
+filters: 64
+se_ratio: 4          # squeeze-excitation reduction (null disables it)
+value_channels: 32
+value_hidden: 128

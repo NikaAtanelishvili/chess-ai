@@ -1,0 +1,6 @@
+# small model: a cheaper alternative to base.
+blocks: 6
+filters: 128
+se_ratio: 4          # squeeze-excitation reduction (null disables it)
+value_channels: 32
+value_hidden: 128

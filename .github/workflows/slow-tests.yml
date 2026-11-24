@@ -1,0 +1,28 @@
+name: Slow tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *" # nightly
+
+permissions:
+  contents: read
+
+jobs:
+  slow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install
+        run: uv sync --locked --all-groups --all-extras
+
+      # pytest exits with 5 when no test is selected; that is not a failure here.
+      - name: Slow tests
+        run: uv run pytest -m slow || [ $? -eq 5 ]

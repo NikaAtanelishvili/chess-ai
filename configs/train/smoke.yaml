@@ -1,0 +1,14 @@
+# Smoke run (first Kaggle GPU session): the tiny model on about 1M positions, to check the
+# whole pipeline on a GPU before the main run.
+model: tiny
+batch_size: 1024
+max_steps: 1000            # 1000 x 1024 = about 1M positions
+optimizer: adamw
+lr: 0.001
+warmup_steps: 100
+log_every: 50
+val_every: 250
+val_batches: 20
+checkpoint_minutes: 10
+num_workers: 2
+seed: 0

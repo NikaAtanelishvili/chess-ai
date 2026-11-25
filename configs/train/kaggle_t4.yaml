@@ -1,0 +1,23 @@
+# Main run on Kaggle: the base model on one T4 GPU (of the T4 x2 machine), fp16 mixed precision.
+# Kaggle's P100 is retired, so there is no P100 config. Revisit batch_size and epochs after
+# the throughput benchmark of the smoke session.
+model: base
+batch_size: 1024
+epochs: 3                  # passes over the train split (~78M positions)
+optimizer: adamw
+lr: 0.001
+weight_decay: 0.0001
+warmup_steps: 2000
+min_lr_ratio: 0.01
+value_loss_weight: 0.5
+label_smoothing: 0.05
+grad_clip: 5.0
+amp: true
+compile: false             # enable once verified on the Kaggle image
+log_every: 200
+val_every: 5000
+val_batches: 50            # fixed validation subset: 51,200 positions
+checkpoint_minutes: 20
+keep_checkpoints: 3
+num_workers: 2
+seed: 0

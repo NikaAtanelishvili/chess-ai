@@ -230,7 +230,7 @@ the data loader too and reports hours per epoch.
 ## Kaggle run playbook
 
 The training kernel `kaggle/train/` is a GPU script kernel:
-- machine `NvidiaTeslaT4`, using one of the two T4s;
+- machine `NvidiaTeslaT4`, two T4s: GPU 0 for the main run, GPU 1 for a second run;
 - internet on;
 - input: the dataset `nikaatanelishvili/chessnet-lichess-2000plus-v1`.
 
@@ -273,22 +273,61 @@ the sampling noise of the 20,480-position subset (about +/-0.65 points).
 | Quantity | Value | Source |
 |----------|-------|--------|
 | Training positions | 77,107,653 | dataset manifest |
-| Steps per epoch (batch 2048) | 37,628 | shard sizes (each shard drops its last partial batch) |
+| Steps per epoch (batch 2048) | 37,572 | shard sizes; each shard drops its last partial batch |
 | Base training speed (T4, fp16, batch 2048, compiled) | 10,639 positions/s | measured in session 1 |
 | Time per epoch (base) | 2.01 h | measured speed |
 | Validation (51,200 positions every 2500 steps) | about 3.5 s each, with `best.pt`; 76 per run | measured forward speed |
 | Checkpoint size (base, with optimizer state) | ~42 MB; 3 rolling + best kept | 3.5M parameters |
-| 5 epochs (`kaggle_t4.yaml`) | 10.19 h, 188,140 steps | measured speed; see below |
+| 5 epochs (`kaggle_t4.yaml`) | 10.18 h, 187,860 steps | measured speed; see below |
 
-The 10.19 h are 10.06 h of training plus 8 min for validation, checkpoints (every 20 min
-and at each epoch end), start-up and compilation.
+Each shuffled epoch starts every shard at a random offset, so the epochs after the first can
+be a few dozen steps shorter (at most one per shard). The 10.18 h are 10.05 h of training
+plus 8 min for validation, checkpoints (every 20 min and at each epoch end), start-up and
+compilation. `chessnet.train.budget` computes the estimate, and a test pins these figures.
 
 **Epochs** is the largest whole number whose estimated run time leaves at least 1 h of
-`--max-wall-time 11h15m`: 5 epochs take 10.19 h and leave 1.06 h, while 6 would take
-12.2 h. The run still finishes inside the session if its sustained speed is up to 9.5%
+`--max-wall-time 11h15m`: 5 epochs take 10.18 h and leave 1.07 h, while 6 would take
+12.2 h. The run still finishes inside the session if its sustained speed is up to 9.6%
 below the benchmark's. If it is slower, the run stops cleanly at 11 h 15 min, and session 3
 finishes it. The learning-rate schedule spans the whole planned run and is fixed when the
 run starts.
+
+### The second run (GPU 1)
+
+The main run uses one of the machine's two T4s. On the other, the kernel trains a second,
+independent run: the `wide` model (10 blocks x 192 filters, 7,572,332 parameters, 2.1 times
+base) with the main run's settings (batch 2048, `torch.compile` on, channels_last off, the
+same schedule shape and validation subset).
+
+- **Purpose:** an equal-time comparison. Is a bigger model trained for fewer epochs (wide)
+  better than base trained for 5 epochs, on the same data and the same GPU time?
+- **Epochs** are chosen during the session. Once the main run is training, a benchmark of
+  `wide` on GPU 1 (about 2 minutes) measures its speed. The kernel then takes the largest
+  whole number of epochs whose estimate (computed as above) leaves at least 1.5 h of the
+  second run's wall time, which ends with the main run's: 11 h 15 min after the main run
+  started. If not even one epoch fits, the second run is skipped. `run-wide/epochs.json`
+  records the measured speed, the estimate and the epochs, or why the run was skipped;
+  `run-wide/benchmark.md` holds the benchmark.
+- **Isolation:** the main run starts first, and nothing about the second run can stop, slow
+  or end it.
+  - The runs use separate processes, GPUs (`CUDA_VISIBLE_DEVICES`), output directories
+    (`run-base/`, `run-wide/`) and logs: the main run's goes to the kernel log, the second
+    run's to `run-wide/train.log`.
+  - The second run starts only after the main run has logged training progress, so their
+    compilations never overlap. It runs at the lowest CPU priority (`nice -n 19`), with one
+    compiler thread, one OpenMP thread and its own compiler caches.
+  - Each run has one DataLoader worker instead of two (the machine has 4 vCPUs). One worker
+    delivers about 180,000 positions/s, 17 times what base consumes.
+  - If the second run fails, the kernel logs it and keeps waiting for the main run. The
+    kernel exits only when both runs have ended, with the main run's exit code, and it never
+    signals the main run. A second run still going 10 minutes after its deadline gets
+    SIGTERM (it saves a checkpoint and stops), then SIGKILL 10 minutes later, so the session
+    ends well before Kaggle's 12-hour limit. If the main run fails, the second run carries
+    on; cancel the session on the kernel page to fix and restart sooner.
+  - On a machine with one GPU, only the main run trains.
+- **Disk:** a checkpoint with optimizer state takes 42.5 MB for base and 91.1 MB for wide.
+  Each run keeps 3 rolling checkpoints and `best.pt`, so the two runs write less than
+  0.6 GB of Kaggle's 20 GB output limit. The kernel logs the output size at the end.
 
 ### Sessions (one week's GPU quota, about 30 h)
 
@@ -296,8 +335,8 @@ run starts.
 |---------|--------|---------|-----------|
 | 0 | (CPU kernel) | Preprocessing: done, 0.92 h, no GPU quota | 0 |
 | 1 | `smoke` | Done: GPU tests, benchmark (16 configurations), tiny model on 1M positions | 0.12 |
-| 2 | `train` | Main run: base model, 5 epochs, about 10.2 h; stops by 11 h 15 min | <= 11.5 |
-| 3 | `train` | Only if session 2 stops before the end: resumes and finishes the run | 0-2 |
+| 2 | `train` | Main run (base, 5 epochs, about 10.2 h) and the second run (wide); both stop by 11 h 15 min | <= 11.6 |
+| 3 | `train` | Only if a run of session 2 stops before its end: each run resumes from its own directory | 0-2 |
 | - | - | Reserve for a fix or a re-run | ~5 |
 
 ### Steps
@@ -325,17 +364,22 @@ run starts.
    `channels_last` set from them. `CHESSNET_REF` points to the commit that contains those
    settings, and `MODE = "train"`.
 
-3. **Session 2 (main run).** Push again. The first progress line should appear about 2 minutes
-   after training starts and show about 10,600 positions/s. The run finishes after about 10.2 h (11 h
-   15 min at most) with a checkpoint in `/kaggle/working/run`. Follow progress in the live log
-   (a line every 200 steps, with an ETA) or afterwards with
-   `tensorboard --logdir runs/<name>/run/tb`.
+3. **Session 2.** Push again. The main run's first progress line should appear about 2
+   minutes after training starts and show about 10,600 positions/s. A few minutes later the
+   kernel logs the wide model's measured speed, its epochs, and the start of the second run.
+   The main run finishes after about 10.2 h (11 h 15 min at most) with checkpoints in
+   `/kaggle/working/run-base`; the second run writes to `/kaggle/working/run-wide`. Follow
+   the main run in the live log (a line every 200 steps, with an ETA). The second run's log
+   is `run-wide/train.log` in the output. `tensorboard --logdir runs/<name>` shows both runs.
 
-4. **Continuing (session 3).** If the run is not finished, turn session 2's output into the
-   dataset `nikaatanelishvili/chessnet-run`: kernel page, *Output*, *New Dataset* (or *New
-   Version* later). Add it to `dataset_sources` in `kaggle/train/kernel-metadata.json` and
-   push again. The kernel copies the previous `run/` directory and continues from its newest
-   checkpoint, at the same step and position in the data.
+4. **Continuing (session 3).** If either run is not finished, turn session 2's output into
+   the dataset `nikaatanelishvili/chessnet-run`: kernel page, *Output*, *New Dataset* (or
+   *New Version* later). Add it to `dataset_sources` in `kaggle/train/kernel-metadata.json`
+   and push again. The kernel copies `run-base/` and `run-wide/`, and each run continues
+   from the newest checkpoint in its own directory, at the same step and position in the
+   data; a finished run ends at once. The second run keeps the epochs chosen in session 2
+   (`run-wide/config.yaml`).
 
-5. **After the run.** Download the output (`kaggle kernels output ...`). `best.pt` and the
-   last checkpoint are the candidates for evaluation.
+5. **After the run.** Download the output (`kaggle kernels output ...`). Each run's
+   `best.pt` and last checkpoint are the candidates for evaluation, which also settles the
+   equal-time comparison of wide and base.

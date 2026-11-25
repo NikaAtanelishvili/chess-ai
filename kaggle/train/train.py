@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Any
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "6a60990c4f6be1be2a51fdf58c3f58aa36387503"  # main: training merged (#10)
+CHESSNET_REF = "fd50dcfaa92f4af7c8135ba0b501d04069478643"  # main: second run merged (#12)
 MODE = "train"  # "smoke" or "train"
 
 CONFIGS = {"smoke": "configs/train/smoke.yaml", "train": "configs/train/kaggle_t4.yaml"}

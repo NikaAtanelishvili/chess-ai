@@ -77,6 +77,9 @@ class TrainConfig(BaseModel):
     grad_clip: float = Field(default=5.0, gt=0, description="max gradient norm")
     amp: bool = Field(default=True, description="fp16 autocast + GradScaler (CUDA only)")
     compile: bool = Field(default=False, description="torch.compile the training graph")
+    channels_last: bool = Field(
+        default=False, description="NHWC memory format (can speed up fp16 convolutions)"
+    )
     log_every: int = Field(default=100, ge=1, description="steps per progress line")
     val_every: int = Field(default=2000, ge=1, description="steps between validations")
     val_batches: int = Field(default=50, ge=1, description="size of the fixed val subset")

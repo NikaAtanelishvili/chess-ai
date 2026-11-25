@@ -13,7 +13,8 @@ value_loss_weight: 0.5
 label_smoothing: 0.05
 grad_clip: 5.0
 amp: true
-compile: false             # enable once verified on the Kaggle image
+compile: false             # speed flags: the fastest combination in session 1's benchmark
+channels_last: false
 log_every: 200
 val_every: 5000
 val_batches: 50            # fixed validation subset: 51,200 positions

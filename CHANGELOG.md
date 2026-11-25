@@ -12,8 +12,10 @@ All notable changes to this project are documented here. The format follows
   validation on a fixed subset, wall-clock and end-of-epoch checkpoints, exact resume
   (including the position within an epoch), and a clean stop on SIGTERM or
   `--max-wall-time`. Logs go to the console, CSV and TensorBoard, with W&B opt-in.
-  Validation metrics include the White/Black accuracy split.
-- `scripts/benchmark_train.py`: training throughput per model and batch size.
+  Validation metrics include the White/Black accuracy split. `compile` and `channels_last`
+  config flags select `torch.compile` and the NHWC memory format.
+- `scripts/benchmark_train.py`: training throughput per model, batch size, `torch.compile`
+  and channels_last.
 - Kaggle training kernel (`kaggle/train/`): GPU tests first, then a smoke session or the
   main run, continuing from a previous session's output.
 

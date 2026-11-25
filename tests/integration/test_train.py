@@ -12,8 +12,9 @@ import torch
 from typer.testing import CliRunner
 
 from chessnet.cli import app
-from chessnet.config import TrainConfig
-from chessnet.model.checkpoint import load_checkpoint
+from chessnet.config import MODEL_PRESETS, TrainConfig
+from chessnet.model.checkpoint import load_checkpoint, load_network
+from chessnet.model.resnet import ChessNet
 from chessnet.train.loop import train
 
 from helpers.datasets import make_dataset
@@ -79,14 +80,24 @@ def final_weights(run: Path) -> dict[str, torch.Tensor]:
 
 
 @pytest.mark.parametrize(
-    "num_workers",
-    [0, pytest.param(2, marks=pytest.mark.slow)],  # worker order is also unit-tested (fast)
+    ("num_workers", "channels_last"),
+    [
+        (0, False),
+        (0, True),
+        pytest.param(2, False, marks=pytest.mark.slow),  # worker order is also unit-tested
+    ],
 )
 def test_kill_and_resume_matches_an_uninterrupted_run(
-    dataset: Path, tmp_path: Path, num_workers: int
+    dataset: Path, tmp_path: Path, num_workers: int, channels_last: bool
 ) -> None:
     config = SMOKE.model_copy(
-        update={"max_steps": 60, "log_every": 1, "deterministic": True, "num_workers": num_workers}
+        update={
+            "max_steps": 60,
+            "log_every": 1,
+            "deterministic": True,
+            "num_workers": num_workers,
+            "channels_last": channels_last,
+        }
     )
     straight = train(config, dataset, tmp_path / "straight", device="cpu")
     first = train(config, dataset, tmp_path / "resumed", device="cpu", stop_at_step=30)
@@ -109,6 +120,23 @@ def test_kill_and_resume_matches_an_uninterrupted_run(
     expected = final_weights(tmp_path / "straight")
     for name, tensor in final_weights(tmp_path / "resumed").items():
         torch.testing.assert_close(tensor, expected[name], rtol=1e-6, atol=1e-7)
+
+
+@pytest.mark.slow
+def test_speed_options_do_not_reach_the_checkpoint(dataset: Path, tmp_path: Path) -> None:
+    """A compiled channels_last run resumes without either option, and the other way round."""
+    fast = SMOKE.model_copy(update={"max_steps": 30, "compile": True, "channels_last": True})
+    plain = fast.model_copy(update={"compile": False, "channels_last": False})
+    keys = set(ChessNet(MODEL_PRESETS["tiny"]).state_dict())
+    steps = []
+    for config, stop_at_step in ((fast, 10), (plain, 20), (fast, None)):
+        result = train(config, dataset, tmp_path / "run", device="cpu", stop_at_step=stop_at_step)
+        assert result.last_checkpoint is not None
+        assert set(load_checkpoint(result.last_checkpoint).model_state) == keys
+        steps.append(result.state.step)
+    assert steps == [10, 20, 30]
+    assert result.state.sessions == 3
+    assert load_network(result.last_checkpoint)(torch.zeros(1, 19, 8, 8)).policy.isfinite().all()
 
 
 def test_sigterm_stops_cleanly_with_a_checkpoint(dataset: Path, tmp_path: Path) -> None:

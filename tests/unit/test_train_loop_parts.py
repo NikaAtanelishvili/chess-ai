@@ -1,3 +1,4 @@
+import copy
 import itertools
 import signal
 import time
@@ -12,7 +13,9 @@ from chessnet.train.loop import (
     StopRequest,
     find_checkpoint,
     make_optimizer,
+    model_input,
     parse_duration,
+    prepare_network,
     warmup_cosine,
 )
 
@@ -109,3 +112,33 @@ def test_find_checkpoint(tmp_path: Path) -> None:
     assert find_checkpoint(str(out / "best.pt"), out, []) == out / "best.pt"
     with pytest.raises(FileNotFoundError):
         find_checkpoint(str(out / "nope.pt"), out, [])
+
+
+def test_channels_last_keeps_the_outputs_and_the_policy_order() -> None:
+    torch.manual_seed(0)
+    reference = ChessNet(MODEL_PRESETS["tiny"]).eval()
+    network = copy.deepcopy(reference)
+    model = prepare_network(network, channels_last=True, compile=False)
+    assert model is network
+    kernels = [p for p in network.parameters() if p.ndim == 4]
+    assert kernels
+    assert all(p.is_contiguous(memory_format=torch.channels_last) for p in kernels)
+
+    planes = (torch.rand(4, 19, 8, 8) < 0.3).float()
+    assert model_input(planes, channels_last=False) is planes
+    nhwc = model_input(planes, channels_last=True)
+    assert nhwc.is_contiguous(memory_format=torch.channels_last)
+    with torch.no_grad():
+        expected, actual = reference(planes), model(nhwc)
+    # A flatten that followed the memory layout would scramble the move index, not perturb it.
+    torch.testing.assert_close(actual.policy, expected.policy, rtol=1e-4, atol=1e-5)
+    torch.testing.assert_close(actual.value, expected.value, rtol=1e-4, atol=1e-5)
+
+
+def test_compiling_leaves_weights_and_checkpoint_keys_in_the_network() -> None:
+    network = ChessNet(MODEL_PRESETS["tiny"])
+    keys = list(network.state_dict())
+    model = prepare_network(network, channels_last=False, compile=True)  # compiles lazily
+    assert model is not network
+    assert list(network.state_dict()) == keys  # checkpoints save the network, not the wrapper
+    assert all(a is b for a, b in zip(model.parameters(), network.parameters(), strict=True))

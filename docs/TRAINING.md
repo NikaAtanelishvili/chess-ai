@@ -218,8 +218,11 @@ uv run chessnet train \
   accuracy by side to move. With a correct encoding they agree to within about a point; a
   larger gap means something is wrong with mirroring.
 
-`scripts/benchmark_train.py` measures training positions/s per model and batch size. With
-`--data` it also measures the data loader and reports hours per epoch.
+`scripts/benchmark_train.py` measures training positions/s for each model and batch size
+with every combination of the two speed options, `torch.compile` and channels_last (config
+flags `compile` and `channels_last`; they change speed only, never the checkpoints). It
+also times forward passes alone, which is what validation costs. With `--data` it measures
+the data loader too and reports hours per epoch.
 
 ## Kaggle run playbook
 
@@ -255,7 +258,7 @@ session 1 (`benchmark.md`, column *Hours per epoch*).
 | Session | `MODE` | Purpose | GPU hours |
 |---------|--------|---------|-----------|
 | 0 | (CPU kernel) | Preprocessing: done, 0.92 h, no GPU quota | 0 |
-| 1 | `smoke` | GPU tests, throughput benchmark, tiny model on 1M positions | ~0.3 |
+| 1 | `smoke` | GPU tests, throughput benchmark (16 configurations), tiny model on 1M positions | ~0.5 |
 | 2 | `train` | Main run, part 1: base model, stops after 11 h 15 min | <= 11.5 |
 | 3 | `train` | Main run, part 2, resumed from session 2 (only if needed) | 0-11.5 |
 | - | - | Reserve for a fix or a re-run | ~5 |
@@ -279,13 +282,13 @@ run and is fixed when the run starts.
 
    Check:
    - the GPU tests passed (in the log);
-   - `benchmark.md` gives positions/s for small and base at batch 512/1024/2048 and the data
-     loader's speed;
+   - `benchmark.md` gives positions/s for small and base at batch 1024 and 2048, each with
+     `torch.compile` and channels_last off and on, and the data loader's speed;
    - `smoke/val_metrics.csv` shows top-1 rising well above chance, and `top1_colour_gap`
      staying within a few points.
 
-2. **Before session 2.** Put the measured numbers into this playbook and set `epochs` (and,
-   if the benchmark favours it, `batch_size`) in `configs/train/kaggle_t4.yaml`. Pin
+2. **Before session 2.** Put the measured numbers into this playbook and set `epochs`,
+   `batch_size`, `compile` and `channels_last` in `configs/train/kaggle_t4.yaml`. Pin
    `CHESSNET_REF` to the commit that contains those settings, and set `MODE = "train"`.
 
 3. **Session 2 (main run).** Push again. The run stops after 11 h 15 min with a checkpoint in

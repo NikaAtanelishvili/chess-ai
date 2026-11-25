@@ -134,6 +134,21 @@ class StopRequest:
         return None
 
 
+def prepare_network(network: ChessNet, *, channels_last: bool, compile: bool) -> nn.Module:
+    """Apply the speed options; returns the module to call (compiled or the network itself).
+
+    Weights stay in ``network``, so checkpoints never depend on these options.
+    """
+    if channels_last:
+        network.to(memory_format=torch.channels_last)
+    return cast(nn.Module, torch.compile(network)) if compile else network
+
+
+def model_input(planes: torch.Tensor, *, channels_last: bool) -> torch.Tensor:
+    """Input planes in the memory format the network expects."""
+    return planes.contiguous(memory_format=torch.channels_last) if channels_last else planes
+
+
 def make_optimizer(config: TrainConfig, network: nn.Module) -> torch.optim.Optimizer:
     """AdamW or Nesterov SGD; biases and normalisation weights get no weight decay."""
     decay = [p for p in network.parameters() if p.requires_grad and p.ndim > 1]
@@ -234,8 +249,9 @@ def _validate(
     with torch.inference_mode():
         for cpu_batch in batches:
             batch = cpu_batch.to(device, non_blocking=True)
+            planes = model_input(unpack_batch_torch(batch), channels_last=config.channels_last)
             with torch.autocast(device.type, dtype=torch.float16, enabled=use_amp):
-                output = network(unpack_batch_torch(batch))
+                output = network(planes)
             accumulator.update(
                 output,
                 batch.move,
@@ -316,6 +332,8 @@ def train(
     val_batches = list(islice(iter(val_set), config.val_batches))
 
     network = ChessNet(MODEL_PRESETS[config.model]).to(torch_device)
+    # Before the optimizer exists, so its state takes the parameters' memory format.
+    model = prepare_network(network, channels_last=config.channels_last, compile=config.compile)
     optimizer = make_optimizer(config, network)
     state = TrainState(
         total_steps=config.max_steps or max(1, round(config.epochs * steps_per_epoch))
@@ -374,7 +392,6 @@ def train(
         config=run_config,
         manifest_hash=dataset_hash,
     )
-    model = cast(nn.Module, torch.compile(network)) if config.compile else network
     stop = StopRequest(max_wall_time=max_wall_time, started=started)
     stopped_because = "completed"
     val_metrics: dict[str, float] = {}
@@ -390,8 +407,9 @@ def train(
             loader = make_loader(train_set, num_workers=config.num_workers)
             for cpu_batch in loader:
                 batch = cpu_batch.to(torch_device, non_blocking=True)
+                planes = model_input(unpack_batch_torch(batch), channels_last=config.channels_last)
                 with torch.autocast(torch_device.type, dtype=torch.float16, enabled=use_amp):
-                    output = model(unpack_batch_torch(batch))
+                    output = model(planes)
                     losses = compute_losses(
                         output,
                         batch.move,

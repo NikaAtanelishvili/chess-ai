@@ -409,3 +409,19 @@ suite.
 - `MODE = "smoke"` benchmarks and runs the tiny model; `MODE = "train"` copies a previous run
   directory (if one is attached) into `/kaggle/working/run` and resumes. Each session's
   output therefore holds the whole run so far.
+
+## 2026-11-25: Training speed options
+
+**Context.** `torch.compile` and the channels_last memory format may or may not speed up
+fp16 training on a T4, depending on the model size and the PyTorch build. With sessions
+capped at 12 h, the choice should be measured, not guessed.
+**Decision.**
+- Both are `TrainConfig` flags (`compile`, `channels_last`), off by default and applied by
+  one helper (`prepare_network`) that the training loop and the benchmark share. The main
+  config sets them to the fastest combination measured on Kaggle's T4.
+- They never reach a checkpoint: the weights stay in the uncompiled network, and loading
+  copies values whatever the memory format, so a run can change options between sessions.
+- Validation always runs the eager network. It is a small share of the time, and calling
+  the compiled module in eval mode would compile a second graph.
+- The benchmark records a compiler failure in its table and carries on, so a broken
+  compiler cannot end the smoke session.

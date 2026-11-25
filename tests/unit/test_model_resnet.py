@@ -24,7 +24,7 @@ REPO = Path(__file__).parents[2]
 log = logging.getLogger(__name__)
 
 # Pinned so that any architecture change is deliberate (and documented in ARCHITECTURE.md).
-PARAMETER_COUNTS = {"tiny": 626_380, "small": 2_294_092, "base": 3_526_092}
+PARAMETER_COUNTS = {"tiny": 626_380, "small": 2_294_092, "base": 3_526_092, "wide": 7_572_332}
 
 # Positions whose legal moves cover every move type: both colours, castling, en passant,
 # promotions and underpromotions with and without capture, and 218 moves at once.

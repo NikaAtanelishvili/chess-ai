@@ -1,0 +1,6 @@
+# wide model: base with 1.5x the filters, for the second Kaggle run (same session as base).
+blocks: 10
+filters: 192
+se_ratio: 4          # squeeze-excitation reduction (null disables it)
+value_channels: 32
+value_hidden: 128

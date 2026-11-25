@@ -159,3 +159,11 @@ def test_missing_states_cannot_be_restored(tmp_path: Path) -> None:
         restore_training_state(checkpoint, network, optimizer=optimizer)
     with pytest.raises(ValueError, match="RNG"):
         restore_training_state(checkpoint, network, restore_rng=True)
+
+
+def test_extra_state_round_trips(tmp_path: Path) -> None:
+    extra = {"train_state": {"step": 7, "epoch_batches": 3, "best_val_loss": float("inf")}}
+    path = save_checkpoint(tmp_path / "extra.pt", ChessNet(TINY), extra=extra)
+    assert load_checkpoint(path).extra == extra
+    plain = save_checkpoint(tmp_path / "plain.pt", ChessNet(TINY))
+    assert load_checkpoint(plain).extra == {}

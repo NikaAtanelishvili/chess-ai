@@ -160,8 +160,9 @@ planes (N, 19, 8, 8)
 | `tiny` | 4 x 64 | 626,380 | tests, CI, smoke runs |
 | `small` | 6 x 128 | 2,294,092 | cheaper training run |
 | `base` | 10 x 128 | 3,526,092 | default Kaggle model |
+| `wide` | 10 x 192 | 7,572,332 | second Kaggle run, beside `base` |
 
-All three use squeeze-excitation (ratio 4). For `base`, the trunk holds 3,080,000
+All use squeeze-excitation (ratio 4). For `base`, the trunk holds 3,080,000
 parameters, the policy head 157,129, the value head 266,819 and the stem 22,144.
 
 ### Checkpoints

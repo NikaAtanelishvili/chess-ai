@@ -110,7 +110,7 @@ def test_batch_counts(dataset_dir: Path) -> None:
         assert sum(counts) == dataset.num_batches()
 
 
-@pytest.mark.parametrize("num_workers", [0, 2, 3])
+@pytest.mark.parametrize("num_workers", [0, 1, 2, 3])
 def test_start_after_resumes_where_a_loader_left_off(dataset_dir: Path, num_workers: int) -> None:
     dataset = ShardDataset(dataset_dir, batch_size=16, seed=3)
     dataset.set_epoch(2)

@@ -4,7 +4,7 @@
 # checkpoints) leaves at least 1 h of the 11h15m session. See docs/TRAINING.md.
 model: base
 batch_size: 2048
-epochs: 5                  # passes over the train split: 37,628 steps each, 188,140 in all
+epochs: 5                  # passes over the train split: 37,572 steps each, 187,860 in all
 optimizer: adamw
 lr: 0.001
 weight_decay: 0.0001
@@ -21,5 +21,5 @@ val_every: 2500            # every 5.1M positions
 val_batches: 25            # fixed validation subset: 51,200 positions
 checkpoint_minutes: 20
 keep_checkpoints: 3
-num_workers: 2
+num_workers: 1             # 180k positions/s, 17x what base needs; GPU 1 runs a second job
 seed: 0

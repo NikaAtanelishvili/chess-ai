@@ -49,11 +49,13 @@ class ModelConfig(BaseModel):
     value_hidden: int = Field(default=128, ge=1)
 
 
-#: The model presets (also in ``configs/model/``): tiny for tests and CI, base for Kaggle.
+#: The model presets (also in ``configs/model/``): tiny for tests and CI; base for Kaggle's
+#: main run and wide for the second run beside it.
 MODEL_PRESETS: dict[str, ModelConfig] = {
     "tiny": ModelConfig(blocks=4, filters=64),
     "small": ModelConfig(blocks=6, filters=128),
     "base": ModelConfig(blocks=10, filters=128),
+    "wide": ModelConfig(blocks=10, filters=192),
 }
 
 

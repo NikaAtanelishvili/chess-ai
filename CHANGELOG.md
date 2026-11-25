@@ -17,7 +17,14 @@ All notable changes to this project are documented here. The format follows
 - `scripts/benchmark_train.py`: training throughput per model, batch size, `torch.compile`
   and channels_last.
 - Kaggle training kernel (`kaggle/train/`): GPU tests first, then a smoke session or the
-  main run, continuing from a previous session's output.
+  main run, continuing from a previous session's output. On a two-GPU machine it also
+  trains an independent second run (the new `wide` preset) on the other GPU, sized by a
+  short benchmark and isolated so that it cannot stop or slow the main run.
+- `wide` model preset (10 blocks x 192 filters, 7,572,332 parameters).
+- `chessnet.train.budget`: run-time estimates that pick the largest number of epochs that
+  fits a wall-time budget.
+- `scripts/benchmark_train.py --json` writes the measurements for programs, and every row
+  now includes the validation (forward-only) speed.
 
 ### Changed
 

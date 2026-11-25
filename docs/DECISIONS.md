@@ -416,12 +416,30 @@ suite.
 fp16 training on a T4, depending on the model size and the PyTorch build. With sessions
 capped at 12 h, the choice should be measured, not guessed.
 **Decision.**
-- Both are `TrainConfig` flags (`compile`, `channels_last`), off by default and applied by
-  one helper (`prepare_network`) that the training loop and the benchmark share. The main
-  config sets them to the fastest combination measured on Kaggle's T4.
+- Both are `TrainConfig` flags (`compile`, `channels_last`), applied by one helper
+  (`prepare_network`) that the training loop and the benchmark share. Their defaults are
+  the fastest combination measured on Kaggle's T4 in session 1: compile on, channels_last
+  off (channels_last helps an eager model but slows a compiled one). CPU tests turn
+  compiling off; one slow test compiles.
 - They never reach a checkpoint: the weights stay in the uncompiled network, and loading
   copies values whatever the memory format, so a run can change options between sessions.
 - Validation always runs the eager network. It is a small share of the time, and calling
   the compiled module in eval mode would compile a second graph.
 - The benchmark records a compiler failure in its table and carries on, so a broken
   compiler cannot end the smoke session.
+
+## 2026-11-25: Main run settings
+
+**Context.** Session 1 measured the base model on a T4 at 10,639 positions/s with batch 2048
+and `torch.compile`, against 10,058 at batch 1024.
+**Decision.**
+- Batch 2048 (also the `TrainConfig` default): 6% faster than 1024, and it fits 5 epochs
+  into one session instead of 4.
+- The learning rate stays at 1e-3 without batch-size scaling: AdamW at 1e-3 is a safe
+  setting at this batch size, and there is no budget for tuning runs. Warmup stays at 2000
+  steps (4.1M positions).
+- Validation every 2500 steps on 25 batches: the same 51,200 positions, every 5.1M
+  positions, as at batch 1024.
+- Epochs: the largest whole number whose estimated run time leaves at least 1 h of the
+  11h15m wall-time budget. That is 5 epochs: 10.19 h, counting validation, checkpoints,
+  start-up and compilation from measured speeds.

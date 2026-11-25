@@ -63,7 +63,7 @@ class TrainConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     model: str = Field(default="base", description="a MODEL_PRESETS name")
-    batch_size: int = Field(default=1024, ge=1)
+    batch_size: int = Field(default=2048, ge=1, description="fastest on the T4 (benchmark)")
     epochs: float = Field(default=3.0, gt=0, description="passes over the train split")
     max_steps: int | None = Field(default=None, ge=1, description="caps the run; overrides epochs")
     optimizer: Literal["adamw", "sgd"] = "adamw"
@@ -76,10 +76,9 @@ class TrainConfig(BaseModel):
     label_smoothing: float = Field(default=0.05, ge=0, lt=1)
     grad_clip: float = Field(default=5.0, gt=0, description="max gradient norm")
     amp: bool = Field(default=True, description="fp16 autocast + GradScaler (CUDA only)")
-    compile: bool = Field(default=False, description="torch.compile the training graph")
-    channels_last: bool = Field(
-        default=False, description="NHWC memory format (can speed up fp16 convolutions)"
-    )
+    # Speed options (checkpoints never depend on them); defaults: fastest on Kaggle's T4.
+    compile: bool = Field(default=True, description="torch.compile the training graph")
+    channels_last: bool = Field(default=False, description="NHWC memory format")
     log_every: int = Field(default=100, ge=1, description="steps per progress line")
     val_every: int = Field(default=2000, ge=1, description="steps between validations")
     val_batches: int = Field(default=50, ge=1, description="size of the fixed val subset")

@@ -22,6 +22,7 @@ from helpers.datasets import make_dataset
 SMOKE = TrainConfig(
     model="tiny",
     batch_size=64,
+    compile=False,  # slow on the CPU; test_speed_options_do_not_reach_the_checkpoint compiles
     max_steps=50,
     warmup_steps=5,
     log_every=10,
@@ -199,7 +200,7 @@ def test_cli_train(dataset: Path, tmp_path: Path) -> None:
     config = tmp_path / "train.yaml"
     config.write_text(
         "model: tiny\nbatch_size: 64\nmax_steps: 1000\nwarmup_steps: 1\nlog_every: 2\n"
-        "val_every: 4\nval_batches: 2\nnum_workers: 0\n",
+        "val_every: 4\nval_batches: 2\nnum_workers: 0\ncompile: false\n",
         encoding="utf-8",
     )
     common = ["train", "--config", str(config), "--data", str(dataset), "--device", "cpu"]

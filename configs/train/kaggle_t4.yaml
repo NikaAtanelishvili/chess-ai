@@ -1,9 +1,10 @@
 # Main run on Kaggle: the base model on one T4 GPU (of the T4 x2 machine), fp16 mixed precision.
-# Kaggle's P100 is retired, so there is no P100 config. Revisit batch_size and epochs after
-# the throughput benchmark of the smoke session.
+# Batch size and speed flags: the fastest combination in session 1's benchmark (10,639
+# positions/s). Epochs: the most whose estimated run time (10.2 h with validation and
+# checkpoints) leaves at least 1 h of the 11h15m session. See docs/TRAINING.md.
 model: base
-batch_size: 1024
-epochs: 3                  # passes over the train split (~78M positions)
+batch_size: 2048
+epochs: 5                  # passes over the train split: 37,628 steps each, 188,140 in all
 optimizer: adamw
 lr: 0.001
 weight_decay: 0.0001
@@ -13,11 +14,11 @@ value_loss_weight: 0.5
 label_smoothing: 0.05
 grad_clip: 5.0
 amp: true
-compile: false             # speed flags: the fastest combination in session 1's benchmark
-channels_last: false
+compile: true
+channels_last: false       # slower than plain NCHW once compiled
 log_every: 200
-val_every: 5000
-val_batches: 50            # fixed validation subset: 51,200 positions
+val_every: 2500            # every 5.1M positions
+val_batches: 25            # fixed validation subset: 51,200 positions
 checkpoint_minutes: 20
 keep_checkpoints: 3
 num_workers: 2

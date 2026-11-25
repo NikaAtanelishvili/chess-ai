@@ -24,6 +24,8 @@ All notable changes to this project are documented here. The format follows
 - The Kaggle preprocessing kernel installs v0.1.0. Kaggle CLI setup is documented with API
   tokens (`~/.kaggle/access_token` or `KAGGLE_API_TOKEN`).
 - Development Python is 3.13, matching Kaggle's GPU image; CI tests 3.11 to 3.13.
+- Training defaults follow the T4 benchmark: batch 2048 with `torch.compile` on and
+  channels_last off. The main Kaggle config trains the base model for 5 epochs.
 
 ### Fixed
 

@@ -185,9 +185,12 @@ uv run chessnet train \
 ```
 
 - **Configs** (`configs/train/`): `smoke.yaml` (the tiny model, 1000 steps) and
-  `kaggle_t4.yaml` (the base model, 3 epochs, batch 1024). Kaggle has retired its P100, so
-  there is no P100 config.
+  `kaggle_t4.yaml` (the base model, 5 epochs at batch 2048). Kaggle has retired its P100,
+  so there is no P100 config.
 - **Precision:** fp16 autocast with a GradScaler on CUDA; fp32 on the CPU.
+- **Speed options:** `compile: true` and `channels_last: false` are the defaults, the
+  fastest combination on a T4 (see the session 1 results below). Validation always runs
+  uncompiled. Turn compilation off for short CPU runs, where it only adds start-up time.
 - **Optimisation:** AdamW (SGD with Nesterov momentum is an option); linear warmup, then
   cosine decay over the whole planned run; gradient clipping at norm 5.
 - **Loss:** policy cross-entropy with label smoothing 0.05, plus 0.5 x the WDL value
@@ -236,64 +239,97 @@ which fails if no GPU is attached or the GPU unpacking path is wrong. It then fi
 dataset by globbing `/kaggle/input` for `manifest.json`, and stops with a clear error if it
 finds none or more than one.
 
+### Session 1 results (2026-11-25)
+
+Session 1 ran for 7.4 min on the T4 x2 machine: GPU tests (1 passed), the benchmark
+(5.7 min) and the smoke run (1 min). Training used one of the two T4s.
+
+Training speed on one T4 (positions/s; torch 2.11.0+cu130, fp16 mixed precision):
+
+| Model | Batch | Plain | channels_last | compile | Both |
+|-------|------:|------:|--------------:|--------:|-----:|
+| small | 1024 | 12,525 | 15,891 | **17,668** | 16,970 |
+| small | 2048 | 12,000 | 14,686 | 16,783 | 15,893 |
+| base | 1024 | 6,547 | 8,827 | 10,058 | 9,615 |
+| base | 2048 | 6,341 | 9,057 | **10,639** | 9,712 |
+
+- `torch.compile` alone is fastest for both models: +40% (small) and +54-68% (base) over
+  plain eager. channels_last alone helps too (+22-43%), but adding it to a compiled model
+  makes every configuration slower.
+- Compilation costs 17-25 s on the first step of every session.
+- Forward passes alone (validation, which runs uncompiled): 20,514 positions/s for base at
+  batch 2048.
+- Peak GPU memory for base at batch 2048, compiled: 1.71 GB of 15 GB.
+- Data loader with 2 workers: 159,089 positions/s at batch 1024 and 359,914 at batch 2048,
+  15 to 34 times what the GPU consumes.
+
+Smoke run (tiny model, 1000 steps of 1024): about 30,000 positions/s in the training loop.
+Validation top-1 rose from 23.8% to 31.1% (top-5 66.2%, WDL accuracy 52.9%). The
+White/Black top-1 gap at the four validations was 0.94, 0.58, 0.56 and 0.18 points, within
+the sampling noise of the 20,480-position subset (about +/-0.65 points).
+
 ### Numbers for planning
 
 | Quantity | Value | Source |
 |----------|-------|--------|
 | Training positions | 77,107,653 | dataset manifest |
-| Steps per epoch (batch 1024) | 75,300 | manifest / 1024 |
-| Base model training speed on a T4 (fp16) | ~10,000 positions/s (range 8,000-12,000) | **estimate**; session 1 measures it |
-| Time per epoch (base) | ~2.1 h (1.8-2.7 h) | from the estimate |
-| 3 epochs (`kaggle_t4.yaml`) | ~6.4 h, 225,900 steps | from the estimate |
-| Data loader (2 workers) | >150,000 positions/s at batch 256 on a laptop CPU | measured locally; not a bottleneck |
+| Steps per epoch (batch 2048) | 37,628 | shard sizes (each shard drops its last partial batch) |
+| Base training speed (T4, fp16, batch 2048, compiled) | 10,639 positions/s | measured in session 1 |
+| Time per epoch (base) | 2.01 h | measured speed |
+| Validation (51,200 positions every 2500 steps) | about 3.5 s each, with `best.pt`; 76 per run | measured forward speed |
 | Checkpoint size (base, with optimizer state) | ~42 MB; 3 rolling + best kept | 3.5M parameters |
-| GPU memory (base, batch 1024, fp16) | a few GB of the T4's 16 GB | estimate; session 1 measures it |
+| 5 epochs (`kaggle_t4.yaml`) | 10.19 h, 188,140 steps | measured speed; see below |
 
-The speed estimate assumes about 1.2 GFLOP per training position for the base model, at
-roughly a quarter of a T4's fp16 tensor-core peak. Replace it with the measured value from
-session 1 (`benchmark.md`, column *Hours per epoch*).
+The 10.19 h are 10.06 h of training plus 8 min for validation, checkpoints (every 20 min
+and at each epoch end), start-up and compilation.
+
+**Epochs** is the largest whole number whose estimated run time leaves at least 1 h of
+`--max-wall-time 11h15m`: 5 epochs take 10.19 h and leave 1.06 h, while 6 would take
+12.2 h. The run still finishes inside the session if its sustained speed is up to 9.5%
+below the benchmark's. If it is slower, the run stops cleanly at 11 h 15 min, and session 3
+finishes it. The learning-rate schedule spans the whole planned run and is fixed when the
+run starts.
 
 ### Sessions (one week's GPU quota, about 30 h)
 
 | Session | `MODE` | Purpose | GPU hours |
 |---------|--------|---------|-----------|
 | 0 | (CPU kernel) | Preprocessing: done, 0.92 h, no GPU quota | 0 |
-| 1 | `smoke` | GPU tests, throughput benchmark (16 configurations), tiny model on 1M positions | ~0.5 |
-| 2 | `train` | Main run, part 1: base model, stops after 11 h 15 min | <= 11.5 |
-| 3 | `train` | Main run, part 2, resumed from session 2 (only if needed) | 0-11.5 |
+| 1 | `smoke` | Done: GPU tests, benchmark (16 configurations), tiny model on 1M positions | 0.12 |
+| 2 | `train` | Main run: base model, 5 epochs, about 10.2 h; stops by 11 h 15 min | <= 11.5 |
+| 3 | `train` | Only if session 2 stops before the end: resumes and finishes the run | 0-2 |
 | - | - | Reserve for a fix or a re-run | ~5 |
-
-At the estimated speed, 3 epochs fit into session 2 alone. With the measured speed `s`
-(positions/s), the epochs that fit into one session are `11.25 h x 3600 x s / 77.1M`.
-Session 1's measurement may justify `epochs: 4` (about 8.5 h at the estimate).
-**Decide `epochs` before session 2:** the learning-rate schedule spans the whole planned
-run and is fixed when the run starts.
 
 ### Steps
 
-1. **Session 1 (smoke).** In `kaggle/train/train.py`, keep `MODE = "smoke"` and check that
-   `CHESSNET_REF` is the pinned commit. Then:
+1. **Session 1 (smoke)**, done on 2026-11-25 (results above). In `kaggle/train/train.py`,
+   `MODE = "smoke"` and `CHESSNET_REF` set to the pinned commit. Then:
 
    ```bash
    uv run kaggle kernels push -p kaggle/train
    uv run kaggle kernels status nikaatanelishvili/chessnet-train
-   uv run kaggle kernels output nikaatanelishvili/chessnet-train -p runs/smoke
+   uv run kaggle kernels output nikaatanelishvili/chessnet-train -p runs/smoke \
+       --file-pattern '.*(benchmark\.md|metrics\.csv|runs\.jsonl)$'
    ```
 
-   Check:
+   The file pattern skips checkpoints and TensorBoard files; the kernel log
+   (`chessnet-train.log`, JSON lines) is downloaded too. Check:
    - the GPU tests passed (in the log);
    - `benchmark.md` gives positions/s for small and base at batch 1024 and 2048, each with
      `torch.compile` and channels_last off and on, and the data loader's speed;
    - `smoke/val_metrics.csv` shows top-1 rising well above chance, and `top1_colour_gap`
      staying within a few points.
 
-2. **Before session 2.** Put the measured numbers into this playbook and set `epochs`,
-   `batch_size`, `compile` and `channels_last` in `configs/train/kaggle_t4.yaml`. Pin
-   `CHESSNET_REF` to the commit that contains those settings, and set `MODE = "train"`.
+2. **Before session 2**, done. The measured numbers are in this playbook, and
+   `configs/train/kaggle_t4.yaml` has `epochs`, `batch_size`, `compile` and
+   `channels_last` set from them. `CHESSNET_REF` points to the commit that contains those
+   settings, and `MODE = "train"`.
 
-3. **Session 2 (main run).** Push again. The run stops after 11 h 15 min with a checkpoint in
-   `/kaggle/working/run`. Follow progress in the live log (a line every 200 steps) or
-   afterwards with `tensorboard --logdir runs/<name>/run/tb`.
+3. **Session 2 (main run).** Push again. The first progress line should appear about 2 minutes
+   after training starts and show about 10,600 positions/s. The run finishes after about 10.2 h (11 h
+   15 min at most) with a checkpoint in `/kaggle/working/run`. Follow progress in the live log
+   (a line every 200 steps, with an ETA) or afterwards with
+   `tensorboard --logdir runs/<name>/run/tb`.
 
 4. **Continuing (session 3).** If the run is not finished, turn session 2's output into the
    dataset `nikaatanelishvili/chessnet-run`: kernel page, *Output*, *New Dataset* (or *New

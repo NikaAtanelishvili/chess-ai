@@ -20,8 +20,8 @@ import sys
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "1838be01751ae45146ef11dc89b5ab445c0b9817"  # training code, pre-merge
-MODE = "smoke"  # "smoke" or "train"
+CHESSNET_REF = "6a60990c4f6be1be2a51fdf58c3f58aa36387503"  # main: training merged (#10)
+MODE = "train"  # "smoke" or "train"
 
 CONFIGS = {"smoke": "configs/train/smoke.yaml", "train": "configs/train/kaggle_t4.yaml"}
 MAX_WALL_TIME = {"smoke": "1h", "train": "11h15m"}

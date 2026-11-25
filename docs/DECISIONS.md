@@ -404,11 +404,12 @@ suite.
 **Decision.**
 - The kernel installs a pinned commit with the `train` extra plus pytest and hypothesis, and
   runs `pytest -m gpu --require-gpu` before anything else.
-- It finds the dataset by globbing `/kaggle/input/**/manifest.json`, and a previous run by
-  `runs.jsonl`, failing on zero (dataset) or several matches.
-- `MODE = "smoke"` benchmarks and runs the tiny model; `MODE = "train"` copies a previous run
-  directory (if one is attached) into `/kaggle/working/run` and resumes. Each session's
-  output therefore holds the whole run so far.
+- It finds the dataset by globbing `/kaggle/input/**/manifest.json`, and previous runs by
+  `run-base/runs.jsonl` and `run-wide/runs.jsonl`, failing on zero (dataset) or several
+  matches.
+- `MODE = "smoke"` benchmarks and runs the tiny model. `MODE = "train"` copies each run
+  directory of an attached previous session into `/kaggle/working` and resumes it, so each
+  session's output holds both runs so far. (Session 2 added the second run; see below.)
 
 ## 2026-11-25: Training speed options
 
@@ -441,5 +442,64 @@ and `torch.compile`, against 10,058 at batch 1024.
 - Validation every 2500 steps on 25 batches: the same 51,200 positions, every 5.1M
   positions, as at batch 1024.
 - Epochs: the largest whole number whose estimated run time leaves at least 1 h of the
-  11h15m wall-time budget. That is 5 epochs: 10.19 h, counting validation, checkpoints,
-  start-up and compilation from measured speeds.
+  11h15m wall-time budget. That is 5 epochs: 10.18 h, counting validation, checkpoints,
+  start-up and compilation from measured speeds (`chessnet.train.budget`).
+- One DataLoader worker instead of two, since the second run shares the machine's 4 vCPUs:
+  one worker delivers about 180,000 positions/s, 17 times what base consumes.
+
+## 2026-11-25: A second, isolated run on the second T4
+
+**Context.** Every T4 session has two GPUs, and the main run uses one. The owner chose no DDP
+for this run (see the backlog entry below) and asked for an independent run on the idle GPU.
+**Decision.**
+- The second run trains `wide` (10 blocks x 192 filters, 7.6M parameters) with the main
+  run's settings, for an equal-time comparison with base at 5 epochs.
+- Its epochs are chosen during the session from a 2-minute benchmark on GPU 1, with the same
+  estimate as the main run's (`chessnet.train.budget`) but a 1.5 h margin, because its speed
+  is measured only minutes before it starts. Its wall time ends with the main run's.
+- Isolation from the main run:
+  - separate processes, GPUs, output directories and logs;
+  - the second run starts only after the main run has logged training progress;
+  - it runs at the lowest CPU priority, with one compiler thread, one OpenMP thread and its
+    own compiler caches;
+  - one DataLoader worker per run;
+  - the kernel never signals the main run, and stops a second run only once it is past its
+    deadline (SIGTERM, then SIGKILL).
+- `run-wide/epochs.json` records the measured speed and the chosen epochs. A resumed second
+  run keeps its `run-wide/config.yaml`, so its schedule does not change.
+
+## 2026-11-25: Backlog: DDP for the next, bigger-model run
+
+**Context.** For session 2 the owner chose two independent runs over DDP. The next run, with
+a bigger model, should use both T4s for one job.
+**Decision (to implement then).**
+- **Expected gain:** about 1.8x with 1024 positions per GPU, which keeps the hyperparameters
+  of a 2048 batch (2 x 10,058 positions/s for base, at about 95% efficiency). Up to 1.95x
+  with 2048 per GPU, but that 4096 batch needs an untested learning rate. Each step
+  all-reduces the gradients (14 MB for base, 30 MB for wide) over PCIe in 2-3 ms, against
+  a 100-190 ms step. In one 11h15m session with a 1 h margin that is 8 epochs of base instead
+  of 5, or 5 epochs of a model with about 1.7 times base's compute (for example 18 blocks x
+  128 filters, about 6M parameters).
+- **Shape:** the kernel launches `torchrun --standalone --nproc_per_node=2`, with an NCCL
+  process group and one GPU per rank. `ShardDataset` gives each rank a disjoint,
+  deterministic share of every epoch's batches. Rank 0 alone logs, validates and writes
+  checkpoints, and the logged metrics are all-reduced.
+- **Hang safety.** A rank waiting in a collective while the other has stopped would idle
+  the session until Kaggle's 12-hour limit and lose the final checkpoint. Against that:
+  - every stop decision is collective: each step all-reduces a stop flag (SIGTERM, SIGINT,
+    wall time, step limit), so all ranks stop after the same step;
+  - every rank runs the same number of steps per epoch, computed from the shard sizes before
+    the epoch starts; surplus batches are dropped, never waited for;
+  - rank 0's validation and checkpoint writes sit between barriers, so the other rank waits
+    at a barrier, never inside a gradient all-reduce;
+  - the NCCL process group has a timeout (about 10 minutes) and asynchronous error handling
+    (`TORCH_NCCL_ASYNC_ERROR_HANDLING=1`), so a hang becomes a crash; rolling checkpoints
+    bound the loss to 20 minutes of training;
+  - an exception on any rank ends the whole job (torchrun's default), and the kernel reports
+    it.
+- **Exact resume:** checkpoints record the global step, and each rank derives its share of
+  the remaining batches from it. A CPU test with two gloo processes checks kill-and-resume
+  equivalence in CI.
+- **Verification before a long run:** one short Kaggle session of about 0.5 h (GPU tests,
+  two-GPU throughput with `torch.compile`, a short run stopped by `--max-wall-time` and
+  resumed). Budget 1 h in case it finds a bug.

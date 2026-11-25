@@ -84,3 +84,80 @@ def preprocess(
     for split, info in manifest.splits.items():
         shards = len(info.shards)
         typer.echo(f"{split}: {info.games:,} games, {info.positions:,} positions, {shards} shards")
+
+
+@app.command()
+def train(
+    config: Annotated[
+        Path,
+        typer.Option(
+            exists=True,
+            dir_okay=False,
+            help="Training config (YAML), e.g. configs/train/kaggle_t4.yaml.",
+        ),
+    ],
+    data: Annotated[
+        Path,
+        typer.Option(exists=True, file_okay=False, help="Dataset written by chessnet preprocess."),
+    ],
+    out: Annotated[
+        Path,
+        typer.Option(help="Run directory for checkpoints and logs; reuse it to resume."),
+    ],
+    resume: Annotated[
+        str,
+        typer.Option(
+            help="'auto' (newest checkpoint in --out or --resume-from), 'none', or a path."
+        ),
+    ] = "auto",
+    resume_from: Annotated[
+        list[Path] | None,
+        typer.Option(help="Extra directories to search for checkpoints (e.g. a previous run)."),
+    ] = None,
+    max_wall_time: Annotated[
+        str | None,
+        typer.Option(help="Stop cleanly with a checkpoint after this long, e.g. 11h15m."),
+    ] = None,
+    max_steps: Annotated[
+        int | None,
+        typer.Option(min=1, help="Step budget for a new run (overrides the config)."),
+    ] = None,
+    logger: Annotated[
+        list[str] | None,
+        typer.Option(help="Extra metric logger: 'wandb' (needs WANDB_API_KEY)."),
+    ] = None,
+    device: Annotated[
+        str | None,
+        typer.Option(help="'cuda' or 'cpu' (default: cuda if available)."),
+    ] = None,
+) -> None:
+    """Train the network on a preprocessed dataset, resuming from the newest checkpoint."""
+    from chessnet.config import load_train_config
+    from chessnet.train.loop import parse_duration
+    from chessnet.train.loop import train as run_training
+
+    loggers = set(logger or [])
+    if loggers - {"wandb"}:
+        raise typer.BadParameter(
+            f"unknown logger(s): {', '.join(sorted(loggers - {'wandb'}))}; console, CSV and "
+            "TensorBoard are always on, and 'wandb' is the only optional one",
+            param_hint="--logger",
+        )
+    train_config = load_train_config(config)
+    if max_steps is not None:
+        train_config = train_config.model_copy(update={"max_steps": max_steps})
+    _configure_logging()
+    result = run_training(
+        train_config,
+        data,
+        out,
+        resume=resume,
+        resume_dirs=resume_from or [],
+        max_wall_time=parse_duration(max_wall_time) if max_wall_time else None,
+        wandb="wandb" in loggers,
+        device=device,
+    )
+    typer.echo(
+        f"stopped at step {result.state.step:,} of {result.state.total_steps:,} "
+        f"({result.stopped_because}); last checkpoint: {result.last_checkpoint}"
+    )

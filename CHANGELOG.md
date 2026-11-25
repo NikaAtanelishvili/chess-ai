@@ -6,10 +6,26 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `chessnet train`: fp16 mixed-precision training on CUDA with warmup and cosine decay,
+  validation on a fixed subset, wall-clock and end-of-epoch checkpoints, exact resume
+  (including the position within an epoch), and a clean stop on SIGTERM or
+  `--max-wall-time`. Logs go to the console, CSV and TensorBoard, with W&B opt-in.
+  Validation metrics include the White/Black accuracy split. `compile` and `channels_last`
+  config flags select `torch.compile` and the NHWC memory format.
+- `scripts/benchmark_train.py`: training throughput per model, batch size, `torch.compile`
+  and channels_last.
+- Kaggle training kernel (`kaggle/train/`): GPU tests first, then a smoke session or the
+  main run, continuing from a previous session's output.
+
 ### Changed
 
 - The Kaggle preprocessing kernel installs v0.1.0. Kaggle CLI setup is documented with API
   tokens (`~/.kaggle/access_token` or `KAGGLE_API_TOKEN`).
+- Development Python is 3.13, matching Kaggle's GPU image; CI tests 3.11 to 3.13.
+- Training defaults follow the T4 benchmark: batch 2048 with `torch.compile` on and
+  channels_last off. The main Kaggle config trains the base model for 5 epochs.
 
 ### Fixed
 

@@ -48,6 +48,7 @@ class Checkpoint:
     scheduler_state: dict[str, Any] | None
     scaler_state: dict[str, Any] | None
     rng_states: dict[str, Any] | None
+    extra: dict[str, Any]  # caller-defined state, e.g. the training loop's progress
 
     @property
     def model_config(self) -> ModelConfig:
@@ -100,12 +101,14 @@ def save_checkpoint(
     config: Mapping[str, Any] | None = None,
     metrics: Mapping[str, float] | None = None,
     dataset_manifest_hash: str | None = None,
+    extra: Mapping[str, Any] | None = None,
     save_rng: bool = True,
 ) -> Path:
     """Write a checkpoint atomically (a crash mid-write never leaves a broken file).
 
     ``config`` holds the remaining run configuration (e.g. ``{"train": {...}}``); the model
-    configuration is always added under ``"model"``.
+    configuration is always added under ``"model"``. ``extra`` stores further caller state
+    (plain values only), returned as :attr:`Checkpoint.extra`.
     """
     path = Path(path)
     payload: dict[str, Any] = {
@@ -124,6 +127,7 @@ def save_checkpoint(
         "scheduler_state": scheduler.state_dict() if scheduler is not None else None,
         "scaler_state": scaler.state_dict() if scaler is not None else None,
         "rng_states": capture_rng_states() if save_rng else None,
+        "extra": dict(extra or {}),
     }
     temporary = path.with_name(path.name + ".tmp")
     torch.save(payload, temporary)
@@ -162,6 +166,7 @@ def load_checkpoint(path: str | Path, *, map_location: str | torch.device = "cpu
         scheduler_state=payload["scheduler_state"],
         scaler_state=payload["scaler_state"],
         rng_states=payload["rng_states"],
+        extra=payload.get("extra", {}),
     )
 
 

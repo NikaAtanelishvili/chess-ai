@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class FilterConfig(BaseModel):
@@ -56,6 +57,45 @@ MODEL_PRESETS: dict[str, ModelConfig] = {
 }
 
 
+class TrainConfig(BaseModel):
+    """A training run: model, batch, optimisation, schedule, logging and checkpoint cadence."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    model: str = Field(default="base", description="a MODEL_PRESETS name")
+    batch_size: int = Field(default=2048, ge=1, description="fastest on the T4 (benchmark)")
+    epochs: float = Field(default=3.0, gt=0, description="passes over the train split")
+    max_steps: int | None = Field(default=None, ge=1, description="caps the run; overrides epochs")
+    optimizer: Literal["adamw", "sgd"] = "adamw"
+    lr: float = Field(default=1e-3, gt=0)
+    weight_decay: float = Field(default=1e-4, ge=0)
+    momentum: float = Field(default=0.9, ge=0, lt=1, description="SGD (Nesterov) only")
+    warmup_steps: int = Field(default=1000, ge=0)
+    min_lr_ratio: float = Field(default=0.0, ge=0, le=1, description="cosine floor, x lr")
+    value_loss_weight: float = Field(default=0.5, ge=0)
+    label_smoothing: float = Field(default=0.05, ge=0, lt=1)
+    grad_clip: float = Field(default=5.0, gt=0, description="max gradient norm")
+    amp: bool = Field(default=True, description="fp16 autocast + GradScaler (CUDA only)")
+    # Speed options (checkpoints never depend on them); defaults: fastest on Kaggle's T4.
+    compile: bool = Field(default=True, description="torch.compile the training graph")
+    channels_last: bool = Field(default=False, description="NHWC memory format")
+    log_every: int = Field(default=100, ge=1, description="steps per progress line")
+    val_every: int = Field(default=2000, ge=1, description="steps between validations")
+    val_batches: int = Field(default=50, ge=1, description="size of the fixed val subset")
+    checkpoint_minutes: float = Field(default=20.0, gt=0)
+    keep_checkpoints: int = Field(default=3, ge=1)
+    num_workers: int = Field(default=2, ge=0, description="DataLoader worker processes")
+    seed: int = 0
+    deterministic: bool = False
+
+    @field_validator("model")
+    @classmethod
+    def _known_model(cls, value: str) -> str:
+        if value not in MODEL_PRESETS:
+            raise ValueError(f"unknown model {value!r}; presets: {', '.join(MODEL_PRESETS)}")
+        return value
+
+
 def _read_yaml(path: str | Path) -> object:
     with Path(path).open(encoding="utf-8") as file:
         return yaml.safe_load(file)
@@ -69,3 +109,8 @@ def load_data_config(path: str | Path) -> DataConfig:
 def load_model_config(path: str | Path) -> ModelConfig:
     """Read a :class:`ModelConfig` from a YAML file."""
     return ModelConfig.model_validate(_read_yaml(path))
+
+
+def load_train_config(path: str | Path) -> TrainConfig:
+    """Read a :class:`TrainConfig` from a YAML file."""
+    return TrainConfig.model_validate(_read_yaml(path) or {})

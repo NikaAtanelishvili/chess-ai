@@ -347,3 +347,99 @@ instead of `kaggle.json` keys.
 and CI runs `uv run kaggle --version`, which needs no credentials. The docs describe the
 token in `~/.kaggle/access_token` or `KAGGLE_API_TOKEN` as the way to authenticate, which
 2.2.5 checks first. Token files are gitignored.
+
+## 2026-11-25: Python 3.13 to match Kaggle's GPU image
+
+**Context.** Kaggle's GPU image is now built on Colab's 2026-10-27 runtime, whose Python is
+3.13 (`/usr/local/lib/python3.13/dist-packages` in `Kaggle/docker-python`).
+**Decision.** `.python-version` is now 3.13, and CI tests 3.11, 3.12 and 3.13.
+`requires-python` stays `>=3.11`, and mypy still checks against 3.11 syntax. The full suite
+passes on 3.13. This settles the earlier follow-up on the Python pin.
+
+## 2026-11-25: Kaggle GPU choice
+
+**Context.** Kaggle has retired the P100; the CLI warns that P100 requests run on a T4.
+**Decision.** There is only a T4 training config. The training kernel requests
+`machine_shape: NvidiaTeslaT4` (two T4s) and trains on one GPU. Multi-GPU training stays out
+of scope unless the benchmark shows the data loader idle and one GPU saturated.
+
+## 2026-11-25: Training loop details
+
+**Decision.**
+- **Precision:** fp16 autocast with a GradScaler on CUDA only, fp32 on the CPU (T4s handle
+  bf16 poorly).
+- **Optimisation:** biases and normalisation weights get no weight decay. Warmup plus cosine
+  was chosen over one-cycle: one schedule is enough, and it is easy to resume.
+- **Schedule length:** fixed when a run starts (`total_steps`, stored in every checkpoint),
+  so a multi-session run keeps one schedule. Changing `epochs` later means a new run.
+- **Validation subset:** the first `val_batches` batches of the unshuffled val split, the
+  same positions every time.
+- **Checkpoint names:** `checkpoints/step-NNNNNNNNN.pt` (last 3 kept) and `best.pt`.
+  `--resume auto` picks the newest rolling checkpoint in the run directory and any
+  `--resume-from` directories, never `best.pt`.
+- **Resume checks:** resuming refuses a checkpoint from a different dataset (by manifest
+  hash) or a different model.
+- **Data position:** `ShardDataset.start_after` skips the batches already trained on, the
+  way a DataLoader with N workers delivers them (round-robin over workers, passing over
+  workers that have run dry). Worker roles are rotated so a fresh DataLoader continues with
+  the worker that was due next. Skipped data is never read.
+- **DataLoader workers** start through `forkserver`: forking a process that runs threads
+  (TensorBoard, torch) can deadlock children.
+- **No GPU syncs per step:** training metrics are summed on the GPU and read back only at
+  log steps.
+- **No pinned memory:** packed batches are about 150 KB, so pinning would not help.
+- **Logging:** W&B is opt-in, imported lazily, and never fatal. TensorBoard needs the
+  `train` extra, which the Kaggle kernel installs.
+
+## 2026-11-25: Kill-and-resume test placement
+
+**Decision.** The kill-and-resume equivalence test (60 steps without interruption vs. 30 +
+resumed 30; per-step losses and final weights must match) runs on every CI run without
+DataLoader workers. The variant with 2 workers takes another 12 s and runs nightly. Resuming
+with workers is also unit-tested against a real DataLoader with 2 and 3 workers in the fast
+suite.
+
+## 2026-11-25: Kaggle training kernel
+
+**Decision.**
+- The kernel installs a pinned commit with the `train` extra plus pytest and hypothesis, and
+  runs `pytest -m gpu --require-gpu` before anything else.
+- It finds the dataset by globbing `/kaggle/input/**/manifest.json`, and a previous run by
+  `runs.jsonl`, failing on zero (dataset) or several matches.
+- `MODE = "smoke"` benchmarks and runs the tiny model; `MODE = "train"` copies a previous run
+  directory (if one is attached) into `/kaggle/working/run` and resumes. Each session's
+  output therefore holds the whole run so far.
+
+## 2026-11-25: Training speed options
+
+**Context.** `torch.compile` and the channels_last memory format may or may not speed up
+fp16 training on a T4, depending on the model size and the PyTorch build. With sessions
+capped at 12 h, the choice should be measured, not guessed.
+**Decision.**
+- Both are `TrainConfig` flags (`compile`, `channels_last`), applied by one helper
+  (`prepare_network`) that the training loop and the benchmark share. Their defaults are
+  the fastest combination measured on Kaggle's T4 in session 1: compile on, channels_last
+  off (channels_last helps an eager model but slows a compiled one). CPU tests turn
+  compiling off; one slow test compiles.
+- They never reach a checkpoint: the weights stay in the uncompiled network, and loading
+  copies values whatever the memory format, so a run can change options between sessions.
+- Validation always runs the eager network. It is a small share of the time, and calling
+  the compiled module in eval mode would compile a second graph.
+- The benchmark records a compiler failure in its table and carries on, so a broken
+  compiler cannot end the smoke session.
+
+## 2026-11-25: Main run settings
+
+**Context.** Session 1 measured the base model on a T4 at 10,639 positions/s with batch 2048
+and `torch.compile`, against 10,058 at batch 1024.
+**Decision.**
+- Batch 2048 (also the `TrainConfig` default): 6% faster than 1024, and it fits 5 epochs
+  into one session instead of 4.
+- The learning rate stays at 1e-3 without batch-size scaling: AdamW at 1e-3 is a safe
+  setting at this batch size, and there is no budget for tuning runs. Warmup stays at 2000
+  steps (4.1M positions).
+- Validation every 2500 steps on 25 batches: the same 51,200 positions, every 5.1M
+  positions, as at batch 1024.
+- Epochs: the largest whole number whose estimated run time leaves at least 1 h of the
+  11h15m wall-time budget. That is 5 epochs: 10.19 h, counting validation, checkpoints,
+  start-up and compilation from measured speeds.

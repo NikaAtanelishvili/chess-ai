@@ -347,3 +347,65 @@ instead of `kaggle.json` keys.
 and CI runs `uv run kaggle --version`, which needs no credentials. The docs describe the
 token in `~/.kaggle/access_token` or `KAGGLE_API_TOKEN` as the way to authenticate, which
 2.2.5 checks first. Token files are gitignored.
+
+## 2026-11-25: Python 3.13 to match Kaggle's GPU image
+
+**Context.** Kaggle's GPU image is now built on Colab's 2026-10-27 runtime, whose Python is
+3.13 (`/usr/local/lib/python3.13/dist-packages` in `Kaggle/docker-python`).
+**Decision.** `.python-version` is now 3.13, and CI tests 3.11, 3.12 and 3.13.
+`requires-python` stays `>=3.11`, and mypy still checks against 3.11 syntax. The full suite
+passes on 3.13. This settles the earlier follow-up on the Python pin.
+
+## 2026-11-25: Kaggle GPU choice
+
+**Context.** Kaggle has retired the P100; the CLI warns that P100 requests run on a T4.
+**Decision.** There is only a T4 training config. The training kernel requests
+`machine_shape: NvidiaTeslaT4` (two T4s) and trains on one GPU. Multi-GPU training stays out
+of scope unless the benchmark shows the data loader idle and one GPU saturated.
+
+## 2026-11-25: Training loop details
+
+**Decision.**
+- **Precision:** fp16 autocast with a GradScaler on CUDA only, fp32 on the CPU (T4s handle
+  bf16 poorly).
+- **Optimisation:** biases and normalisation weights get no weight decay. Warmup plus cosine
+  was chosen over one-cycle: one schedule is enough, and it is easy to resume.
+- **Schedule length:** fixed when a run starts (`total_steps`, stored in every checkpoint),
+  so a multi-session run keeps one schedule. Changing `epochs` later means a new run.
+- **Validation subset:** the first `val_batches` batches of the unshuffled val split, the
+  same positions every time.
+- **Checkpoint names:** `checkpoints/step-NNNNNNNNN.pt` (last 3 kept) and `best.pt`.
+  `--resume auto` picks the newest rolling checkpoint in the run directory and any
+  `--resume-from` directories, never `best.pt`.
+- **Resume checks:** resuming refuses a checkpoint from a different dataset (by manifest
+  hash) or a different model.
+- **Data position:** `ShardDataset.start_after` skips the batches already trained on, the
+  way a DataLoader with N workers delivers them (round-robin over workers, passing over
+  workers that have run dry). Worker roles are rotated so a fresh DataLoader continues with
+  the worker that was due next. Skipped data is never read.
+- **DataLoader workers** start through `forkserver`: forking a process that runs threads
+  (TensorBoard, torch) can deadlock children.
+- **No GPU syncs per step:** training metrics are summed on the GPU and read back only at
+  log steps.
+- **No pinned memory:** packed batches are about 150 KB, so pinning would not help.
+- **Logging:** W&B is opt-in, imported lazily, and never fatal. TensorBoard needs the
+  `train` extra, which the Kaggle kernel installs.
+
+## 2026-11-25: Kill-and-resume test placement
+
+**Decision.** The kill-and-resume equivalence test (60 steps without interruption vs. 30 +
+resumed 30; per-step losses and final weights must match) runs on every CI run without
+DataLoader workers. The variant with 2 workers takes another 12 s and runs nightly. Resuming
+with workers is also unit-tested against a real DataLoader with 2 and 3 workers in the fast
+suite.
+
+## 2026-11-25: Kaggle training kernel
+
+**Decision.**
+- The kernel installs a pinned commit with the `train` extra plus pytest and hypothesis, and
+  runs `pytest -m gpu --require-gpu` before anything else.
+- It finds the dataset by globbing `/kaggle/input/**/manifest.json`, and a previous run by
+  `runs.jsonl`, failing on zero (dataset) or several matches.
+- `MODE = "smoke"` benchmarks and runs the tiny model; `MODE = "train"` copies a previous run
+  directory (if one is attached) into `/kaggle/working/run` and resumes. Each session's
+  output therefore holds the whole run so far.

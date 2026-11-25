@@ -2,6 +2,7 @@
 
 import importlib.util
 import itertools
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -36,6 +37,8 @@ def test_benchmark_script_writes_a_report(tmp_path: Path) -> None:
         "0",
         "--out",
         str(report),
+        "--json",
+        str(tmp_path / "benchmark.json"),
     ]
     subprocess.run(command, check=True, capture_output=True, text=True, timeout=300)
     text = report.read_text(encoding="utf-8")
@@ -43,6 +46,13 @@ def test_benchmark_script_writes_a_report(tmp_path: Path) -> None:
         assert f"| tiny | 626,380 | {batch} | {channels_last} | off |" in text
     assert "- tiny: batch " in text  # the fastest configuration
     assert "- 0 workers, batch 32: " in text
+    measured = json.loads((tmp_path / "benchmark.json").read_text(encoding="utf-8"))
+    assert measured["failures"] == []
+    assert len(measured["results"]) == 4
+    for result in measured["results"]:
+        assert result["train_speed"] > 0
+        assert result["eval_speed"] > 0  # every row times validation's forward passes
+        assert result["memory"] is None  # no GPU
 
 
 def load_script(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
@@ -70,8 +80,14 @@ def test_a_compile_failure_is_reported_and_the_benchmark_goes_on(
     monkeypatch.setattr(torch.backends.cudnn, "benchmark", torch.backends.cudnn.benchmark)
     report = tmp_path / "benchmark.md"
     arguments = [*QUICK, "--batch-sizes", "16", "--channels-last", "off", "--out", str(report)]
+    arguments += ["--json", str(tmp_path / "benchmark.json")]
     monkeypatch.setattr(sys, "argv", ["benchmark_train.py", *arguments])
     benchmark.main()
     text = report.read_text(encoding="utf-8")
     assert "| tiny | 626,380 | 16 | off | on | compile failed: RuntimeError |" in text
     assert "- tiny: batch 16, channels_last off, compile off: " in text
+    measured = json.loads((tmp_path / "benchmark.json").read_text(encoding="utf-8"))
+    assert [result["compile"] for result in measured["results"]] == [False]
+    [failure] = measured["failures"]
+    assert failure["error"] == "compile failed: RuntimeError"
+    assert failure["compile"] is True

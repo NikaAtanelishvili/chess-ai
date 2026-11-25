@@ -140,6 +140,19 @@ def test_speed_options_do_not_reach_the_checkpoint(dataset: Path, tmp_path: Path
     assert load_network(result.last_checkpoint)(torch.zeros(1, 19, 8, 8)).policy.isfinite().all()
 
 
+def test_resuming_a_finished_run_trains_nothing(dataset: Path, tmp_path: Path) -> None:
+    config = SMOKE.model_copy(update={"max_steps": 6, "val_every": 1_000_000})
+    first = train(config, dataset, tmp_path / "run", device="cpu")
+    again = train(config, dataset, tmp_path / "run", device="cpu")
+    assert again.stopped_because == "completed"
+    assert again.state.step == first.state.step == 6
+    assert again.state.sessions == 2
+    assert [row["step"] for row in read_rows(tmp_path / "run" / "metrics.csv")] == ["6"]
+    weights = load_checkpoint(again.last_checkpoint).model_state
+    for name, tensor in load_checkpoint(first.last_checkpoint).model_state.items():
+        torch.testing.assert_close(weights[name], tensor, rtol=0, atol=0)
+
+
 def test_sigterm_stops_cleanly_with_a_checkpoint(dataset: Path, tmp_path: Path) -> None:
     config = SMOKE.model_copy(update={"max_steps": 100_000, "val_every": 1_000_000})
     timer = threading.Timer(2.0, os.kill, args=(os.getpid(), signal.SIGTERM))

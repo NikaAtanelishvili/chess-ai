@@ -5,7 +5,8 @@ mixed precision on CUDA, for each combination of ``torch.compile`` and channels_
 off and on by default). The network is prepared with the training loop's own helpers, so
 the options mean the same as in ``chessnet train``. It also times forward passes alone
 (what validation costs) and, with ``--data``, the data loader, and turns the measured speed
-into hours per epoch for that dataset.
+into hours per epoch for that dataset. ``--json`` writes the measurements for programs (the
+Kaggle kernel sizes its second run from them).
 
     python scripts/benchmark_train.py --data /kaggle/input/.../shards --out benchmark.md
 """
@@ -15,11 +16,12 @@ from __future__ import annotations
 import argparse
 import gc
 import itertools
+import json
 import math
 import time
 import traceback
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
@@ -48,7 +50,7 @@ class Result:
     channels_last: bool
     compile: bool
     train_speed: float  # positions/s
-    eval_speed: float  # positions/s of forward passes; NaN when compiled (validation is eager)
+    eval_speed: float  # positions/s of forward passes through the uncompiled network
     first_step: float  # seconds, compilation included
     memory: float  # peak GB; NaN on the CPU
 
@@ -132,12 +134,10 @@ def measure(
     seconds(train_step, max(warmup - 1, 0), device)
     train_speed = batch_size * steps / seconds(train_step, steps, device)
     memory = torch.cuda.max_memory_allocated(device) / 1e9 if use_amp else math.nan
-    eval_speed = math.nan
-    if not compile:  # validation always runs the eager network
-        network.eval()
-        with torch.inference_mode():
-            seconds(eval_step, warmup, device)
-            eval_speed = batch_size * steps / seconds(eval_step, steps, device)
+    network.eval()  # validation always runs the uncompiled network
+    with torch.inference_mode():
+        seconds(eval_step, warmup, device)
+        eval_speed = batch_size * steps / seconds(eval_step, steps, device)
     return Result(
         model, batch_size, channels_last, compile, train_speed, eval_speed, first_step, memory
     )
@@ -163,6 +163,10 @@ def speed_text(value: float) -> str:
     return "-" if math.isnan(value) else f"{value:,.0f}"
 
 
+def json_value(value: object) -> object:
+    return None if isinstance(value, float) and math.isnan(value) else value
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--models", nargs="+", default=["small", "base"], choices=MODEL_PRESETS)
@@ -176,6 +180,7 @@ def main() -> None:
     parser.add_argument("--loader-batches", type=int, default=200)
     parser.add_argument("--workers", type=int, default=2, help="data loader workers")
     parser.add_argument("--out", type=Path, help="also write the report to this Markdown file")
+    parser.add_argument("--json", type=Path, help="also write the measurements to this file")
     args = parser.parse_args()
 
     device = torch.device(args.device)
@@ -190,20 +195,27 @@ def main() -> None:
         "",
         f"Data: {args.data or 'random records'}. Each row times {args.steps} training steps "
         f"after {args.warmup} warm-up steps; the first step, which includes compilation, is "
-        "timed on its own. Eval times forward passes alone, as validation runs them (always "
-        "eager, so compiled rows have none).",
+        "timed on its own. Eval times forward passes alone through the uncompiled network, as "
+        "validation runs them.",
         "",
         "| Model | Parameters | Batch | channels_last | compile | Train positions/s "
         "| Eval positions/s | First step | Peak GPU memory | Hours per epoch |",
         "|---|---:|---:|---|---|---:|---:|---:|---:|---:|",
     ]
     results: list[Result] = []
+    failures: list[dict[str, object]] = []
     for model in args.models:
         parameters = count_parameters(ChessNet(MODEL_PRESETS[model]))
         for batch_size, channels_last, compile in itertools.product(
             args.batch_sizes, args.channels_last, args.compile
         ):
             row = f"| {model} | {parameters:,} | {batch_size} | {channels_last} | {compile} |"
+            failure = {
+                "model": model,
+                "batch_size": batch_size,
+                "channels_last": SWITCH[channels_last],
+                "compile": SWITCH[compile],
+            }
             try:
                 result = measure(
                     model,
@@ -217,11 +229,13 @@ def main() -> None:
                 )
             except torch.cuda.OutOfMemoryError:
                 lines.append(f"{row} out of memory | | | | |")
+                failures.append({**failure, "error": "out of memory"})
             except Exception as error:
                 if not SWITCH[compile]:
                     raise
                 traceback.print_exc()  # a compiler failure must not end the session
                 lines.append(f"{row} compile failed: {type(error).__name__} | | | | |")
+                failures.append({**failure, "error": f"compile failed: {type(error).__name__}"})
             else:
                 results.append(result)
                 hours = train_positions / result.train_speed / 3600 if train_positions else None
@@ -251,6 +265,12 @@ def main() -> None:
     print(report)
     if args.out:
         args.out.write_text(report, encoding="utf-8")
+    if args.json:
+        measured = [
+            {key: json_value(value) for key, value in asdict(result).items()} for result in results
+        ]
+        document = {"device": gpu, "torch": torch.__version__, "results": measured}
+        args.json.write_text(json.dumps({**document, "failures": failures}, indent=2) + "\n")
 
 
 if __name__ == "__main__":

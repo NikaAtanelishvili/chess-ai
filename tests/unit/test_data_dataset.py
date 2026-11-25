@@ -91,3 +91,44 @@ def test_other_encoding_versions_are_refused(dataset_dir: Path, tmp_path: Path) 
     (copy / MANIFEST_NAME).write_text(json.dumps(manifest))
     with pytest.raises(EncodingVersionError):
         ShardDataset(copy, batch_size=8)
+
+
+def batch_keys(batches: list[PackedBatch]) -> list[tuple[tuple[int, int, int], ...]]:
+    """Each batch as the tuple of its records' (ply, move, elo)."""
+    return [
+        tuple(zip(b.ply.tolist(), b.move.tolist(), b.elo.tolist(), strict=True)) for b in batches
+    ]
+
+
+def test_batch_counts(dataset_dir: Path) -> None:
+    dataset = ShardDataset(dataset_dir, batch_size=16, seed=3)
+    dataset.set_epoch(1)
+    assert dataset.num_batches() == len(list(dataset))
+    for workers in (0, 1, 2, 3):
+        counts = dataset.batches_per_worker(workers)
+        assert len(counts) == max(workers, 1)
+        assert sum(counts) == dataset.num_batches()
+
+
+@pytest.mark.parametrize("num_workers", [0, 2, 3])
+def test_start_after_resumes_where_a_loader_left_off(dataset_dir: Path, num_workers: int) -> None:
+    dataset = ShardDataset(dataset_dir, batch_size=16, seed=3)
+    dataset.set_epoch(2)
+    full = batch_keys(list(make_loader(dataset, num_workers=num_workers, prefetch_factor=2)))
+    assert len(full) == dataset.num_batches()
+    for skip in (0, 1, 7, len(full) - 3, len(full)):
+        dataset.set_epoch(2)
+        dataset.start_after(skip, num_workers=num_workers)
+        resumed = list(make_loader(dataset, num_workers=num_workers, prefetch_factor=2))
+        assert batch_keys(resumed) == full[skip:], skip
+
+
+def test_start_after_checks_its_arguments(dataset_dir: Path) -> None:
+    dataset = ShardDataset(dataset_dir, batch_size=16, seed=3)
+    with pytest.raises(ValueError, match="cannot skip"):
+        dataset.start_after(dataset.num_batches() + 1, num_workers=0)
+    dataset.start_after(2, num_workers=2)
+    with pytest.raises(RuntimeError, match="computed for 2 workers"):
+        list(dataset)  # read by one process, not two workers
+    dataset.set_epoch(0)  # a new epoch clears the skip
+    assert len(list(dataset)) == dataset.num_batches()

@@ -248,9 +248,18 @@ refused** (`EncodingVersionError`), as is data built with another version.
 in five positions: the start, two openings with Black to move, a middlegame and a rook
 endgame. Nodes are playouts. With the base network (`base-best.pt`):
 
-| Hardware | Leaf batch 1 | 8 | 16 | 32 |
-|----------|------:|------:|------:|------:|
-| CPU: laptop Intel i3-1115G4 (2 cores, torch 2.15) | 223 | 477 | 537 | 568 |
+| Hardware | Leaf batch 1 | 8 | 16 | 32 | 64 |
+|----------|------:|------:|------:|------:|------:|
+| CPU: laptop Intel i3-1115G4 (2 cores, torch 2.15) | 223 | 477 | 537 | 568 | - |
+| CPU: Kaggle Xeon 2.0 GHz (2 threads, torch 2.11) | - | 268 | 323 | 367 | - |
+| GPU: Kaggle Tesla T4 (fp16, torch 2.11) | 133 | 659 | 986 | 1,305 | 1,507 |
+
+The GPU figures come from the Kaggle kernel `kaggle/search/` (session of 2026-11-26), with
+the same checkpoint (its SHA-256 is checked). On the GPU, a lone leaf costs more than on a
+CPU, because each call has a fixed latency; batches pay off from 8 leaves up. Batches fill
+only partly, because a leaf selected twice ends its batch: 12.8 of 16 and 36 of 64 on
+average. The search loop in Python then sets the pace, so a T4 gives about 2-3 times a
+laptop CPU at the default batch of 16, not more.
 
 On a CPU the evaluator (encoding plus the network) takes about 95% of the search time.
 At batch 16 it evaluates 455 positions per second; the other 15% of playouts are cache

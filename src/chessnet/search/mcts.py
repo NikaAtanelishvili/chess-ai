@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import math
 import random
+import threading
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 import chess
@@ -64,6 +65,8 @@ class SearchResult:
     move: chess.Move  # the most visited root move
     visits: dict[chess.Move, int]  # visits of every root move
     value: float  # expected outcome for the side to move
+    move_value: float  # expected outcome for the side to move after ``move``
+    mate_in_one: bool  # ``move`` checkmates
     pv: list[chess.Move]  # principal variation: the most visited line
     playouts: int  # playouts in this search (each adds one visit to the root)
     nodes: int  # root visits, including those of a reused tree
@@ -137,28 +140,44 @@ class MCTS:
         *,
         simulations: int | None = None,
         movetime: float | None = None,
+        stop: threading.Event | None = None,
+        max_nodes: int | None = None,
+        on_progress: Callable[[SearchResult], None] | None = None,
+        progress_interval: float = 1.0,
     ) -> SearchResult:
-        """Search ``board`` until ``simulations`` playouts or ``movetime`` seconds, whichever
-        comes first (give at least one)."""
-        if simulations is None and movetime is None:
-            raise ValueError("give simulations, movetime or both")
+        """Search ``board`` until the first of: ``simulations`` playouts, ``movetime``
+        seconds, ``stop`` being set, or ``max_nodes`` root visits (which bounds memory).
+
+        Give at least one of ``simulations``, ``movetime`` and ``stop``. The first playout
+        always runs, so there is a move to play even if ``stop`` is already set.
+        ``on_progress`` receives interim results every ``progress_interval`` seconds.
+        """
+        if simulations is None and movetime is None and stop is None:
+            raise ValueError("give simulations, movetime or a stop event")
         if simulations is not None and simulations < 1:
             raise ValueError(f"simulations must be positive, not {simulations}")
         if not any(board.generate_legal_moves()):
             raise ValueError("no legal moves: the game is over")
         root = self._set_root(board)
         game = board.copy()  # keeps the move stack, so repetitions include the real game
-        started = time.monotonic()
+        started = last_report = time.monotonic()
         playouts = 0
         while True:
             limit = self.config.batch_size
             if simulations is not None:
                 limit = min(limit, simulations - playouts)
             playouts += self._run_batch(root, game, limit)
-            if simulations is not None and playouts >= simulations:
+            now = time.monotonic()
+            if (
+                (simulations is not None and playouts >= simulations)
+                or (movetime is not None and now - started >= movetime)
+                or (stop is not None and stop.is_set())
+                or (max_nodes is not None and root.visits >= max_nodes)
+            ):
                 break
-            if movetime is not None and time.monotonic() - started >= movetime:
-                break
+            if on_progress is not None and now - last_report >= progress_interval:
+                on_progress(self._result(root, playouts, now - started))
+                last_report = now
         return self._result(root, playouts, time.monotonic() - started)
 
     def principal_variation(self) -> list[chess.Move]:
@@ -256,10 +275,14 @@ class MCTS:
     def _result(self, root: Node, playouts: int, seconds: float) -> SearchResult:
         children = root.children
         assert children, "the root is expanded by its first playout"
+        move = most_visited(root)
+        chosen = children[move]
         return SearchResult(
-            move=most_visited(root),
+            move=move,
             visits={move: child.visits for move, child in children.items()},
             value=-root.q,
+            move_value=chosen.q if chosen.visits else -root.q,
+            mate_in_one=chosen.terminal == -1.0,
             pv=self.principal_variation(),
             playouts=playouts,
             nodes=root.visits,

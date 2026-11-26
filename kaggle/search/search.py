@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "<tag-or-commit-sha>"
+CHESSNET_REF = "0641aba462e5b4db385e4998399fd8eadace6639"  # search code, pre-merge
 CHECKPOINT_SHA256 = "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78"
 INPUT = Path("/kaggle/input")
 WORKING = Path("/kaggle/working")

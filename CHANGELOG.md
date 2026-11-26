@@ -26,6 +26,15 @@ All notable changes to this project are documented here. The format follows
 - `scripts/benchmark_train.py --json` writes the measurements for programs, and every row
   now includes the validation (forward-only) speed.
 
+- Search: `NetworkEvaluator` (priors over legal moves only, value for the side to move, an
+  LRU cache keyed by the network input) and PUCT MCTS with batched leaf evaluation, virtual
+  loss, first-play urgency, terminal scoring (repetitions over the real game history) and
+  tree reuse.
+- Players behind one `Player.choose(board)` interface: `RandomPlayer`, `PolicyPlayer` and
+  `MCTSPlayer` (playouts or time per move, optional temperature for the first plies).
+- `scripts/benchmark_search.py` and the Kaggle kernel `kaggle/search/`: search speed on CPU
+  and GPU with the trained base network.
+
 ### Changed
 
 - The Kaggle preprocessing kernel installs v0.1.0. Kaggle CLI setup is documented with API

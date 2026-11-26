@@ -83,6 +83,14 @@ def test_stop_request_reasons() -> None:
     assert unlimited.reason(started + 1e9, step=10, stop_at_step=None) is None
 
 
+@pytest.mark.parametrize("started", [239.093622937947, 251.82211665197852, 32732.82858355153])
+def test_the_wall_time_stop_is_exact_at_the_deadline(started: float) -> None:
+    """For these clock readings ``(started + 60) - started`` rounds to just below 60."""
+    assert (started + 60.0) - started < 60.0
+    stop = StopRequest(max_wall_time=60.0, started=started)
+    assert stop.reason(started + 60.0, step=1, stop_at_step=None) == "max_wall_time"
+
+
 def test_sigterm_requests_a_stop_and_handlers_are_restored() -> None:
     before = signal.getsignal(signal.SIGTERM)
     stop = StopRequest(max_wall_time=None, started=time.monotonic())

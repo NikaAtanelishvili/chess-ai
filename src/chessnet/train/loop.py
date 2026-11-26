@@ -127,7 +127,8 @@ class StopRequest:
     def reason(self, now: float, step: int, stop_at_step: int | None) -> str | None:
         if self.signal_name is not None:
             return "signal"
-        if self.max_wall_time is not None and now - self.started >= self.max_wall_time:
+        # A deadline by addition: ``now - started`` can round to just below the budget.
+        if self.max_wall_time is not None and now >= self.started + self.max_wall_time:
             return "max_wall_time"
         if stop_at_step is not None and step >= stop_at_step:
             return "stop_at_step"

@@ -383,3 +383,90 @@ same schedule shape and validation subset).
 5. **After the run.** Download the output (`kaggle kernels output ...`). Each run's
    `best.pt` and last checkpoint are the candidates for evaluation, which also settles the
    equal-time comparison of wide and base.
+
+## Session 2 results (2026-11-25)
+
+Both runs of session 2 (code `fd50dcf`) finished all their planned epochs, well inside the
+wall-time budget, and wrote 0.54 GB of output. The GPU tests passed first.
+
+| | base (main run, GPU 0) | wide (second run, GPU 1) |
+|---|---:|---:|
+| Model | 10 x 128, 3,526,092 parameters | 10 x 192, 7,572,332 parameters |
+| Epochs, steps | 5, 187,860 (completed) | 2, 75,144 (completed) |
+| Run time | 10.08 h (estimated 10.18 h) | 8.73 h (estimated 7.83 h) |
+| Mean training speed | 10,621 positions/s (benchmark 10,639) | 4,904 positions/s (benchmark 5,533) |
+| Val top-1 / top-3 / top-5 | **54.75%** / 82.96% / 91.56% | **54.99%** / 83.20% / 91.75% |
+| Val WDL accuracy | 57.69% | 57.69% |
+| Value loss, val / train | 0.848 / 0.828 | 0.848 / 0.830 |
+| Policy loss, val / train | 1.910 / 1.881 | 1.907 / 1.888 |
+| Top-1, White / Black to move | 54.30% / 55.21% (gap 0.91 points) | 54.70% / 55.27% (gap 0.57 points) |
+| Top-1, opening / middlegame / endgame | 54.9% / 53.4% / 56.8% | 54.8% / 53.8% / 57.1% |
+
+Validation is on the fixed subset of 51,200 positions from held-out games. Train figures
+are means over the last 2% of logged steps. Both runs pass the minimum target for
+validation top-1 (40%) and the stretch target (50%).
+
+- **No overfitting.** Validation value loss fell through each run and was at its lowest at
+  the end (or within 0.0001 of it). The train-validation gap is 0.02 for the value loss and
+  0.03 for the policy loss, so the 77M training positions are far from memorised.
+- **White/Black gap.** Below 1 point at the end of both runs. Across all validations, base
+  peaked at 1.28 points (8 of 76 validations above 1 point) and wide at 1.06 points.
+  Black-to-move positions score slightly higher in both runs. A position and its colour
+  mirror encode to identical planes, so the network cannot treat the colours differently.
+  The gap therefore comes from the positions in the subset, not from the encoding.
+- **Speed.** The main run held its benchmark speed. The second run averaged 11% below its
+  2-minute benchmark, so it took 8.73 h instead of 7.83 h. Its 1.5 h margin covered that,
+  and it finished 2.5 h before its deadline.
+
+### Equal-time comparison
+
+The wide model trained for 2 epochs reached the same quality as base trained for 5, on 13%
+less GPU time: +0.24 points of top-1, +0.19 points of top-5, and equal value metrics. The
+difference is within the noise of a 51,200-position subset (about 0.2 points). Base gained
+1.3 points of top-1 over its last three epochs and 0.5 over its last two, while its learning
+rate annealed, so extra passes over the same data return little.
+
+- **Network for search and play: base** (`base-best.pt` below). It matches wide's accuracy
+  and needs about half the computation per evaluation, so it searches about twice as many
+  nodes in the same time. That matters most on a CPU.
+- **For a future, bigger run:** at equal GPU time a 2.1x wider model with 2 epochs matched
+  base with 5, so further compute should go into model size and more games, not more epochs.
+  With DDP across both T4s (about 1.8x; see the backlog in `docs/DECISIONS.md`), one session
+  could train a wide-sized or bigger model for 3 to 4 epochs. More training data (several
+  months of games instead of one) would raise the ceiling further.
+
+### Checkpoints
+
+Stored outside git in `checkpoints/session2/` (ignored by git). Source: the session 2 output
+of the Kaggle kernel `nikaatanelishvili/chessnet-train`, downloaded with:
+
+```bash
+uv run kaggle kernels output nikaatanelishvili/chessnet-train -p runs/session2 \
+    --file-pattern '.*(best\.pt|step-000187860\.pt|step-000075144\.pt|metrics\.csv|runs\.jsonl|epochs\.json|train\.log|benchmark\.(md|json|log)|config\.yaml)$'
+```
+
+Every checkpoint has encoding version 1 and dataset manifest hash `88d5cddd...6793ea`.
+
+| File | Origin | Step | Val top-1 | SHA-256 |
+|------|--------|-----:|----------:|---------|
+| `base-best.pt` | `run-base/best.pt` (lowest val loss) | 182,500 | 54.73% | `370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78` |
+| `base-step-000187860.pt` | `run-base`, final | 187,860 | 54.75% | `d6cb43678d382ad9583be5515b3404bba2ffedca442dfa79dd2b166f6f19137b` |
+| `wide-best.pt` | `run-wide/best.pt` (lowest val loss) | 75,000 | 54.94% | `7a3d263826103e6f85fa74c55f95b21ab988a8e7680b8eb1be94ac4e1cd4ca74` |
+| `wide-step-000075144.pt` | `run-wide`, final | 75,144 | 54.99% | `a5e77a70c3a58b4e1bb0e12eba37e5157e4db05728f9cd4e09167c25cf890cc6` |
+
+Check a copy with `sha256sum checkpoints/session2/*.pt`.
+
+### Sanity check of base-best.pt (CPU, policy only)
+
+Top-5 moves from the masked policy (softmax over legal moves):
+
+| Position | Top-5 |
+|----------|-------|
+| Start position (White to move) | e4 52.1%, d4 30.1%, Nf3 6.6%, c4 5.2%, b3 1.3% |
+| 1.e4 (Black to move) | c5 31.2%, e5 22.4%, e6 12.8%, c6 12.2%, d5 6.8% |
+| Ruy Lopez, 1.e4 e5 2.Nf3 Nc6 3.Bb5 (Black to move) | a6 48.7%, Nf6 22.7%, Bc5 8.6%, f5 5.8%, d6 5.6% |
+| Queen's Gambit, 1.d4 d5 2.c4 (Black to move) | e6 41.9%, c6 30.9%, dxc4 11.7%, Nf6 6.5%, e5 4.4% |
+| 1.e4 e5 2.Bc4 Nc6 3.Qh5 Nf6?? (White to move, mate in 1) | Qxf7# 90.4%, Bxf7+ 7.5%, Qh4 1.0%, Qf3 0.4%, Qe2 0.2% |
+
+The value head rates the start position about even (+0.04 for White). After 3...Nf6?? it
+gives White only +0.29, because it does not calculate the mate; the search will.

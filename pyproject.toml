@@ -34,6 +34,8 @@ onnx = [
 
 [project.scripts]
 chessnet = "chessnet.cli:app"
+# For GUIs that start an engine without arguments: UCI on stdin and stdout.
+chessnet-uci = "chessnet.engine.uci:main"
 
 [project.urls]
 Repository = "https://github.com/NikaAtanelishvili/chess-ai"

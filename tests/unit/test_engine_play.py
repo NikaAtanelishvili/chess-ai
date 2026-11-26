@@ -1,5 +1,6 @@
 """The terminal game: board drawing, move input, and whole scripted games."""
 
+import re
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -102,14 +103,14 @@ def test_cli_play(weights: Path) -> None:
     common = ["play", "--weights", str(weights), "--device", "cpu"]
     result = runner.invoke(app, [*common, "--mode", "policy"], input="e4\nresign\n")
     assert result.exit_code == 0, result.output
-    assert "chessnet plays" in result.output
-    assert "You resigned." in result.output
+    assert "chessnet plays" in plain(result.output)
+    assert "You resigned." in plain(result.output)
     result = runner.invoke(app, [*common, "--color", "black", "--simulations", "20"], input="")
     assert result.exit_code == 0, result.output
     assert "for White, 20 playouts" in result.output
     bad = runner.invoke(app, ["play", "--weights", str(weights.with_name("none.pt"))])
     assert bad.exit_code != 0
-    assert "no checkpoint" in bad.output
+    assert "no checkpoint" in plain(bad.output)
 
 
 def test_cli_uci(weights: Path) -> None:
@@ -122,12 +123,20 @@ def test_cli_uci(weights: Path) -> None:
     assert lines[-1].startswith("bestmove ")
 
 
+def plain(text: str) -> str:
+    """Output without ANSI colours (Typer colours its errors in some environments, e.g. CI)."""
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
 def test_cli_play_refuses_unknown_choices(weights: Path) -> None:
     runner = CliRunner()
-    for option, value in (("--color", "green"), ("--mode", "alphabeta")):
+    for option, value, message in (
+        ("--color", "green", "use 'white', 'black' or 'random'"),
+        ("--mode", "alphabeta", "use 'mcts' or 'policy'"),
+    ):
         result = runner.invoke(app, ["play", "--weights", str(weights), option, value])
         assert result.exit_code != 0
-        assert option in result.output
+        assert message in plain(result.output)
 
 
 @pytest.mark.slow

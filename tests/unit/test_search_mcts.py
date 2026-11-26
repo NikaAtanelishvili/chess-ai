@@ -4,11 +4,12 @@ import random
 import threading
 import time
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 
 import chess
 import pytest
 
+from chessnet.search.evaluator import Evaluation
 from chessnet.search.mcts import (
     MCTS,
     Node,
@@ -329,16 +330,25 @@ def test_max_nodes_bounds_the_tree() -> None:
     assert 300 <= result.nodes < 300 + 8
 
 
+class SlowEvaluator(UniformEvaluator):
+    """Takes 20 ms a batch, so a search lasts a predictable time."""
+
+    def evaluate(self, boards: Sequence[chess.Board]) -> list[Evaluation]:
+        time.sleep(0.02)
+        return super().evaluate(boards)
+
+
 def test_progress_reports_arrive_during_a_search() -> None:
     reports: list[int] = []
-    MCTS(UniformEvaluator()).search(
+    MCTS(SlowEvaluator(), SearchConfig(batch_size=4)).search(
         chess.Board(),
-        movetime=0.35,
+        simulations=200,  # 50 batches of 20 ms: about 1 s, so about 9 reports
         on_progress=lambda interim: reports.append(interim.playouts),
         progress_interval=0.1,
     )
-    assert len(reports) >= 2
+    assert len(reports) >= 3
     assert reports == sorted(reports)
+    assert all(0 < playouts < 200 for playouts in reports)
 
 
 def test_the_result_reports_the_chosen_moves_value_and_a_mate_in_one() -> None:

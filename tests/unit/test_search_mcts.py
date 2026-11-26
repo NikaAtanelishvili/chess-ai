@@ -1,12 +1,15 @@
 """MCTS with stub evaluators, so that these tests check the search itself, above all its signs."""
 
 import random
+import threading
+import time
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 
 import chess
 import pytest
 
+from chessnet.search.evaluator import Evaluation
 from chessnet.search.mcts import (
     MCTS,
     Node,
@@ -236,7 +239,7 @@ def test_movetime_bounds_the_search() -> None:
 
 def test_a_budget_is_required_and_settings_are_checked() -> None:
     mcts = MCTS(UniformEvaluator())
-    with pytest.raises(ValueError, match="simulations, movetime or both"):
+    with pytest.raises(ValueError, match="simulations, movetime or a stop event"):
         mcts.search(chess.Board())
     with pytest.raises(ValueError, match="positive"):
         mcts.search(chess.Board(), simulations=0)
@@ -304,3 +307,54 @@ def test_sample_move_follows_the_visit_counts() -> None:
     draws = Counter(sample_move(visits, 1.0, rng) for _ in range(2000))
     assert nf3 not in draws
     assert 0.85 < draws[e4] / 2000 < 0.95
+
+
+def test_a_stop_event_ends_the_search_and_still_yields_a_move() -> None:
+    stop = threading.Event()
+    stop.set()  # already set: the first playout still runs
+    result = MCTS(UniformEvaluator()).search(chess.Board(), stop=stop)
+    assert result.playouts == 1
+    assert result.move in chess.Board().legal_moves
+
+    later = threading.Event()
+    threading.Timer(0.2, later.set).start()
+    started = time.monotonic()
+    result = MCTS(UniformEvaluator()).search(chess.Board(), stop=later)
+    assert 0.2 <= time.monotonic() - started < 2.0
+    assert result.playouts > 1
+
+
+def test_max_nodes_bounds_the_tree() -> None:
+    mcts = MCTS(UniformEvaluator(), SearchConfig(batch_size=8))
+    result = mcts.search(chess.Board(), simulations=10_000, max_nodes=300)
+    assert 300 <= result.nodes < 300 + 8
+
+
+class SlowEvaluator(UniformEvaluator):
+    """Takes 20 ms a batch, so a search lasts a predictable time."""
+
+    def evaluate(self, boards: Sequence[chess.Board]) -> list[Evaluation]:
+        time.sleep(0.02)
+        return super().evaluate(boards)
+
+
+def test_progress_reports_arrive_during_a_search() -> None:
+    reports: list[int] = []
+    MCTS(SlowEvaluator(), SearchConfig(batch_size=4)).search(
+        chess.Board(),
+        simulations=200,  # 50 batches of 20 ms: about 1 s, so about 9 reports
+        on_progress=lambda interim: reports.append(interim.playouts),
+        progress_interval=0.1,
+    )
+    assert len(reports) >= 3
+    assert reports == sorted(reports)
+    assert all(0 < playouts < 200 for playouts in reports)
+
+
+def test_the_result_reports_the_chosen_moves_value_and_a_mate_in_one() -> None:
+    board = chess.Board(MATE_IN_ONE[0])
+    result = MCTS(UniformEvaluator()).search(board, simulations=200)
+    assert result.mate_in_one
+    assert result.move_value == pytest.approx(1.0)  # the mated side's -1, for the mover
+    quiet = MCTS(UniformEvaluator()).search(chess.Board(), simulations=50)
+    assert not quiet.mate_in_one

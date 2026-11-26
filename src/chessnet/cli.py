@@ -161,3 +161,103 @@ def train(
         f"stopped at step {result.state.step:,} of {result.state.total_steps:,} "
         f"({result.stopped_because}); last checkpoint: {result.last_checkpoint}"
     )
+
+
+WeightsOption = Annotated[
+    Path | None,
+    typer.Option(
+        dir_okay=False,
+        help="Network checkpoint (default: CHESSNET_WEIGHTS, else the chosen base network "
+        "in checkpoints/session2/).",
+    ),
+]
+DeviceOption = Annotated[str, typer.Option(help="'auto', 'cpu' or 'cuda'.")]
+
+
+@app.command()
+def uci(weights: WeightsOption = None, device: DeviceOption = "auto") -> None:
+    """Run the UCI engine on stdin and stdout, for chess GUIs (same as chessnet-uci)."""
+    from chessnet.engine.uci import main as serve
+
+    serve(weights=str(weights) if weights else None, device=device)
+
+
+@app.command()
+def play(
+    color: Annotated[
+        str, typer.Option(help="Your colour: 'white', 'black' or 'random'.")
+    ] = "white",
+    weights: WeightsOption = None,
+    device: DeviceOption = "auto",
+    mode: Annotated[str, typer.Option(help="'mcts' (search) or 'policy' (instant).")] = "mcts",
+    simulations: Annotated[int, typer.Option(min=1, help="Playouts per engine move.")] = 800,
+    movetime: Annotated[
+        float | None, typer.Option(min=0.01, help="Seconds per engine move, instead of playouts.")
+    ] = None,
+) -> None:
+    """Play a game against the engine in the terminal."""
+    import random
+
+    import chess
+
+    from chessnet.engine.play import play_game
+    from chessnet.engine.player import MCTSPlayer, Player, PolicyPlayer
+    from chessnet.engine.uci import default_weights, resolve_device, value_to_cp
+    from chessnet.search.evaluator import NetworkEvaluator
+    from chessnet.search.mcts import SearchConfig
+
+    colours = {"white": chess.WHITE, "black": chess.BLACK}
+    if color not in (*colours, "random"):
+        raise typer.BadParameter("use 'white', 'black' or 'random'", param_hint="--color")
+    if mode not in ("mcts", "policy"):
+        raise typer.BadParameter("use 'mcts' or 'policy'", param_hint="--mode")
+    path = weights or Path(default_weights())
+    if not path.is_file():
+        raise typer.BadParameter(f"no checkpoint at {path}", param_hint="--weights")
+    human = colours[color] if color in colours else random.choice([chess.WHITE, chess.BLACK])
+    evaluator = NetworkEvaluator.from_checkpoint(path, device=resolve_device(device))
+    player: Player
+    describe = None
+    if mode == "policy":
+        player = PolicyPlayer(evaluator)
+    else:
+        search_player = MCTSPlayer(
+            evaluator,
+            simulations=None if movetime else simulations,
+            movetime=movetime,
+            config=SearchConfig(batch_size=32),
+        )
+        player = search_player
+
+        def describe() -> str:
+            result = search_player.last_result
+            assert result is not None
+            # The value is the engine's; show it for White, as GUIs do.
+            white = result.move_value if human == chess.BLACK else -result.move_value
+            return (
+                f"eval {value_to_cp(white) / 100:+.2f} for White, {result.playouts} playouts "
+                f"in {result.seconds:.1f} s"
+            )
+
+    play_game(player, human, describe=describe)
+
+
+@app.command("export-onnx")
+def export_onnx(
+    weights: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, help="Checkpoint to export.")
+    ],
+    out: Annotated[Path, typer.Option(help="ONNX file to write.")],
+    opset: Annotated[int, typer.Option(min=17, help="ONNX opset.")] = 18,
+) -> None:
+    """Export a checkpoint's network to ONNX, for fast CPU inference (needs the onnx extra)."""
+    from chessnet.model.checkpoint import load_network
+    from chessnet.model.inference import export_onnx as run_export
+
+    try:
+        written = run_export(load_network(weights), out, opset=opset)
+    except ModuleNotFoundError as error:
+        raise typer.BadParameter(
+            f"{error.name} is missing: install the onnx extra (uv sync --extra onnx)"
+        ) from error
+    typer.echo(f"wrote {written}")

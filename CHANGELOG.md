@@ -34,6 +34,13 @@ All notable changes to this project are documented here. The format follows
   `MCTSPlayer` (playouts or time per move, optional temperature for the first plies).
 - `scripts/benchmark_search.py` and the Kaggle kernel `kaggle/search/`: search speed on CPU
   and GPU with the trained base network.
+- UCI engine (`chessnet uci`, and `chessnet-uci` for GUIs): `uci`, `isready`, `ucinewgame`,
+  `position`, `go` (nodes, movetime, clocks, infinite) with `stop` from a worker thread,
+  options (Weights, Simulations, CPuct, Mode, LeafBatch, Device, MoveOverhead), `info` lines
+  with centipawn scores, and time management that does not flag at short time controls.
+- `chessnet play`: a game against the engine in the terminal.
+- `chessnet export-onnx`: export a checkpoint's network to ONNX.
+- MCTS: an external stop event, a node limit, progress callbacks, and the chosen move's value.
 
 ### Changed
 

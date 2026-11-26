@@ -2,6 +2,7 @@
 
 import math
 from collections.abc import Callable, Sequence
+from pathlib import Path
 
 import chess
 
@@ -74,3 +75,15 @@ class FixedPriorEvaluator(UniformEvaluator):
             priors = {move: named.get(move, rest) for move in moves}
             evaluations.append(Evaluation(priors, evaluation.value))
         return evaluations
+
+
+def tiny_checkpoint(path: Path, seed: int = 0) -> Path:
+    """A checkpoint of the tiny network with seeded random weights (fast on any CPU)."""
+    import torch
+
+    from chessnet.config import MODEL_PRESETS
+    from chessnet.model.checkpoint import save_checkpoint
+    from chessnet.model.resnet import ChessNet
+
+    torch.manual_seed(seed)
+    return save_checkpoint(path, ChessNet(MODEL_PRESETS["tiny"]))

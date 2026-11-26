@@ -503,3 +503,13 @@ a bigger model, should use both T4s for one job.
 - **Verification before a long run:** one short Kaggle session of about 0.5 h (GPU tests,
   two-GPU throughput with `torch.compile`, a short run stopped by `--max-wall-time` and
   resumed). Budget 1 h in case it finds a bug.
+
+## 2026-11-26: Network for search and play
+
+**Context.** Session 2 trained base (5 epochs) and wide (2 epochs) for about the same GPU
+time. Both reached about 55% validation top-1, with wide ahead by 0.24 points, which is
+within the noise of the validation subset.
+**Decision.** Search, the UCI engine and evaluation use base, `checkpoints/session2/base-best.pt`
+(SHA-256 `370248af...` in `docs/TRAINING.md`). It is as accurate as wide and about twice as
+fast per evaluation, which buys more search in the same time, especially on a CPU. Wide
+stays available for a fixed-node comparison in evaluation.

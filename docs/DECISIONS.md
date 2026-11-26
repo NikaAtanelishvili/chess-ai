@@ -513,3 +513,23 @@ within the noise of the validation subset.
 (SHA-256 `370248af...` in `docs/TRAINING.md`). It is as accurate as wide and about twice as
 fast per evaluation, which buys more search in the same time, especially on a CPU. Wide
 stays available for a fixed-node comparison in evaluation.
+
+## 2026-11-26: Search conventions
+
+**Decision.**
+- **Value perspective:** a node keeps its value for the player who moved into it, so
+  selection reads children's mean values directly and backup negates at every ply.
+- **Terminal rules:** threefold repetition (`board.is_repetition(3)`) and the 50-move rule
+  count as draws inside the tree, the claimable versions, because a player facing a loss
+  would claim them. The root is never terminal while it has legal moves: an engine must
+  still move when a draw could be claimed.
+- **History:** the search works on a copy of the game board with its full move stack, so
+  repetitions include the game before the root. A tree is reused only if the new board
+  continues the same game, because terminal flags in the tree depend on that history.
+- **Budget:** `simulations` counts the playouts added by one search, not the root's total, so
+  tree reuse never shortens a search.
+- **Batches:** a leaf selected twice in one batch ends the batch; no playout waits on a
+  duplicate, and every batch makes progress.
+- **Cache key:** the network input, including the halfmove clock up to 100. A Zobrist hash
+  alone would mix positions whose clock feature differs, and the key is exact.
+- No Dirichlet noise: it serves self-play exploration, which this engine does not do.

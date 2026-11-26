@@ -188,3 +188,71 @@ refused** (`EncodingVersionError`), as is data built with another version.
   dimension, for fast CPU play later. Inputs: `planes`; outputs: `policy`, `value`. It
   needs the `onnx` extra (`onnx`, `onnxscript`; `onnxruntime` to run the result). A slow
   test checks that onnxruntime reproduces PyTorch's outputs.
+
+## Search (`chessnet.search`) and players (`chessnet.engine`)
+
+### Evaluator
+
+`NetworkEvaluator.evaluate(boards)` returns one `Evaluation(priors, value)` per board:
+
+- It encodes each board from the side to move's perspective and runs the whole batch
+  through the network (fp16 autocast on CUDA).
+- The **priors** are a softmax over the **legal moves only**: the policy logits are taken at
+  the legal moves' indices (`move_to_index`), so no illegal move gets probability.
+- The **value** is `P(win) - P(loss)` for the side to move.
+- An LRU cache (50,000 positions by default) is keyed by `position_key(board)`: pieces, side
+  to move, castling rights, an en-passant square with a legal capture, and the halfmove
+  clock up to 100, where its input feature saturates. That is exactly what the network
+  sees. History is not part of the key, because the network does not see it.
+- `NetworkEvaluator.from_checkpoint(path, device=...)` loads any training checkpoint.
+
+### MCTS (PUCT)
+
+- **Value convention:** values are expected outcomes in [-1, 1]. A node's `value_sum` is
+  seen from the player who made the move into the node, so a parent compares its children's
+  mean values directly. `backup` adds the leaf value up the path and **negates it at every
+  ply**; a test checks the signs on a hand-built tree.
+- **Selection:** `argmax Q + c_puct * P * sqrt(N_parent) / (1 + N_child)` with
+  `c_puct = 2.0`. An unvisited child scores the parent's own value minus 0.2 (first-play
+  urgency) instead of 0, which would over-explore.
+- **Terminal positions** are scored without the network: checkmate is -1 for the side to
+  move; stalemate, insufficient material, threefold repetition and the 50-move rule are 0.
+  Repetitions count the real game: the search pushes its moves onto a copy of the game
+  board that keeps the whole move stack (a regression test for the legacy engine's invented
+  history). The root itself is always searched, even where a draw could be claimed.
+- **Batched leaves with virtual loss:** up to `batch_size` (default 16) leaves share one
+  network call. Each leaf selected for the batch counts as a pending loss along its path, so
+  the next selections spread out. A leaf selected a second time ends the batch early. The
+  first playout evaluates the root alone.
+- **Budget:** `search(board, simulations=..., movetime=...)` adds that many playouts, or runs
+  for that many seconds, whichever comes first. Each playout adds one visit to the root.
+- **Tree reuse:** when the next board continues the same game, the subtree of the moves
+  played since is kept, visits included. A board from another game, or the same position
+  without its history, starts a new tree.
+- **Move choice:** the most visited root move. Players can instead sample the first plies
+  from the visit counts with a temperature. There is no Dirichlet noise, which belongs to
+  self-play.
+
+### Players
+
+`Player.choose(board) -> Move` is the one interface:
+
+- `RandomPlayer`: a random legal move.
+- `PolicyPlayer`: the masked policy's most likely move, with no search.
+- `MCTSPlayer(simulations | movetime)`: search with tree reuse between its moves;
+  `last_result` keeps the statistics (value, principal variation, nodes, speed).
+
+### Search speed
+
+`scripts/benchmark_search.py` runs 800-playout searches from a fresh tree and an empty cache
+in five positions: the start, two openings with Black to move, a middlegame and a rook
+endgame. Nodes are playouts. With the base network (`base-best.pt`):
+
+| Hardware | Leaf batch 1 | 8 | 16 | 32 |
+|----------|------:|------:|------:|------:|
+| CPU: laptop Intel i3-1115G4 (2 cores, torch 2.15) | 223 | 477 | 537 | 568 |
+
+On a CPU the evaluator (encoding plus the network) takes about 95% of the search time.
+At batch 16 it evaluates 455 positions per second; the other 15% of playouts are cache
+hits and terminal positions, which need no network call. Faster CPU inference, for example
+through the ONNX export, would therefore speed up search almost one for one.

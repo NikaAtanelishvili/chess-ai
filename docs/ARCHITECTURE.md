@@ -265,3 +265,65 @@ On a CPU the evaluator (encoding plus the network) takes about 95% of the search
 At batch 16 it evaluates 455 positions per second; the other 15% of playouts are cache
 hits and terminal positions, which need no network call. Faster CPU inference, for example
 through the ONNX export, would therefore speed up search almost one for one.
+
+## UCI engine (`chessnet.engine.uci`) and the terminal game
+
+### Protocol
+
+`chessnet-uci` (or `chessnet uci`) reads UCI commands from stdin and writes to stdout,
+flushing every line:
+
+- `uci` answers at once with the name, the options and `uciok`. Nothing heavy is imported
+  until it is needed.
+- `isready` loads the network for the current `Weights` and `Device` options (about two
+  seconds the first time), then answers `readyok`. During a search it answers at once.
+- `position startpos|fen ... moves ...` keeps the moves on the board's stack, so the search
+  sees the real game for repetitions, and the next search reuses the tree of the moves
+  played. An illegal move is reported with `info string` and the old position is kept.
+- `go` starts a search in a worker thread. The main thread keeps reading, so `stop`,
+  `isready` and `quit` are handled while the engine thinks. `go infinite` sends its
+  `bestmove` only after `stop`, as UCI requires.
+- `ucinewgame` drops the tree and the evaluator cache. Unknown commands are ignored.
+- A missing or unreadable weights file is reported with `info string`; the engine stays up
+  and answers `bestmove 0000`. So does a position with no legal moves.
+
+### Limits and time management
+
+`go nodes N` runs N playouts and `go movetime T` runs T milliseconds, less `MoveOverhead`;
+with both, whichever comes first. With a clock (`wtime`/`btime`/`winc`/`binc`), a move
+gets `remaining / 30 + 0.8 x increment - overhead` seconds, at most half of the remaining
+time after the overhead, and with `movestogo` the time is spread over at most that many
+moves. `MoveOverhead` (100 ms) covers the leaf batch that runs past the deadline (about
+60 ms on a laptop CPU at batch 32) and the protocol latency. Without node or time limits
+(including `go depth`), the engine runs `Simulations` playouts. A test simulates 100-move
+games at bullet and blitz controls with a pessimistic cost per move and checks that the
+clock never runs out. Another plays real games through python-chess on 5-second and
+20-second clocks.
+
+The tree takes about 9 KB per playout, so a search stops growing at half of the memory
+available when the engine starts, which allows about 70,000 playouts on a laptop with 1.4 GB
+free. An infinite search then waits for `stop` with its result.
+
+### Output and score
+
+During a search, an `info` line appears every second, and a final one before `bestmove`:
+`info depth <pv length> score cp <cp> nodes <root visits> nps <playouts per second>
+time <ms> pv <moves>`. A move that checkmates is reported as `score mate 1`. The score is
+the chosen move's mean value `v` (expected outcome for the engine), converted with
+Lichess's logistic win-chance model:
+
+```
+v  = 2 / (1 + exp(-0.00368208 * cp)) - 1
+cp = ln((1 + v) / (1 - v)) / 0.00368208
+```
+
+So `v = 0.18` is about +100 cp and `v = 0.5` about +300 cp. `|v|` is clipped at 0.999, which
+keeps scores within about 2,000 cp. The model was fitted to Lichess games, the same
+population the network learned from.
+
+### Terminal game
+
+`chessnet play` draws an ASCII board from the human's side and reads moves in SAN or UCI,
+plus `moves`, `undo` and `resign`. The engine plays with MCTS (800 playouts by default,
+or `--movetime`) or the policy alone, and shows its evaluation for White after each move.
+Draws by threefold repetition and the 50-move rule are claimed automatically.

@@ -533,3 +533,26 @@ stays available for a fixed-node comparison in evaluation.
 - **Cache key:** the network input, including the halfmove clock up to 100. A Zobrist hash
   alone would mix positions whose clock feature differs, and the key is exact.
 - No Dirichlet noise: it serves self-play exploration, which this engine does not do.
+
+## 2026-11-26: UCI engine details
+
+**Decision.**
+- **Entry point for GUIs:** a `chessnet-uci` console script. GUIs such as En Croissant start
+  an engine from a binary path without arguments, so the engine finds its network by itself:
+  the `Weights` option, else `CHESSNET_WEIGHTS`, else `checkpoints/session2/base-best.pt`
+  in the checkout (the package is installed in editable mode).
+- **Lazy loading:** `uci` must be answered quickly, so torch and the network load on
+  `isready` or at the first `go`.
+- **Score mapping:** Lichess's win-chance model, `cp = ln((1 + v) / (1 - v)) / 0.00368208`.
+  It is a standard logistic mapping, and it was fitted to the same population of games.
+- **Depth:** the principal variation's length. `go depth` is accepted but does not limit
+  the search; MCTS has no meaningful depth limit.
+- **Defaults:** `LeafBatch` 32, the fastest batch on both CPUs measured; `Simulations` 800,
+  about 1.5 s a move on a laptop CPU. `MoveOverhead` (100 ms) is an option, because the
+  time lost per move depends on the GUI and the machine.
+- **Memory bound:** search stops growing at half the memory available at start-up (about
+  9 KB per playout). An infinite search keeps its result until `stop`. Storing children
+  lazily, so that unvisited moves cost no node objects, would cut the tree's memory
+  several times; that can come later.
+- **Robustness:** errors (bad weights, illegal moves in `position`, malformed `go`) become
+  `info string` lines, and the engine keeps running.

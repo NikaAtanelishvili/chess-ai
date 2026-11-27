@@ -210,10 +210,12 @@ def test_only_plays_some_matches_and_merges_them_into_earlier_results(
     saved["puzzles"][0]["solved"] = -1  # replaced by the rerun below
     path.write_text(json.dumps(saved))
     puzzles_only = run_suite(
-        plan, str(weights), out=tmp_path, report=lambda line: None, only={"puzzles-policy"}
-    )
+        plan, str(weights), out=tmp_path, report=lambda line: None, only={"puzzles-policy"},
+        model_card=card,
+    )  # fmt: skip
     assert [run["solved"] >= 0 for run in puzzles_only["puzzles"]] == [True]
     assert puzzles_only["matches"] == saved["matches"]
+    assert f"Puzzles (policy) ran on {hardware('cpu')} (cpu)." in card.read_text()
     with pytest.raises(ValueError, match="no match or puzzle run nonsense"):
         run_suite(plan, str(weights), out=tmp_path, only={"nonsense"}, report=lambda line: None)
     (tmp_path / "other").mkdir()

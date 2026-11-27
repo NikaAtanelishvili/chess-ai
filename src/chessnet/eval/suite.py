@@ -437,6 +437,10 @@ def summary_table(results: dict[str, Any]) -> str:
         f"{match['name']} was played on {match['hardware']} ({match['device']})."
         for match in results["matches"]
         if match.get("hardware", results["hardware"]) != results["hardware"]
+    ] + [
+        f"Puzzles ({run['player']['name']}) ran on {run['hardware']} ({run['device']})."
+        for run in results["puzzles"]
+        if run.get("hardware", results["hardware"]) != results["hardware"]
     ]
     unfinished = [
         f"{match['errors']} game(s) of {match['name']} did not finish "

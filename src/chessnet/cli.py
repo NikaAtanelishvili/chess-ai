@@ -189,7 +189,9 @@ def play(
     ] = "white",
     weights: WeightsOption = None,
     device: DeviceOption = "auto",
-    mode: Annotated[str, typer.Option(help="'mcts' (search) or 'policy' (instant).")] = "mcts",
+    mode: Annotated[
+        str, typer.Option(help="'mcts' (search) or 'policy' (instant, with safety rules).")
+    ] = "mcts",
     simulations: Annotated[int, typer.Option(min=1, help="Playouts per engine move.")] = 800,
     movetime: Annotated[
         float | None, typer.Option(min=0.01, help="Seconds per engine move, instead of playouts.")
@@ -201,7 +203,7 @@ def play(
     import chess
 
     from chessnet.engine.play import play_game
-    from chessnet.engine.player import MCTSPlayer, Player, PolicyPlayer
+    from chessnet.engine.player import MCTSPlayer, Player, PolicySafePlayer
     from chessnet.engine.uci import default_weights, resolve_device, value_to_cp
     from chessnet.search.evaluator import NetworkEvaluator
     from chessnet.search.mcts import SearchConfig
@@ -219,7 +221,7 @@ def play(
     player: Player
     describe = None
     if mode == "policy":
-        player = PolicyPlayer(evaluator)
+        player = PolicySafePlayer(evaluator)
     else:
         search_player = MCTSPlayer(
             evaluator,
@@ -304,6 +306,13 @@ def evaluate(
             exists=True, dir_okay=False, help="Only write the model card table from a results JSON."
         ),
     ] = None,
+    only: Annotated[
+        str | None,
+        typer.Option(
+            help="Comma-separated match names (e.g. policy-safe-vs-random): play only these, and "
+            "merge them into the suite's existing results.",
+        ),
+    ] = None,
 ) -> None:
     """Evaluate a network: matches (Elo with 95% CI, PGNs saved) and Lichess puzzles."""
     import json
@@ -334,7 +343,11 @@ def evaluate(
     if estimate:
         estimate_suite(plan, workers=workers, device=device, report=typer.echo)
         return
-    run_suite(
-        plan, str(path), workers=workers, device=device, out=out, model_card=model_card,
-        report=typer.echo,
-    )  # fmt: skip
+    selected = {name.strip() for name in only.split(",")} if only else None
+    try:
+        run_suite(
+            plan, str(path), workers=workers, device=device, out=out, model_card=model_card,
+            report=typer.echo, only=selected,
+        )  # fmt: skip
+    except ValueError as error:
+        raise typer.BadParameter(str(error), param_hint="--only") from error

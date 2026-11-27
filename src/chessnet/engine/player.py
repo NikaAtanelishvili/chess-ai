@@ -1,8 +1,9 @@
-"""Players: random, policy-only and MCTS move choice behind one interface."""
+"""Players: random, policy-only (plain or with safety rules) and MCTS behind one interface."""
 
 from __future__ import annotations
 
 import random
+from collections.abc import Mapping
 from typing import Protocol
 
 import chess
@@ -46,6 +47,45 @@ class PolicyPlayer:
         _require_moves(board)
         priors = self.evaluator.evaluate([board])[0].priors
         return max(priors, key=priors.__getitem__)
+
+
+def safe_policy_move(board: chess.Board, priors: Mapping[chess.Move, float]) -> chess.Move:
+    """The most likely move after three rules, in prior order:
+
+    1. a move that checkmates, if there is one;
+    2. otherwise the first move that neither stalemates nor leaves a threefold repetition to
+       claim (completed by the move, or reachable by the opponent's reply);
+    3. if every move does one of those, the most likely move.
+
+    ``board`` is restored before returning.
+    """
+    ranked = sorted(priors, key=priors.__getitem__, reverse=True)
+    for move in ranked:
+        board.push(move)
+        mates = board.is_checkmate()
+        board.pop()
+        if mates:
+            return move
+    for move in ranked:
+        board.push(move)
+        unsafe = board.is_stalemate() or board.can_claim_threefold_repetition()
+        board.pop()
+        if not unsafe:
+            return move
+    return ranked[0]
+
+
+class PolicySafePlayer:
+    """The policy with three safety rules: it takes a mate in one, and it avoids moves that
+    stalemate or allow a threefold-repetition claim while it has others (no search)."""
+
+    def __init__(self, evaluator: Evaluator) -> None:
+        self.evaluator = evaluator
+
+    def choose(self, board: chess.Board) -> chess.Move:
+        _require_moves(board)
+        priors = self.evaluator.evaluate([board])[0].priors
+        return safe_policy_move(board, priors)
 
 
 class MCTSPlayer:

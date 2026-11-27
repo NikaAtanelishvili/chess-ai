@@ -5,7 +5,14 @@ import pytest
 import torch
 
 from chessnet.config import MODEL_PRESETS
-from chessnet.engine.player import MCTSPlayer, Player, PolicyPlayer, RandomPlayer
+from chessnet.engine.player import (
+    MCTSPlayer,
+    Player,
+    PolicyPlayer,
+    PolicySafePlayer,
+    RandomPlayer,
+    safe_policy_move,
+)
 from chessnet.model.resnet import ChessNet
 from chessnet.search.evaluator import NetworkEvaluator
 from chessnet.search.mcts import SearchConfig
@@ -95,3 +102,108 @@ def test_mcts_player_reuses_its_tree_during_a_game() -> None:
             break
         board.push(opponent.choose(board))
     assert reused > 0
+
+
+# --- policy-safe: the policy with three rules --------------------------------------------
+
+
+class Preferring(UniformEvaluator):
+    """Uniform priors, except 0.9 on one move (the policy's favourite)."""
+
+    def __init__(self, favourite: chess.Move) -> None:
+        super().__init__()
+        self.favourite = favourite
+
+    def evaluate(self, boards):  # type: ignore[no-untyped-def]
+        evaluations = super().evaluate(boards)
+        result = []
+        for evaluation in evaluations:
+            others = (0.1 / (len(evaluation.priors) - 1)) if len(evaluation.priors) > 1 else 0.0
+            priors = {m: (0.9 if m == self.favourite else others) for m in evaluation.priors}
+            result.append(type(evaluation)(priors, evaluation.value))
+        return result
+
+
+def mirrored(move: chess.Move) -> chess.Move:
+    return chess.Move(chess.square_mirror(move.from_square), chess.square_mirror(move.to_square))
+
+
+def both_colours(fen: str, *moves: str) -> list[tuple[chess.Board, list[chess.Move]]]:
+    """The position with White to move, and its colour mirror, with the moves translated."""
+    board = chess.Board(fen)
+    white = [chess.Move.from_uci(uci) for uci in moves]
+    return [(board, white), (board.mirror(), [mirrored(m) for m in white])]
+
+
+def safe_and_plain(board: chess.Board, favourite: chess.Move) -> tuple[chess.Move, chess.Move]:
+    evaluator = Preferring(favourite)
+    return PolicySafePlayer(evaluator).choose(board), PolicyPlayer(evaluator).choose(board)
+
+
+def test_policy_safe_takes_a_mate_in_one() -> None:
+    for board, (favourite, mate) in both_colours(MATE_IN_ONE, "g1f1", "d1d8"):
+        safe, plain = safe_and_plain(board, favourite)
+        assert safe == mate
+        assert plain == favourite  # the pure policy baseline is unchanged
+
+
+def test_policy_safe_avoids_a_stalemate() -> None:
+    # Ka1 Qa2 against Kc1: Qe2 stalemates, nothing mates.
+    for board, (favourite,) in both_colours("8/8/8/8/8/8/Q7/K1k5 w - - 0 1", "a2e2"):
+        safe, plain = safe_and_plain(board, favourite)
+        assert plain == favourite
+        assert safe != favourite
+        board.push(safe)
+        assert not board.is_stalemate()
+
+
+SHUFFLE_FROM = "3qk3/8/8/8/8/8/8/R3K1NR w - - 0 1"
+SHUFFLE = ("g1f3", "d8d7", "f3g1", "d7d8", "g1f3", "d8d7")  # back and forth twice
+
+
+def shuffled(colour: chess.Color, plies: int) -> tuple[chess.Board, list[chess.Move]]:
+    """The shuffle from the start position (or its mirror), ``plies`` moves in."""
+    [(board, moves)] = [
+        pair
+        for pair in both_colours(SHUFFLE_FROM, *SHUFFLE, "f3g1", "d7d8")
+        if pair[0].turn == colour
+    ]
+    board = board.copy()
+    for move in moves[:plies]:
+        board.push(move)
+    return board, moves[plies:]
+
+
+def test_policy_safe_does_not_complete_a_threefold_repetition() -> None:
+    for colour in (chess.WHITE, chess.BLACK):
+        board, rest = shuffled(colour, 7)  # the next move repeats the start a third time
+        favourite = rest[0]
+        board.push(favourite)
+        assert board.can_claim_threefold_repetition()
+        board.pop()
+        safe, plain = safe_and_plain(board, favourite)
+        assert plain == favourite
+        assert safe != favourite
+
+
+def test_policy_safe_does_not_allow_a_threefold_claim() -> None:
+    for colour in (chess.WHITE, chess.BLACK):
+        board, rest = shuffled(colour, 6)  # retreating lets the opponent repeat a third time
+        favourite = rest[0]
+        board.push(favourite)
+        assert not board.is_repetition(3)  # nothing completed yet...
+        assert board.can_claim_threefold_repetition()  # ...but the reply would
+        board.pop()
+        safe, plain = safe_and_plain(board, favourite)
+        assert plain == favourite
+        assert safe != favourite
+
+
+def test_policy_safe_plays_the_favourite_when_it_is_safe_and_falls_back_when_nothing_is() -> None:
+    board = chess.Board()
+    e4 = chess.Move.from_uci("e2e4")
+    assert safe_and_plain(board, e4) == (e4, e4)
+    stalemate = chess.Board("8/8/8/8/8/8/Q7/K1k5 w - - 0 1")
+    qe2 = chess.Move.from_uci("a2e2")
+    assert safe_policy_move(stalemate, {qe2: 1.0}) == qe2  # the only candidate, unsafe or not
+    assert stalemate.move_stack == []  # the board is restored

@@ -200,6 +200,55 @@
       "workers": 4,
       "date": "2026-11-27",
       "git_commit": "08aa78e91079c671cdcaf3093611fec8b51685ba"
+    },
+    {
+      "slug": "compare-equal-time-laptop-cpu",
+      "name": "wide-best vs base, 1 s per move each (laptop CPU)",
+      "player": {
+        "name": "wide-best-mcts-1s",
+        "kind": "mcts",
+        "weights": "checkpoints/session2/wide-best.pt",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "mcts-1s",
+        "kind": "mcts",
+        "weights": "checkpoints/session2/base-best.pt",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "games": 20,
+      "wins": 0,
+      "draws": 2,
+      "losses": 18,
+      "score": 0.05,
+      "elo": -511.5,
+      "elo_95": [
+        null,
+        -353.2
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 18,
+        "threefold_repetition": 2
+      },
+      "mean_plies": 108.0,
+      "player_seconds_per_move": 1.103,
+      "opponent_seconds_per_move": 1.058,
+      "wall_seconds": 2338.2,
+      "pgn": "eval/results/base-best.full/compare-equal-time-laptop-cpu.pgn",
+      "device": "cpu",
+      "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+      "workers": 1,
+      "date": "2026-11-27",
+      "git_commit": "aed8f43658b1b2f0bada1e833e9e4a9a2f92f977",
+      "variant_of": "compare-equal-time"
     }
   ],
   "puzzles": [

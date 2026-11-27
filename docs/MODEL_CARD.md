@@ -90,6 +90,7 @@ Puzzles, first move: 500 from lichess_puzzles_500.csv.
 | policy-safe vs random | 100 | 100 / 0 / 0 | 100.0% | +inf (+566 to +inf) | score >= 98% |
 | MCTS 400 vs policy | 100 | 100 / 0 / 0 | 100.0% | +inf (+566 to +inf) | score > 55% |
 | MCTS 800 vs Stockfish UCI_Elo 1320 | 50 | 50 / 0 / 0 | 100.0% | +inf (+446 to +inf) | non-zero score |
+| wide-best vs base, 1 s per move each (laptop CPU) | 20 | 0 / 2 / 18 | 5.0% | -512 (-inf to -353) | - |
 
 Puzzles, first move: 2000 sampled from lichess_db_puzzle.csv.zst (seed 0).
 
@@ -100,6 +101,8 @@ Puzzles, first move: 2000 sampled from lichess_db_puzzle.csv.zst (seed 0).
 The Kaggle run hung after MCTS 800 vs Stockfish UCI_Elo 1320 (fixed since). That match's results were recovered from the kernel log; its PGN was lost.
 
 policy-safe vs random was played on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu).
+
+wide-best vs base, 1 s per move each (laptop CPU) was played on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu).
 
 Puzzles (policy) ran on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu).
 

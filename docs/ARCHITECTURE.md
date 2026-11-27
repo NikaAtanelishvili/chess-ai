@@ -380,9 +380,11 @@ committed fixture has 125 per bucket from the November 2026 database.
 | full | policy vs random (100); policy-safe vs random (100); MCTS 400 vs policy (100); MCTS 800 vs Stockfish at its lowest `UCI_Elo` (50) and at `Skill Level` 0 (50), 1 s per Stockfish move; with `--compare`, the second network vs base at 800 playouts each (50) and at 1 s per move each (50) | 2,000 sampled from the database: policy, MCTS 800 |
 
 `--estimate` plays two games of each match and ten puzzles of each run, and extrapolates.
-`--only <match>,...` plays just those matches and merges them into the suite's existing
-results (for the same checkpoint); each match records the hardware it was played on, and
-the model card says so when it differs from the rest of the suite.
+`--only <part>,...` runs just those matches or puzzle runs (`puzzles-policy`,
+`puzzles-mcts-800`) and merges them into the suite's existing results (for the same
+checkpoint). Each part records the hardware, date and commit it ran on, and the model card
+says so when the hardware differs from the rest of the suite. The results list the parts
+of the suite that have not run yet (`not_run`).
 TensorBoard scalars go to `eval/results/tb/`.
 
 ### Supervised runs

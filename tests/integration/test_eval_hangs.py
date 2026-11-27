@@ -166,13 +166,13 @@ if __name__ == "__main__":
     saved = json.loads((out / "tiny.quick.json").read_text())
     matches = saved["matches"]
     print("MATCHES", [m["name"] for m in matches], [m["incomplete"] for m in matches])
-    print("NOTES", saved["notes"])
-    print("CARD", "(incomplete)" in card.read_text())
+    print("NOT RUN", saved["not_run"])
+    text = card.read_text()
+    print("CARD", "(incomplete)" in text and "Not run: random again; puzzles (policy)." in text)
 """,
         timeout=240,
     )
     out = result.stdout
     assert "MATCHES ['random vs random', 'random vs stuck'] [False, True]" in out, out
-    assert "Not run: random again." in out
-    assert "Not run: puzzles (policy)." in out
+    assert "NOT RUN ['random again', 'puzzles (policy)']" in out
     assert "CARD True" in out

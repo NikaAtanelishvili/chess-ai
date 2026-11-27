@@ -145,8 +145,9 @@ and a summary table to [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
   `uv run kaggle kernels push -p kaggle/eval`.
 - Long runs cannot hang: a stuck game or engine is killed and counted as an error, a
   heartbeat line appears every minute, each match is saved as soon as it ends, and
-  `--max-wall-time 6h` stops cleanly with what has finished. `--only <match>,...` plays
-  single matches and merges them into earlier results.
+  `--max-wall-time 6h` stops cleanly with what has finished. `--only <part>,...` runs
+  single matches or puzzle runs (such as `puzzles-mcts-800`) and merges them into earlier
+  results.
 
 ## Contributing
 

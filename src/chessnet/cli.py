@@ -309,8 +309,8 @@ def evaluate(
     only: Annotated[
         str | None,
         typer.Option(
-            help="Comma-separated match names (e.g. policy-safe-vs-random): play only these, and "
-            "merge them into the suite's existing results.",
+            help="Comma-separated parts of the suite (e.g. policy-safe-vs-random,puzzles-policy): "
+            "run only these, and merge them into the suite's existing results.",
         ),
     ] = None,
     max_wall_time: Annotated[

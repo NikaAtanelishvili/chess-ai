@@ -131,15 +131,20 @@ def test_summary_table_marks_what_did_not_finish() -> None:
              "incomplete": True, "errors": 1, "failures": [stopped, timeout]},
         ],
         "puzzles": [
-            {"player": {"name": "policy"}, "source": "3", "accuracy": None, "buckets": buckets,
-             "incomplete": True, "errors": 1, "failures": {"abc": "TimeoutError: "}},
+            {"player": {"name": "policy"}, "source": "3", "puzzles": 0, "accuracy": None,
+             "buckets": buckets, "incomplete": True, "not_run": 2, "errors": 1,
+             "failures": {"abc": "TimeoutError: "}},
         ],
+        "not_run": ["random again", "puzzles (mcts-800)"],
     }  # fmt: skip
     table = summary_table(results)
     assert "| random vs stuck (incomplete) | 0 | 0 / 0 / 0 | - | - | - |" in table
     assert "| policy (incomplete) | - | - | - | - | - |" in table
     assert "1 game(s) of random vs stuck did not finish (TimeoutError: )" in table
     assert "1 puzzle(s) for policy did not finish (TimeoutError: )" in table
+    assert "random vs stuck was stopped at the wall-time limit after 0 of 2 games." in table
+    assert "Puzzles (policy) were stopped at the wall-time limit after 1 of 3." in table
+    assert "Not run: random again; puzzles (mcts-800)." in table
 
 
 def plain(text: str) -> str:
@@ -200,7 +205,16 @@ def test_only_plays_some_matches_and_merges_them_into_earlier_results(
     assert [m["name"] for m in merged["matches"]] == ["policy vs random", "policy-safe vs random"]
     assert merged["puzzles"] == first["puzzles"]  # kept, not rerun
     assert "policy-safe vs random was played on" in card.read_text()
-    with pytest.raises(ValueError, match="no match nonsense"):
+    assert merged["not_run"] == []
+    saved = json.loads(path.read_text())
+    saved["puzzles"][0]["solved"] = -1  # replaced by the rerun below
+    path.write_text(json.dumps(saved))
+    puzzles_only = run_suite(
+        plan, str(weights), out=tmp_path, report=lambda line: None, only={"puzzles-policy"}
+    )
+    assert [run["solved"] >= 0 for run in puzzles_only["puzzles"]] == [True]
+    assert puzzles_only["matches"] == saved["matches"]
+    with pytest.raises(ValueError, match="no match or puzzle run nonsense"):
         run_suite(plan, str(weights), out=tmp_path, only={"nonsense"}, report=lambda line: None)
     (tmp_path / "other").mkdir()
     other = tiny_checkpoint(tmp_path / "other" / "tiny.pt", seed=1)

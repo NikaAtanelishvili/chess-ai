@@ -50,7 +50,8 @@ All notable changes to this project are documented here. The format follows
 - `PolicySafePlayer`: the policy plus three rules (take a mate in one; avoid moves that
   stalemate or allow a threefold-repetition claim while others exist). UCI `Mode policy` and
   `chessnet play --mode policy` now use it; the evaluation reports both it and the raw
-  policy against a random mover. `chessnet eval --only` adds matches to earlier results.
+  policy against a random mover. `chessnet eval --only` adds matches and puzzle runs to
+  earlier results, which list the parts of the suite not run yet.
 - Supervised evaluation runs: a game or puzzle that makes no progress for 5 minutes, takes
   more than an hour, or hits an external engine's call timeout is killed with its engines
   and recorded as an error; a heartbeat line every minute; results saved after every match;

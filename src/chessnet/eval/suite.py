@@ -4,8 +4,9 @@
 policy, and the 500-puzzle sample with the policy and MCTS 200. ``full``: more games of
 both, MCTS 800 against Stockfish at its weakest settings (when Stockfish is installed),
 optionally a second network against the first, and puzzles with the policy and MCTS 800.
-Results go to ``<out>/<checkpoint>.<suite>.json`` (rewritten after every step), PGNs to
-``<out>/<checkpoint>.<suite>/``, and a summary table to the model card.
+Results go to ``<out>/<checkpoint>.<suite>.json`` (rewritten after every step, with the
+parts not run yet), PGNs to ``<out>/<checkpoint>.<suite>/``, and a summary table to the
+model card.
 """
 
 from __future__ import annotations
@@ -205,6 +206,11 @@ def hardware(device: str) -> str:
     return platform.processor() or platform.machine()
 
 
+def puzzle_slug(player: PlayerSpec) -> str:
+    """The name of a puzzle run for ``--only``, e.g. 'puzzles-mcts-800'."""
+    return f"puzzles-{player.name}"
+
+
 def run_suite(
     plan: SuitePlan,
     weights: str,
@@ -220,70 +226,55 @@ def run_suite(
 ) -> dict[str, Any]:
     """Run every match and puzzle run of ``plan``; returns (and saves) the results.
 
-    Each match is saved (JSON and PGN) as soon as it finishes. ``only`` (match slugs) runs
-    just those matches, no puzzles, merged into the suite's existing results file; each
-    match records the hardware it was played on. With a ``watchdog`` games and puzzles run
-    in supervised workers. ``max_wall_time`` (seconds) stops the suite cleanly: the running
-    match or puzzle run is saved as incomplete and the rest is listed as not run.
+    The results file is rewritten after every match and puzzle run, and lists the parts of
+    the plan that have not run (``not_run``). ``only`` (match slugs and puzzle-run slugs
+    such as 'puzzles-policy') runs just those parts and merges them into the suite's
+    existing results file; each part records where and when it ran. With a ``watchdog``
+    games and puzzles run in supervised workers. ``max_wall_time`` (seconds) stops the suite
+    cleanly: the running part is saved as incomplete, and the rest is left as not run.
     """
     stem = Path(weights).stem
     results_path = out / f"{stem}.{plan.name}.json"
-    games_dir = out / f"{stem}.{plan.name}"
-    matches = plan.matches
+    matches, players = plan.matches, plan.puzzle_players
     if only is not None:
-        unknown = only - {match.slug for match in plan.matches}
+        known = {match.slug for match in matches} | {puzzle_slug(p) for p in players}
+        unknown = only - known
         if unknown:
-            raise ValueError(f"no match {', '.join(sorted(unknown))} in the {plan.name} suite")
-        matches = [match for match in plan.matches if match.slug in only]
+            raise ValueError(
+                f"no match or puzzle run {', '.join(sorted(unknown))} in the {plan.name} suite "
+                f"(choose from {', '.join(sorted(known))})"
+            )
+        matches = [match for match in matches if match.slug in only]
+        players = [player for player in players if puzzle_slug(player) in only]
     if max_wall_time is not None:
-        deadline = time.monotonic() + max_wall_time
-        watchdog = replace(watchdog or Watchdog(), deadline=deadline)
-    run = _Run(plan, results_path, games_dir, workers, device, watchdog, report)
-    if only is not None and results_path.exists():
+        watchdog = replace(watchdog or Watchdog(), deadline=time.monotonic() + max_wall_time)
+    merging = only is not None and results_path.exists()
+    if merging:
         results = json.loads(results_path.read_text(encoding="utf-8"))
         if results["sha256"] != sha256(Path(weights)):
             raise ValueError(f"{results_path} holds results for another checkpoint")
-        run.matches(matches, results)
-        if model_card is not None:
-            update_model_card(model_card, results)
-        report(f"results: {results_path}")
-        return results
-    results = {
-        "checkpoint": Path(weights).name,
-        "sha256": sha256(Path(weights)),
-        "suite": plan.name,
-        "created": datetime.now(UTC).isoformat(timespec="seconds"),
-        "chessnet_version": __version__,
-        "git_commit": git_commit(),
-        "device": resolved_device(device),
-        "hardware": hardware(device),
-        "workers": workers,
-        "openings": "50 balanced openings, each played with both colours",
-        "notes": list(plan.notes),
-        "matches": [],
-        "puzzles": [],
-    }
+    else:
+        results = {
+            "checkpoint": Path(weights).name,
+            "sha256": sha256(Path(weights)),
+            "suite": plan.name,
+            "created": datetime.now(UTC).isoformat(timespec="seconds"),
+            "chessnet_version": __version__,
+            "git_commit": git_commit(),
+            "device": resolved_device(device),
+            "hardware": hardware(device),
+            "workers": workers,
+            "openings": "50 balanced openings, each played with both colours",
+            "notes": list(plan.notes),
+            "matches": [],
+            "puzzles": [],
+        }
     out.mkdir(parents=True, exist_ok=True)
-    started = time.monotonic()
-    finished = run.matches(matches, results)
-    players = plan.puzzle_players if only is None else []
-    for position, player in enumerate(players):
-        if not finished:
-            names = [f"puzzles ({p.name})" for p in players[position:]]
-            results["notes"].append(f"Not run: {', '.join(names)}.")
-            break
-        solved = solve_puzzles(
-            player, plan.puzzles, workers=workers, device=device,
-            source=plan.puzzle_source, watchdog=watchdog, report=report,
-        )  # fmt: skip
-        results["puzzles"].append(solved.summary())
-        if solved.incomplete:
-            results["notes"].append(
-                f"Stopped at the wall-time limit during puzzles ({player.name})."
-            )
-            finished = False
-        _save(results, results_path, started)
-    _save(results, results_path, started)
+    run = _Run(plan, results, results_path, out / f"{stem}.{plan.name}", workers, device,
+               watchdog, report, keep_wall_time=merging)  # fmt: skip
+    run.save()
+    if run.matches(matches):
+        run.puzzles(players)
     if model_card is not None:
         update_model_card(model_card, results)
     _log_scalars(out / "tb" / f"{stem}.{plan.name}", results)
@@ -291,51 +282,102 @@ def run_suite(
     return results
 
 
+def _same_match(entry: dict[str, Any], match: MatchPlan) -> bool:
+    """Entries from before slugs were recorded are matched by name."""
+    return entry.get("slug", entry["name"]) in (match.slug, match.name)
+
+
 @dataclass
 class _Run:
-    """Plays matches into a results document, saving after each one."""
+    """Plays matches and puzzle runs into a results document, saving after each one."""
 
     plan: SuitePlan
+    results: dict[str, Any]
     path: Path
     games_dir: Path
     workers: int
     device: str
     watchdog: Watchdog | None
     report: Callable[[str], None]
+    keep_wall_time: bool = False
+    started: float = field(default_factory=time.monotonic)
 
-    def matches(self, matches: list[MatchPlan], results: dict[str, Any]) -> bool:
-        """Play ``matches`` into ``results`` (in the plan's order); False if time ran out."""
+    def out_of_time(self) -> bool:
+        deadline = self.watchdog.deadline if self.watchdog else None
+        return deadline is not None and time.monotonic() >= deadline
+
+    def provenance(self) -> dict[str, Any]:
+        return {
+            "device": resolved_device(self.device),
+            "hardware": hardware(self.device),
+            "workers": self.workers,
+            "date": datetime.now(UTC).date().isoformat(),
+            "git_commit": git_commit(),
+        }
+
+    def save(self) -> None:
+        results = self.results
+        missing = [m.name for m in self.plan.matches
+                   if not any(_same_match(entry, m) for entry in results["matches"])]  # fmt: skip
+        done = {run["player"]["name"] for run in results["puzzles"]}
+        missing += [f"puzzles ({p.name})" for p in self.plan.puzzle_players if p.name not in done]
+        results["not_run"] = missing
+        if not self.keep_wall_time:
+            results["wall_seconds"] = round(time.monotonic() - self.started, 1)
+        self.path.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+
+    def matches(self, matches: list[MatchPlan]) -> bool:
+        """Play ``matches`` (kept in the plan's order); False if the wall time ran out."""
         openings = load_openings()
-        order = {match.name: index for index, match in enumerate(self.plan.matches)}
-        for position, match in enumerate(matches):
+        order = self.plan.matches
+        for match in matches:
+            if self.out_of_time():
+                return False
             result = run_match(
                 match.name, match.player, match.opponent, games=match.games, openings=openings,
                 workers=self.workers, device=self.device, target=match.target,
                 watchdog=self.watchdog, report=self.report,
             )  # fmt: skip
             pgn = write_pgn(result, self.games_dir / f"{match.slug}.pgn")
-            entry = {
-                **result.summary(),
-                "pgn": str(pgn),
-                "device": resolved_device(self.device),
-                "hardware": hardware(self.device),
-            }
-            kept = [m for m in results["matches"] if m["name"] != match.name]
-            ranked = sorted([*kept, entry], key=lambda m: order.get(m["name"], len(order)))
-            results["matches"] = ranked
-            if result.incomplete:
-                rest = [m.name for m in matches[position + 1 :]]
-                note = f"Stopped at the wall-time limit during {match.name}."
-                results["notes"].append(note + (f" Not run: {', '.join(rest)}." if rest else ""))
-            self.path.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+            entry = {"slug": match.slug, **result.summary(), "pgn": pgn.as_posix(),
+                     **self.provenance()}  # fmt: skip
+            kept = [m for m in self.results["matches"] if not _same_match(m, match)]
+            rank = {plan.slug: index for index, plan in enumerate(order)}
+            self.results["matches"] = sorted(
+                [*kept, entry], key=lambda m: rank.get(m.get("slug", ""), _rank_by_name(m, order))
+            )
+            self.save()
             if result.incomplete:
                 return False
         return True
 
+    def puzzles(self, players: list[PlayerSpec]) -> bool:
+        """Puzzle runs for ``players`` (in the plan's order); False if the wall time ran out."""
+        names = [player.name for player in self.plan.puzzle_players]
+        for player in players:
+            if self.out_of_time():
+                return False
+            solved = solve_puzzles(
+                player, self.plan.puzzles, workers=self.workers, device=self.device,
+                source=self.plan.puzzle_source, watchdog=self.watchdog, report=self.report,
+            )  # fmt: skip
+            entry = {**solved.summary(), **self.provenance()}
+            kept = [r for r in self.results["puzzles"] if r["player"]["name"] != player.name]
+            self.results["puzzles"] = sorted(
+                [*kept, entry],
+                key=lambda r: (
+                    names.index(r["player"]["name"]) if r["player"]["name"] in names else len(names)
+                ),
+            )
+            self.save()
+            if solved.incomplete:
+                return False
+        return True
 
-def _save(results: dict[str, Any], path: Path, started: float) -> None:
-    results["wall_seconds"] = round(time.monotonic() - started, 1)
-    path.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+
+def _rank_by_name(entry: dict[str, Any], order: list[MatchPlan]) -> int:
+    names = [match.name for match in order]
+    return names.index(entry["name"]) if entry["name"] in names else len(names)
 
 
 def _log_scalars(directory: Path, results: dict[str, Any]) -> None:
@@ -407,7 +449,20 @@ def summary_table(results: dict[str, Any]) -> str:
         for run in results["puzzles"]
         if run.get("errors")
     ]
-    for note in [*results["notes"], *elsewhere, *unfinished]:
+    stopped = [
+        f"{match['name']} was stopped at the wall-time limit after {match['games']} of "
+        f"{match['games'] + len(match['failures'])} games."
+        for match in results["matches"]
+        if match.get("incomplete")
+    ] + [
+        f"Puzzles ({run['player']['name']}) were stopped at the wall-time limit after "
+        f"{run['puzzles'] + run['errors']} of {run['puzzles'] + run['errors'] + run['not_run']}."
+        for run in results["puzzles"]
+        if run.get("incomplete")
+    ]
+    # Semicolons: match names can contain commas.
+    not_run = [f"Not run: {'; '.join(results['not_run'])}."] if results.get("not_run") else []
+    for note in [*results["notes"], *elsewhere, *unfinished, *stopped, *not_run]:
         lines += ["", note]
     return "\n".join(lines) + "\n"
 

@@ -4,6 +4,9 @@ import csv
 import json
 import os
 import signal
+import subprocess
+import sys
+import textwrap
 import threading
 from pathlib import Path
 
@@ -76,6 +79,45 @@ def test_smoke_training_run(dataset: Path, tmp_path: Path) -> None:
     assert set(result.val_metrics) >= {"loss", "top1", "top3", "top5", "wdl_accuracy"}
 
 
+FRESH_PROCESS = """
+import sys
+from pathlib import Path
+
+import torch
+
+from chessnet.config import TrainConfig
+from chessnet.model.checkpoint import load_checkpoint
+from chessnet.train.loop import train
+
+if __name__ == "__main__":
+    data, out = Path(sys.argv[1]), Path(sys.argv[2])
+    config = TrainConfig(model="tiny", batch_size=64, compile=False, max_steps=2,
+                         warmup_steps=5, val_batches=1, num_workers=0, deterministic=True)
+    states = []
+    for run in ("first", "second"):
+        train(config, data, out / run, device="cpu")
+        states.append(load_checkpoint(out / run / "checkpoints" / "step-000000002.pt").model_state)
+    same = all(torch.equal(states[0][k], states[1][k]) for k in states[0])
+    print("SAME" if same else "DIFFERENT")
+"""
+
+
+@pytest.mark.slow
+def test_the_first_run_in_a_fresh_process_matches_the_next(dataset: Path, tmp_path: Path) -> None:
+    """Regression: MKL's vector math sets itself up on first use. When that first use was
+    Adam's square root split across two threads, one thread could compute at reduced
+    accuracy (up to 3e-4 relative), so the first run in 1 to 7 of every 8 fresh processes
+    (on a 2-core laptop) differed from the next, and the kill-and-resume test failed now
+    and then."""
+    for attempt in range(10):
+        result = subprocess.run(
+            [sys.executable, "-c", textwrap.dedent(FRESH_PROCESS), str(dataset),
+             str(tmp_path / str(attempt))],
+            capture_output=True, text=True, timeout=300, check=False,
+        )  # fmt: skip
+        assert result.stdout.strip().endswith("SAME"), (attempt, result.stdout, result.stderr)
+
+
 def final_weights(run: Path) -> dict[str, torch.Tensor]:
     return load_checkpoint(run / "checkpoints" / "step-000000060.pt").model_state
 
@@ -112,15 +154,14 @@ def test_kill_and_resume_matches_an_uninterrupted_run(
     uninterrupted = read_rows(tmp_path / "straight" / "metrics.csv")
     interrupted = read_rows(tmp_path / "resumed" / "metrics.csv")
     assert [row["step"] for row in interrupted] == [str(step) for step in range(1, 61)]
+    # Bit for bit: training on the CPU is deterministic (see warm_up_vector_math), so any
+    # difference is a bug, and even a tiny one grows, since Adam normalises every update.
     for a, b in zip(uninterrupted, interrupted, strict=True):
         for column in ("loss", "policy_loss", "value_loss", "lr"):
-            assert float(a[column]) == pytest.approx(float(b[column]), rel=1e-6, abs=1e-9), (
-                a["step"],
-                column,
-            )
+            assert a[column] == b[column], (a["step"], column, a[column], b[column])
     expected = final_weights(tmp_path / "straight")
     for name, tensor in final_weights(tmp_path / "resumed").items():
-        torch.testing.assert_close(tensor, expected[name], rtol=1e-6, atol=1e-7)
+        assert torch.equal(tensor, expected[name]), name
 
 
 @pytest.mark.slow

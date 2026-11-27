@@ -52,6 +52,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Training on the CPU could differ from run to run, and a resumed run from the
+  uninterrupted one: the first multithreaded call of MKL's vector math (Adam's square root)
+  could compute part of its output at reduced accuracy. Training now calls MKL's vector
+  math once on one thread first, and resumed runs match bit for bit.
 - `go depth N` was ignored; it now limits the search to `10 x N^2` playouts, so a GUI's
   depth setting changes the engine's strength.
 - `uv run kaggle` crashed because the Kaggle CLI imports `six` without declaring it; `six`

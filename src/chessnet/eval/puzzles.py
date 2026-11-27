@@ -154,7 +154,7 @@ def sample_puzzles(
 def write_puzzles(puzzles: Sequence[Puzzle], path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as out:
-        writer = csv.writer(out)
+        writer = csv.writer(out, lineterminator="\n")
         writer.writerow(COLUMNS)
         writer.writerows(puzzle.row() for puzzle in puzzles)
     return path

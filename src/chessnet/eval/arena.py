@@ -209,30 +209,31 @@ def write_pgn(result: MatchResult, path: Path) -> Path:
     """All games of a match in one PGN file, in schedule order."""
     path.parent.mkdir(parents=True, exist_ok=True)
     date = datetime.now(UTC).strftime("%Y.%m.%d")
-    with path.open("w", encoding="utf-8") as out:
-        for record in result.records:
-            game = chess.pgn.Game()
-            game.setup(chess.Board(record.fen))
-            node: chess.pgn.GameNode = game
-            for uci in record.moves:
-                node = node.add_variation(chess.Move.from_uci(uci))
-            white, black = (
-                (result.player.name, result.opponent.name)
-                if record.player_white
-                else (result.opponent.name, result.player.name)
-            )
-            game.headers.update(
-                {
-                    "Event": result.name,
-                    "Site": "chessnet arena",
-                    "Date": date,
-                    "Round": str(record.index + 1),
-                    "White": white,
-                    "Black": black,
-                    "Result": record.result,
-                    "Termination": record.termination,
-                    "Opening": record.opening,
-                }
-            )
-            print(game, file=out, end="\n\n")
+    games = []
+    for record in result.records:
+        game = chess.pgn.Game()
+        game.setup(chess.Board(record.fen))
+        node: chess.pgn.GameNode = game
+        for uci in record.moves:
+            node = node.add_variation(chess.Move.from_uci(uci))
+        white, black = (
+            (result.player.name, result.opponent.name)
+            if record.player_white
+            else (result.opponent.name, result.player.name)
+        )
+        game.headers.update(
+            {
+                "Event": result.name,
+                "Site": "chessnet arena",
+                "Date": date,
+                "Round": str(record.index + 1),
+                "White": white,
+                "Black": black,
+                "Result": record.result,
+                "Termination": record.termination,
+                "Opening": record.opening,
+            }
+        )
+        games.append(str(game))
+    path.write_text("\n\n".join(games) + "\n", encoding="utf-8")  # one blank line between games
     return path

@@ -36,6 +36,8 @@ dist/
 *.csv.zst
 # small hand-checked test fixtures are committed
 !/tests/fixtures/**
+# evaluation games are small and part of the evaluation record
+!/eval/results/**/*.pgn
 
 # Checkpoints and exported models
 /checkpoints/

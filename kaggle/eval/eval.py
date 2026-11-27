@@ -26,7 +26,7 @@ import urllib.request
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "<tag-or-commit-sha>"
+CHESSNET_REF = "9dd46e506f1bfe813574b244fb4adcdb38508a5e"  # evaluation code, pre-merge
 BASE_SHA256 = "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78"
 WIDE_SHA256 = "7a3d263826103e6f85fa74c55f95b21ab988a8e7680b8eb1be94ac4e1cd4ca74"
 CHECKPOINTS = {  # name in the results: (path in the training output, SHA-256)

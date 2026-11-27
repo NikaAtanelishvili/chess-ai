@@ -48,6 +48,42 @@
       "pgn": "eval/results/base-best.quick/policy-vs-random.pgn"
     },
     {
+      "name": "policy-safe vs random",
+      "player": {
+        "name": "policy-safe",
+        "kind": "policy-safe",
+        "weights": "/home/nika/Desktop/chess-ai/checkpoints/session2/base-best.pt",
+        "leaf_batch": 32
+      },
+      "opponent": {
+        "name": "random",
+        "kind": "random",
+        "leaf_batch": 32,
+        "seed": 0
+      },
+      "games": 20,
+      "wins": 20,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        286.6,
+        null
+      ],
+      "target": "score >= 98%",
+      "terminations": {
+        "checkmate": 20
+      },
+      "mean_plies": 32.6,
+      "player_seconds_per_move": 0.005,
+      "opponent_seconds_per_move": 0.0,
+      "wall_seconds": 1.9,
+      "pgn": "eval/results/base-best.quick/policy-safe-vs-random.pgn",
+      "device": "cpu",
+      "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz"
+    },
+    {
       "name": "MCTS 400 vs policy",
       "player": {
         "name": "mcts-400",

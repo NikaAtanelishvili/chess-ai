@@ -68,6 +68,7 @@ scored on the first move of the solution, by Lichess rating.
 | Match | Games | W / D / L | Score | Elo (95% CI) | Target |
 |-------|------:|-----------|------:|--------------|--------|
 | policy vs random | 20 | 16 / 4 / 0 | 90.0% | +382 (+255 to +761) | score >= 98% |
+| policy-safe vs random | 20 | 20 / 0 / 0 | 100.0% | +inf (+287 to +inf) | score >= 98% |
 | MCTS 400 vs policy | 20 | 20 / 0 / 0 | 100.0% | +inf (+287 to +inf) | score > 55% |
 
 Puzzles, first move: 500 from lichess_puzzles_500.csv.

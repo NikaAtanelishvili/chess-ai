@@ -261,3 +261,80 @@ def export_onnx(
             f"{error.name} is missing: install the onnx extra (uv sync --extra onnx)"
         ) from error
     typer.echo(f"wrote {written}")
+
+
+@app.command("eval")
+def evaluate(
+    suite: Annotated[
+        str, typer.Option(help="'quick' (about 10 minutes on a laptop CPU) or 'full'.")
+    ] = "quick",
+    weights: WeightsOption = None,
+    compare: Annotated[
+        Path | None,
+        typer.Option(dir_okay=False, help="A second network to play against the first (full)."),
+    ] = None,
+    workers: Annotated[
+        int, typer.Option(min=1, help="Games or puzzles in parallel, one process each.")
+    ] = 1,
+    device: DeviceOption = "auto",
+    stockfish: Annotated[
+        str | None, typer.Option(help="Stockfish binary (default: stockfish on PATH).")
+    ] = None,
+    puzzles: Annotated[
+        Path | None,
+        typer.Option(
+            dir_okay=False,
+            help="Puzzle CSV, or the Lichess puzzle database (.csv.zst) to sample 2,000 from in "
+            "the full suite (default: the 500-puzzle sample in tests/fixtures).",
+        ),
+    ] = None,
+    out: Annotated[Path, typer.Option(help="Directory for results JSON and PGNs.")] = Path(
+        "eval/results"
+    ),
+    model_card: Annotated[Path, typer.Option(help="Model card for the summary table.")] = Path(
+        "docs/MODEL_CARD.md"
+    ),
+    estimate: Annotated[
+        bool,
+        typer.Option(help="Time a few games and puzzles, estimate the suite's wall time, stop."),
+    ] = False,
+    from_results: Annotated[
+        Path | None,
+        typer.Option(
+            exists=True, dir_okay=False, help="Only write the model card table from a results JSON."
+        ),
+    ] = None,
+) -> None:
+    """Evaluate a network: matches (Elo with 95% CI, PGNs saved) and Lichess puzzles."""
+    import json
+    import shutil
+
+    from chessnet.engine.uci import default_weights
+    from chessnet.eval.suite import estimate_suite, plan_suite, run_suite, update_model_card
+
+    if from_results is not None:
+        update_model_card(model_card, json.loads(from_results.read_text(encoding="utf-8")))
+        typer.echo(f"updated {model_card}")
+        return
+    path = weights or Path(default_weights())
+    if not path.is_file():
+        raise typer.BadParameter(f"no checkpoint at {path}", param_hint="--weights")
+    try:
+        plan = plan_suite(
+            suite,
+            str(path),
+            compare=str(compare) if compare else None,
+            stockfish=stockfish or shutil.which("stockfish"),
+            puzzles=puzzles,
+        )
+    except ValueError as error:
+        raise typer.BadParameter(str(error), param_hint="--suite") from error
+    for note in plan.notes:
+        typer.echo(note)
+    if estimate:
+        estimate_suite(plan, workers=workers, device=device, report=typer.echo)
+        return
+    run_suite(
+        plan, str(path), workers=workers, device=device, out=out, model_card=model_card,
+        report=typer.echo,
+    )  # fmt: skip

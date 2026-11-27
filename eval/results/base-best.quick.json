@@ -48,18 +48,21 @@
       "pgn": "eval/results/base-best.quick/policy-vs-random.pgn"
     },
     {
+      "slug": "policy-safe-vs-random",
       "name": "policy-safe vs random",
       "player": {
         "name": "policy-safe",
         "kind": "policy-safe",
-        "weights": "/home/nika/Desktop/chess-ai/checkpoints/session2/base-best.pt",
-        "leaf_batch": 32
+        "weights": "checkpoints/session2/base-best.pt",
+        "leaf_batch": 32,
+        "timeout": 30.0
       },
       "opponent": {
         "name": "random",
         "kind": "random",
         "leaf_batch": 32,
-        "seed": 0
+        "seed": 0,
+        "timeout": 30.0
       },
       "games": 20,
       "wins": 20,
@@ -72,16 +75,22 @@
         null
       ],
       "target": "score >= 98%",
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
       "terminations": {
         "checkmate": 20
       },
       "mean_plies": 32.6,
-      "player_seconds_per_move": 0.005,
+      "player_seconds_per_move": 0.008,
       "opponent_seconds_per_move": 0.0,
-      "wall_seconds": 1.9,
+      "wall_seconds": 4.6,
       "pgn": "eval/results/base-best.quick/policy-safe-vs-random.pgn",
       "device": "cpu",
-      "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz"
+      "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+      "workers": 1,
+      "date": "2026-11-27",
+      "git_commit": "c5f1a7cd5f7e866afbb0b9a32cd2d71b0c991397-dirty"
     },
     {
       "name": "MCTS 400 vs policy",
@@ -194,5 +203,6 @@
       "wall_seconds": 156.2
     }
   ],
-  "wall_seconds": 583.5
+  "wall_seconds": 583.5,
+  "not_run": []
 }

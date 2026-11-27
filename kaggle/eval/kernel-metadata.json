@@ -1,0 +1,18 @@
+{
+  "id": "nikaatanelishvili/chessnet-eval",
+  "title": "chessnet-eval",
+  "code_file": "eval.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [
+    "nikaatanelishvili/chessnet-train"
+  ],
+  "model_sources": []
+}

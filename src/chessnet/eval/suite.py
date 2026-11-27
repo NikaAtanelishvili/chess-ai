@@ -70,11 +70,14 @@ def plan_suite(
         raise ValueError(f"unknown suite {suite!r}: use 'quick' or 'full'")
     random_player = PlayerSpec("random", "random", seed=0)
     policy = PlayerSpec("policy", "policy", weights=weights)
+    policy_safe = PlayerSpec("policy-safe", "policy-safe", weights=weights)
     mcts400 = PlayerSpec("mcts-400", "mcts", weights=weights, simulations=400)
     mcts800 = PlayerSpec("mcts-800", "mcts", weights=weights, simulations=800)
     full = suite == "full"
     matches = [
         MatchPlan("policy vs random", "policy-vs-random", policy, random_player,
+                  100 if full else 20, "score >= 98%"),
+        MatchPlan("policy-safe vs random", "policy-safe-vs-random", policy_safe, random_player,
                   100 if full else 20, "score >= 98%"),
         MatchPlan("MCTS 400 vs policy", "mcts400-vs-policy", mcts400, policy,
                   100 if full else 20, "score > 55%"),
@@ -210,12 +213,32 @@ def run_suite(
     out: Path = Path("eval/results"),
     model_card: Path | None = None,
     report: Callable[[str], None] = print,
+    only: set[str] | None = None,
 ) -> dict[str, Any]:
-    """Run every match and puzzle run of ``plan``; returns (and saves) the results."""
+    """Run every match and puzzle run of ``plan``; returns (and saves) the results.
+
+    ``only`` (match slugs) runs just those matches, no puzzles, and merges them into the
+    suite's existing results file; each match records the hardware it was played on.
+    """
     stem = Path(weights).stem
     results_path = out / f"{stem}.{plan.name}.json"
     games_dir = out / f"{stem}.{plan.name}"
-    results: dict[str, Any] = {
+    matches = plan.matches
+    if only is not None:
+        unknown = only - {match.slug for match in plan.matches}
+        if unknown:
+            raise ValueError(f"no match {', '.join(sorted(unknown))} in the {plan.name} suite")
+        matches = [match for match in plan.matches if match.slug in only]
+    if only is not None and results_path.exists():
+        results = json.loads(results_path.read_text(encoding="utf-8"))
+        if results["sha256"] != sha256(Path(weights)):
+            raise ValueError(f"{results_path} holds results for another checkpoint")
+        _run_matches(plan, matches, results, results_path, games_dir, workers, device, report)
+        if model_card is not None:
+            update_model_card(model_card, results)
+        report(f"results: {results_path}")
+        return results
+    results = {
         "checkpoint": Path(weights).name,
         "sha256": sha256(Path(weights)),
         "suite": plan.name,
@@ -231,28 +254,51 @@ def run_suite(
         "puzzles": [],
     }
     out.mkdir(parents=True, exist_ok=True)
-    openings = load_openings()
     started = time.monotonic()
-    for match in plan.matches:
-        result = run_match(
-            match.name, match.player, match.opponent, games=match.games, openings=openings,
-            workers=workers, device=device, target=match.target, report=report,
-        )  # fmt: skip
-        pgn = write_pgn(result, games_dir / f"{match.slug}.pgn")
-        results["matches"].append({**result.summary(), "pgn": str(pgn)})
-        _save(results, results_path, started)
-    for player in plan.puzzle_players:
+    _run_matches(plan, matches, results, results_path, games_dir, workers, device, report)
+    for player in plan.puzzle_players if only is None else []:
         solved = solve_puzzles(
             player, plan.puzzles, workers=workers, device=device,
             source=plan.puzzle_source, report=report,
         )  # fmt: skip
         results["puzzles"].append(solved.summary())
         _save(results, results_path, started)
+    _save(results, results_path, started)
     if model_card is not None:
         update_model_card(model_card, results)
     _log_scalars(out / "tb" / f"{stem}.{plan.name}", results)
     report(f"results: {results_path}")
     return results
+
+
+def _run_matches(
+    plan: SuitePlan,
+    matches: list[MatchPlan],
+    results: dict[str, Any],
+    path: Path,
+    games_dir: Path,
+    workers: int,
+    device: str,
+    report: Callable[[str], None],
+) -> None:
+    """Play ``matches`` and put each into ``results`` (in the plan's order), saving as it goes."""
+    openings = load_openings()
+    order = {match.name: index for index, match in enumerate(plan.matches)}
+    for match in matches:
+        result = run_match(
+            match.name, match.player, match.opponent, games=match.games, openings=openings,
+            workers=workers, device=device, target=match.target, report=report,
+        )  # fmt: skip
+        pgn = write_pgn(result, games_dir / f"{match.slug}.pgn")
+        entry = {
+            **result.summary(),
+            "pgn": str(pgn),
+            "device": resolved_device(device),
+            "hardware": hardware(device),
+        }
+        kept = [m for m in results["matches"] if m["name"] != match.name]
+        results["matches"] = sorted([*kept, entry], key=lambda m: order.get(m["name"], len(order)))
+        path.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
 
 
 def _save(results: dict[str, Any], path: Path, started: float) -> None:
@@ -308,7 +354,12 @@ def summary_table(results: dict[str, Any]) -> str:
             lines.append(
                 f"| {run['player']['name']} | " + " | ".join(cells) + f" | {run['accuracy']:.1%} |"
             )
-    for note in results["notes"]:
+    elsewhere = [
+        f"{match['name']} was played on {match['hardware']} ({match['device']})."
+        for match in results["matches"]
+        if match.get("hardware", results["hardware"]) != results["hardware"]
+    ]
+    for note in [*results["notes"], *elsewhere]:
         lines += ["", note]
     return "\n".join(lines) + "\n"
 

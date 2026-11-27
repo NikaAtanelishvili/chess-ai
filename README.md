@@ -57,7 +57,7 @@ option or the `CHESSNET_WEIGHTS` environment variable.
 uv run chessnet play                     # you play White
 uv run chessnet play --color black       # or random
 uv run chessnet play --movetime 3        # 3 seconds per engine move (default: 800 playouts)
-uv run chessnet play --mode policy       # instant moves from the network, no search
+uv run chessnet play --mode policy       # instant moves (policy-safe), no search
 ```
 
 Type moves in SAN (`Nf3`, `O-O`) or UCI (`g1f3`); `moves` lists the legal moves, `undo`
@@ -102,10 +102,15 @@ laptop CPU it searches about 500 nodes per second, so 800 playouts take about 1.
 | `Weights` | `checkpoints/session2/base-best.pt` | network checkpoint |
 | `Simulations` | 800 | playouts per move when the GUI sets no node or time limit |
 | `CPuct` | 2.0 | weight of the prior in PUCT exploration |
-| `Mode` | `mcts` | `mcts` (search) or `policy` (the network's top move, instant) |
+| `Mode` | `mcts` | `mcts` (search) or `policy` (policy-safe: instant, see below) |
 | `LeafBatch` | 32 | leaves per network call (fastest on the CPUs measured) |
 | `Device` | `auto` | `auto`, `cpu` or `cuda` |
 | `MoveOverhead` | 100 | milliseconds kept back per move for GUI and system lag |
+
+`Mode policy` plays **policy-safe**: the network's most likely move, except that it takes
+a mate in one when it has one, and avoids moves that stalemate or let either side claim a
+threefold repetition while it has other moves. The evaluation's `policy` player stays the
+raw network, for an honest baseline.
 
 The engine understands `go nodes`, `movetime`, `depth`, `wtime`/`btime`/`winc`/`binc`/
 `movestogo`, and `infinite` with `stop`. MCTS has no fixed depth, so `go depth N` runs
@@ -124,8 +129,8 @@ uv run chessnet eval --suite full --workers 2 --compare checkpoints/session2/wid
     --puzzles data/puzzles/lichess_db_puzzle.csv.zst
 ```
 
-The quick suite plays the policy against a random mover and MCTS (400 playouts) against
-the policy, and scores 500 Lichess puzzles. The full suite plays more games, adds MCTS (800
+The quick suite plays the raw policy and policy-safe against a random mover and MCTS (400
+playouts) against the policy, and scores 500 Lichess puzzles. The full suite plays more games, adds MCTS (800
 playouts) against Stockfish at its lowest `UCI_Elo` and at `Skill Level` 0, optionally a
 second network against the first, and 2,000 puzzles. Games start from 50 balanced
 openings, each played with both colours. Results go to `eval/results/` (JSON and PGNs),

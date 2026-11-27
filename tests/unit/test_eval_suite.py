@@ -35,8 +35,10 @@ def test_the_quick_suite() -> None:
     plan = plan_suite("quick", "w.pt")
     assert [(m.name, m.games) for m in plan.matches] == [
         ("policy vs random", 20),
+        ("policy-safe vs random", 20),
         ("MCTS 400 vs policy", 20),
     ]
+    assert plan.matches[1].player.kind == "policy-safe"
     assert [p.name for p in plan.puzzle_players] == ["policy", "mcts-200"]
     assert len(plan.puzzles) == 500
     assert plan.notes == []
@@ -44,7 +46,7 @@ def test_the_quick_suite() -> None:
 
 def test_the_full_suite_without_stockfish_or_a_second_network() -> None:
     plan = plan_suite("full", "w.pt")
-    assert [m.games for m in plan.matches] == [100, 100]
+    assert [m.games for m in plan.matches] == [100, 100, 100]
     assert [p.name for p in plan.puzzle_players] == ["policy", "mcts-800"]
     assert plan.notes == ["Stockfish was not found, so its matches were skipped."]
     with pytest.raises(ValueError, match="unknown suite"):
@@ -145,3 +147,33 @@ def test_hardware_names_the_cpu_or_the_gpus() -> None:
     name = hardware("cpu")
     assert name
     assert name != "x86_64" or not Path("/proc/cpuinfo").exists()  # the model, not the arch
+
+
+def test_only_plays_some_matches_and_merges_them_into_earlier_results(
+    weights: Path, tmp_path: Path
+) -> None:
+    plan = small_plan(weights)
+    safe = PlayerSpec("policy-safe", "policy-safe", weights=str(weights))
+    plan.matches.insert(
+        1, MatchPlan("policy-safe vs random", "policy-safe-vs-random", safe,
+                     PlayerSpec("random", "random", seed=0), 2, "score >= 98%"),
+    )  # fmt: skip
+    first = run_suite(plan, str(weights), out=tmp_path, report=lambda line: None)
+    first["hardware"] = "the other machine"  # as if the suite had run elsewhere
+    path = tmp_path / "tiny.quick.json"
+    path.write_text(json.dumps(first))
+    card = tmp_path / "card.md"
+    merged = run_suite(
+        plan, str(weights), out=tmp_path, report=lambda line: None, model_card=card,
+        only={"policy-safe-vs-random"},
+    )  # fmt: skip
+    assert [m["name"] for m in merged["matches"]] == ["policy vs random", "policy-safe vs random"]
+    assert merged["puzzles"] == first["puzzles"]  # kept, not rerun
+    assert "policy-safe vs random was played on" in card.read_text()
+    with pytest.raises(ValueError, match="no match nonsense"):
+        run_suite(plan, str(weights), out=tmp_path, only={"nonsense"}, report=lambda line: None)
+    (tmp_path / "other").mkdir()
+    other = tiny_checkpoint(tmp_path / "other" / "tiny.pt", seed=1)
+    with pytest.raises(ValueError, match="another checkpoint"):
+        run_suite(plan, str(other), out=tmp_path, only={"policy-safe-vs-random"},
+                  report=lambda line: None)  # fmt: skip

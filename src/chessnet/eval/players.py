@@ -17,7 +17,7 @@ from typing import Any, TypeVar
 import chess
 import chess.engine
 
-from chessnet.engine.player import MCTSPlayer, Player, PolicyPlayer, RandomPlayer
+from chessnet.engine.player import MCTSPlayer, Player, PolicyPlayer, PolicySafePlayer, RandomPlayer
 
 Item = TypeVar("Item")
 Result = TypeVar("Result")
@@ -26,7 +26,7 @@ OptionValue = str | int | bool
 
 @dataclass(frozen=True)
 class PlayerSpec:
-    """How to build a player (kind: random, policy, mcts or uci)."""
+    """How to build a player (kind: random, policy, policy-safe, mcts or uci)."""
 
     name: str
     kind: str
@@ -114,7 +114,7 @@ def build_players(specs: tuple[PlayerSpec, ...], device: str) -> tuple[Player, .
             players.append(
                 UCIPlayer(spec.command, options, nodes=spec.nodes, movetime=spec.movetime)
             )
-        elif spec.kind in ("policy", "mcts"):
+        elif spec.kind in ("policy", "policy-safe", "mcts"):
             if spec.weights is None:
                 raise ValueError(f"{spec.name} needs weights")
             if spec.weights not in evaluators:
@@ -124,6 +124,8 @@ def build_players(specs: tuple[PlayerSpec, ...], device: str) -> tuple[Player, .
             evaluator = evaluators[spec.weights]
             if spec.kind == "policy":
                 players.append(PolicyPlayer(evaluator))
+            elif spec.kind == "policy-safe":
+                players.append(PolicySafePlayer(evaluator))
             else:
                 players.append(
                     MCTSPlayer(

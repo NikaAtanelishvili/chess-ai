@@ -579,3 +579,19 @@ stays available for a fixed-node comparison in evaluation.
 - **Where it runs:** the full suite takes hours on a laptop, so a Kaggle kernel runs it with
   4 parallel games. Results (JSON and PGNs) are committed under `eval/results/`, so the
   model card's numbers can be checked.
+
+## 2026-11-27: Policy-safe player (owner decision)
+
+**Context.** In the quick suite the raw policy scored 90% against a random mover, below the
+98% target: 3 of 20 games were stalemates and one a threefold repetition, never a loss.
+Without search the policy cannot tell that stalemating a lone king throws the win away.
+**Decision.**
+- The `policy` player stays the raw network, so the baseline measures the network honestly.
+- `policy-safe` adds three rules: take a mate in one; otherwise skip moves that stalemate or
+  leave a threefold repetition to claim (completed by the move, or reachable by the
+  opponent's reply), unless every move does. It is no search: one ply of rules, applied in
+  prior order.
+- Both play the random mover in the suites. UCI `Mode policy` and `chessnet play --mode
+  policy` use policy-safe, since a player wants the win.
+- The Kaggle full suite was already running, so policy-safe's 100 games against the random
+  mover were played on the laptop and merged into its results with `--only`.

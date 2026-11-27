@@ -84,8 +84,8 @@ def map_with_players(
 
     Without a watchdog and with one worker everything runs in this process, and errors
     propagate. Otherwise ``workers`` processes run the tasks under the watchdog's limits
-    (``threads`` torch threads each, by default the CPUs shared out). ``function`` must be a
-    module-level function; it calls ``beat()`` whenever it makes progress.
+    (``threads`` torch threads each, by default :func:`threads_per_worker`). ``function``
+    must be a module-level function; it calls ``beat()`` whenever it makes progress.
     """
     if watchdog is None and workers <= 1:
         players = build_players(specs, resolve_device(device))
@@ -96,9 +96,19 @@ def map_with_players(
             close_players(players)
         return
     count = max(1, min(workers, len(items)))
-    per_worker = threads or max(1, multiprocessing.cpu_count() // count)
+    per_worker = threads or threads_per_worker(count)
     supervisor = _Supervisor(specs, function, items, device, per_worker, watchdog or Watchdog())
     yield from supervisor.run(count, label, report)
+
+
+def threads_per_worker(workers: int) -> int:
+    """Torch's own thread count (one per physical core) shared out among ``workers``.
+
+    Not the logical CPUs: hyper-threads make the network slower, not faster.
+    """
+    import torch
+
+    return max(1, torch.get_num_threads() // workers)
 
 
 class _Worker:

@@ -115,6 +115,30 @@ less the move overhead, and never more than half the remaining time. Scores are 
 from the network's expected outcome `v` with Lichess's win-chance model,
 `cp = ln((1 + v) / (1 - v)) / 0.00368208` (`v = 0.18` is about one pawn).
 
+## Evaluate
+
+```bash
+uv run chessnet eval --suite quick              # about 10 minutes on a laptop CPU
+uv run chessnet eval --suite full --estimate    # times a few games, estimates the full suite
+uv run chessnet eval --suite full --workers 2 --compare checkpoints/session2/wide-best.pt \
+    --puzzles data/puzzles/lichess_db_puzzle.csv.zst
+```
+
+The quick suite plays the policy against a random mover and MCTS (400 playouts) against
+the policy, and scores 500 Lichess puzzles. The full suite plays more games, adds MCTS (800
+playouts) against Stockfish at its lowest `UCI_Elo` and at `Skill Level` 0, optionally a
+second network against the first, and 2,000 puzzles. Games start from 50 balanced
+openings, each played with both colours. Results go to `eval/results/` (JSON and PGNs),
+and a summary table to [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
+
+- **Stockfish** is optional; its matches are skipped without it. On Ubuntu:
+  `sudo apt install stockfish`.
+- **Puzzles:** 500 are committed in `tests/fixtures/puzzles/`. The full Lichess puzzle
+  database (CC0, 310 MB) is not:
+  `curl -L -o data/puzzles/lichess_db_puzzle.csv.zst https://database.lichess.org/lichess_db_puzzle.csv.zst`
+- The full suite takes hours on a laptop, so the Kaggle kernel `kaggle/eval/` runs it:
+  `uv run kaggle kernels push -p kaggle/eval`.
+
 ## Contributing
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/) using the types

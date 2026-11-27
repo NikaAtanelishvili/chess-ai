@@ -330,3 +330,48 @@ population the network learned from.
 plus `moves`, `undo` and `resign`. The engine plays with MCTS (800 playouts by default,
 or `--movetime`) or the policy alone, and shows its evaluation for White after each move.
 Draws by threefold repetition and the 50-move rule are claimed automatically.
+
+## Evaluation (`chessnet.eval`)
+
+### Arena
+
+`run_match` plays N games between two players described by `PlayerSpec`s (random, policy,
+MCTS with playouts or time per move, or an external UCI engine such as Stockfish):
+
+- **Openings:** game i starts from opening i // 2 of the book, with the player as White in
+  even games and as Black in odd ones. Deterministic players therefore never repeat a game.
+  The book (`chessnet/eval/data/openings.epd`) has 50 standard lines of 6 to 14 plies, each
+  within +-52 cp by Stockfish 16 at depth 20.
+- **Adjudication:** checkmate, stalemate, insufficient material, threefold repetition that
+  has happened (a merely available repetition does not end the game, so a winning side
+  is not drawn early), the 50-move rule, or 600 plies (a draw). An illegal move loses.
+- **Statistics:** wins, draws and losses from the player's side; score; the Elo
+  difference `-400 log10(1/score - 1)`. The 95% interval comes from the per-game variance
+  of the score, or from the Wilson interval when every game had the same result, so 100
+  wins in 100 games still give a finite lower bound (about +550).
+- **Parallel games:** with `--workers N`, N spawned processes each build the players once
+  (networks, search trees, engine processes) and take games as they free up. Torch threads
+  are shared out, and GPUs are assigned round-robin.
+- **PGNs:** every game of a match, with the opening's FEN, the players, the result and the
+  termination.
+
+### Puzzles
+
+Lichess puzzle rows give a FEN, the moves and a rating. The player sees the position after
+the first move (the opponent's) and must find the solution's first move. Any checkmate
+counts when the solution checkmates, as on Lichess. Accuracy is reported for four rating
+buckets: up to 1000, 1001-1500, 1501-2000, and above 2000. Samples take equal numbers per
+bucket, uniformly among established puzzles (rating deviation at most 100, popularity at
+least 80, at least 200 plays), and are reproducible for a given file and seed. The
+committed fixture has 125 per bucket from the November 2026 database.
+
+### Suites
+
+| Suite | Matches | Puzzles |
+|-------|---------|---------|
+| quick | policy vs random (20 games); MCTS 400 vs policy (20) | 500 (fixture): policy, MCTS 200 |
+| full | policy vs random (100); MCTS 400 vs policy (100); MCTS 800 vs Stockfish at its lowest `UCI_Elo` (50) and at `Skill Level` 0 (50), 1 s per Stockfish move; with `--compare`, the second network vs base at 800 playouts each (50) and at 1 s per move each (50) | 2,000 sampled from the database: policy, MCTS 800 |
+
+`--estimate` plays two games of each match and ten puzzles of each run, and extrapolates.
+Results are rewritten after every match, so a run that is cut short keeps what it
+finished. TensorBoard scalars go to `eval/results/tb/`.

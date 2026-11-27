@@ -41,6 +41,12 @@ All notable changes to this project are documented here. The format follows
 - `chessnet play`: a game against the engine in the terminal.
 - `chessnet export-onnx`: export a checkpoint's network to ONNX.
 - MCTS: an external stop event, a node limit, progress callbacks, and the chosen move's value.
+- `chessnet eval --suite quick|full`: matches over 50 balanced openings with alternating
+  colours (W/D/L, score, Elo with a 95% interval, PGNs), against a random mover, the policy,
+  Stockfish at its weakest settings and a second network; Lichess puzzle accuracy by rating
+  bucket; `--estimate` for wall time; results in `eval/results/` and `docs/MODEL_CARD.md`.
+- A 500-puzzle Lichess sample in `tests/fixtures/puzzles/`, and the Kaggle kernel
+  `kaggle/eval/` for the full suite.
 
 ### Changed
 

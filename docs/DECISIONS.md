@@ -559,3 +559,23 @@ stays available for a fixed-node comparison in evaluation.
   several times; that can come later.
 - **Robustness:** errors (bad weights, illegal moves in `position`, malformed `go`) become
   `info string` lines, and the engine keeps running.
+
+## 2026-11-27: Evaluation design
+
+**Decision.**
+- **Openings:** 50 balanced main lines (Stockfish 16, depth 20, within +-52 cp), each
+  played with both colours. Without them, two deterministic players would replay one game.
+- **Draws** end a game only when a repetition has happened or the 50-move rule applies.
+  python-chess's `outcome(claim_draw=True)` also counts a repetition that one legal move
+  could reach, which would end games a winning side is still pressing. This matches the
+  search's own terminal rules.
+- **Stockfish** gets 1 s per move, near the conditions its `UCI_Elo` is calibrated for,
+  with one thread and 16 MB hash. Our MCTS plays a fixed number of playouts, as specified.
+- **Elo intervals:** normal approximation of the score's per-game variance; Wilson's
+  interval when all games had one result, which keeps a sweep's lower bound finite.
+- **Puzzles:** first move only, with any mate accepted when the solution mates. Equal
+  samples per rating bucket from well-established puzzles, so each bucket's accuracy has
+  the same precision.
+- **Where it runs:** the full suite takes hours on a laptop, so a Kaggle kernel runs it with
+  4 parallel games. Results (JSON and PGNs) are committed under `eval/results/`, so the
+  model card's numbers can be checked.

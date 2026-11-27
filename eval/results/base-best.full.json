@@ -202,6 +202,159 @@
       "git_commit": "08aa78e91079c671cdcaf3093611fec8b51685ba"
     },
     {
+      "slug": "mcts800-vs-stockfish-skill0",
+      "name": "MCTS 800 vs Stockfish Skill Level 0",
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-skill-0",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "Skill Level": 0,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 50,
+      "wins": 50,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        445.8,
+        null
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 50
+      },
+      "mean_plies": 57.5,
+      "player_seconds_per_move": 0.825,
+      "opponent_seconds_per_move": 0.934,
+      "wall_seconds": 670.4,
+      "pgn": "eval/results/base-best.full/mcts800-vs-stockfish-skill0.pgn",
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "813d45409a0103d43103811cf033493634f87d16"
+    },
+    {
+      "slug": "compare-equal-nodes",
+      "name": "wide-best vs base, 800 playouts each",
+      "player": {
+        "name": "wide-best-mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/wide-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "games": 50,
+      "wins": 12,
+      "draws": 25,
+      "losses": 13,
+      "score": 0.49,
+      "elo": -6.9,
+      "elo_95": [
+        -76.2,
+        61.8
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "stalemate": 3,
+        "checkmate": 25,
+        "threefold_repetition": 20,
+        "insufficient_material": 2
+      },
+      "mean_plies": 110.9,
+      "player_seconds_per_move": 0.761,
+      "opponent_seconds_per_move": 0.761,
+      "wall_seconds": 1081.8,
+      "pgn": "eval/results/base-best.full/compare-equal-nodes.pgn",
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "813d45409a0103d43103811cf033493634f87d16"
+    },
+    {
+      "slug": "compare-equal-time",
+      "name": "wide-best vs base, 1 s per move each",
+      "player": {
+        "name": "wide-best-mcts-1s",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/wide-best.pt",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "mcts-1s",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "games": 50,
+      "wins": 13,
+      "draws": 29,
+      "losses": 8,
+      "score": 0.55,
+      "elo": 34.9,
+      "elo_95": [
+        -27.0,
+        99.0
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 21,
+        "threefold_repetition": 27,
+        "insufficient_material": 2
+      },
+      "mean_plies": 127.7,
+      "player_seconds_per_move": 1.037,
+      "opponent_seconds_per_move": 1.039,
+      "wall_seconds": 3323.8,
+      "pgn": "eval/results/base-best.full/compare-equal-time.pgn",
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 2,
+      "date": "2026-11-27",
+      "git_commit": "813d45409a0103d43103811cf033493634f87d16"
+    },
+    {
       "slug": "compare-equal-time-laptop-cpu",
       "name": "wide-best vs base, 1 s per move each (laptop CPU)",
       "player": {
@@ -256,7 +409,7 @@
       "player": {
         "name": "policy",
         "kind": "policy",
-        "weights": "checkpoints/session2/base-best.pt",
+        "weights": "/tmp/tools/weights/base-best.pt",
         "leaf_batch": 32,
         "timeout": 30.0
       },
@@ -290,20 +443,62 @@
       "not_run": 0,
       "errors": 0,
       "failures": {},
-      "seconds_per_puzzle": 0.008,
-      "wall_seconds": 15.0,
-      "device": "cpu",
-      "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
-      "workers": 1,
+      "seconds_per_puzzle": 0.007,
+      "wall_seconds": 14.0,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
       "date": "2026-11-27",
-      "git_commit": "512a474de9f795234cb471d18f22bfd241b3a734-dirty"
+      "git_commit": "813d45409a0103d43103811cf033493634f87d16"
+    },
+    {
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "source": "2000 sampled from lichess_db_puzzle.csv.zst (seed 0)",
+      "puzzles": 2000,
+      "solved": 1871,
+      "accuracy": 0.9355,
+      "buckets": {
+        "<=1000": {
+          "puzzles": 500,
+          "solved": 497,
+          "accuracy": 0.994
+        },
+        "1001-1500": {
+          "puzzles": 500,
+          "solved": 490,
+          "accuracy": 0.98
+        },
+        "1501-2000": {
+          "puzzles": 500,
+          "solved": 461,
+          "accuracy": 0.922
+        },
+        ">2000": {
+          "puzzles": 500,
+          "solved": 423,
+          "accuracy": 0.846
+        }
+      },
+      "incomplete": false,
+      "not_run": 0,
+      "errors": 0,
+      "failures": {},
+      "seconds_per_puzzle": 0.182,
+      "wall_seconds": 364.0,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "813d45409a0103d43103811cf033493634f87d16"
     }
   ],
-  "not_run": [
-    "MCTS 800 vs Stockfish Skill Level 0",
-    "wide-best vs base, 800 playouts each",
-    "wide-best vs base, 1 s per move each",
-    "puzzles (mcts-800)"
-  ],
+  "not_run": [],
   "wall_seconds": 1090.9
 }

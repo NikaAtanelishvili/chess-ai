@@ -90,6 +90,9 @@ Puzzles, first move: 500 from lichess_puzzles_500.csv.
 | policy-safe vs random | 100 | 100 / 0 / 0 | 100.0% | +inf (+566 to +inf) | score >= 98% |
 | MCTS 400 vs policy | 100 | 100 / 0 / 0 | 100.0% | +inf (+566 to +inf) | score > 55% |
 | MCTS 800 vs Stockfish UCI_Elo 1320 | 50 | 50 / 0 / 0 | 100.0% | +inf (+446 to +inf) | non-zero score |
+| MCTS 800 vs Stockfish Skill Level 0 | 50 | 50 / 0 / 0 | 100.0% | +inf (+446 to +inf) | - |
+| wide-best vs base, 800 playouts each | 50 | 12 / 25 / 13 | 49.0% | -7 (-76 to +62) | - |
+| wide-best vs base, 1 s per move each | 50 | 13 / 29 / 8 | 55.0% | +35 (-27 to +99) | - |
 | wide-best vs base, 1 s per move each (laptop CPU) | 20 | 0 / 2 / 18 | 5.0% | -512 (-inf to -353) | - |
 
 Puzzles, first move: 2000 sampled from lichess_db_puzzle.csv.zst (seed 0).
@@ -97,14 +100,42 @@ Puzzles, first move: 2000 sampled from lichess_db_puzzle.csv.zst (seed 0).
 | Player | <=1000 | 1001-1500 | 1501-2000 | >2000 | All |
 |--------|---:|---:|---:|---:|---:|
 | policy | 82.8% | 69.2% | 55.6% | 49.2% | 64.2% |
+| mcts-800 | 99.4% | 98.0% | 92.2% | 84.6% | 93.5% |
 
 The Kaggle run hung after MCTS 800 vs Stockfish UCI_Elo 1320 (fixed since). That match's results were recovered from the kernel log; its PGN was lost.
 
-policy-safe vs random was played on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu).
+policy-safe vs random was played on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu), 1 game at a time.
 
-wide-best vs base, 1 s per move each (laptop CPU) was played on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu).
+wide-best vs base, 1 s per move each was played 2 games at a time.
 
-Puzzles (policy) ran on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu).
-
-Not run: MCTS 800 vs Stockfish Skill Level 0; wide-best vs base, 800 playouts each; wide-best vs base, 1 s per move each; puzzles (mcts-800).
+wide-best vs base, 1 s per move each (laptop CPU) was played on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu), 1 game at a time.
 <!-- end eval: base-best full -->
+
+### What the full suite shows
+
+- **Against a random mover** the raw policy scores 97.5%: 95 wins and 5 draws (4
+  stalemates, 1 threefold repetition), half a point short of the 98% target. Policy-safe,
+  the engine's policy mode, wins all 100 games.
+- **Search over the policy:** MCTS with 400 playouts wins all 100 games against the raw
+  policy (target: above 55%).
+- **Stockfish at its weakest:** in Stockfish 16, `UCI_Elo 1320` converts to skill level
+  0.0, the same setting as `Skill Level 0`, so the two matches face the same opponent. Their
+  games differ because Stockfish's weakened move choice is random (seeded from the clock):
+  no game of one match has the result and length of the same game in the other. MCTS 800
+  won all 100 games, each by checkmate, which puts it at least 566 Elo above that level
+  (95%). That is a floor, as the target (a non-zero score) intended, not a rating.
+- **Wide vs base at equal playouts** (800 each, GPU): 12 / 25 / 13, no measurable
+  difference (-7 Elo, -76 to +62). Per playout, wide's 2 epochs give as strong a network
+  as base's 5.
+- **Wide vs base at equal time:** on a T4, one game per GPU at 1 s per move each, wide
+  scores 55% (+35, -27 to +99, not significant), most likely because the Python search
+  loop, not the network, sets the pace on the GPU. On the laptop CPU wide loses 18 of 20
+  (5%, -512, -inf to -353): there the network is most of the cost, and wide completes
+  about 257 playouts in a 1 s move against base's 490. On a CPU, base is the network to
+  play with.
+- **Puzzles:** search lifts first-move accuracy from 64.2% (policy) to 93.5% (MCTS 800),
+  and the gain grows with difficulty: +16.6 points at 1000 and below, +28.8 at 1001-1500,
+  +36.6 at 1501-2000 and +35.4 above 2000. The policy alone falls from 82.8% to 49.2%
+  across the buckets; MCTS 800 still finds the first move of 84.6% of puzzles rated above
+  2000. Each bucket has 500 puzzles, so each figure is within about +-0.7 to +-4.4 points
+  (95%).

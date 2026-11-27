@@ -1,0 +1,170 @@
+{
+  "checkpoint": "base-best.pt",
+  "sha256": "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78",
+  "suite": "full",
+  "created": "2026-11-27T02:04:02+00:00",
+  "chessnet_version": "0.2.0.dev0",
+  "git_commit": "08aa78e91079c671cdcaf3093611fec8b51685ba",
+  "device": "cuda",
+  "hardware": "2 x Tesla T4",
+  "workers": 4,
+  "openings": "50 balanced openings, each played with both colours",
+  "notes": [
+    "The Kaggle run hung after MCTS 800 vs Stockfish UCI_Elo 1320 (fixed since). That match's results were recovered from the kernel log; its PGN was lost."
+  ],
+  "matches": [
+    {
+      "slug": "policy-vs-random",
+      "name": "policy vs random",
+      "player": {
+        "name": "policy",
+        "kind": "policy",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "leaf_batch": 32
+      },
+      "opponent": {
+        "name": "random",
+        "kind": "random",
+        "leaf_batch": 32,
+        "seed": 0
+      },
+      "games": 100,
+      "wins": 95,
+      "draws": 5,
+      "losses": 0,
+      "score": 0.975,
+      "elo": 636.4,
+      "elo_95": [
+        525.3,
+        974.8
+      ],
+      "target": "score >= 98%",
+      "terminations": {
+        "checkmate": 95,
+        "stalemate": 4,
+        "threefold_repetition": 1
+      },
+      "mean_plies": 32.3,
+      "player_seconds_per_move": 0.039,
+      "opponent_seconds_per_move": 0.0,
+      "wall_seconds": 31.0,
+      "pgn": "eval/results/base-best.full/policy-vs-random.pgn",
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "08aa78e91079c671cdcaf3093611fec8b51685ba"
+    },
+    {
+      "slug": "mcts400-vs-policy",
+      "name": "MCTS 400 vs policy",
+      "player": {
+        "name": "mcts-400",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 400,
+        "leaf_batch": 32
+      },
+      "opponent": {
+        "name": "policy",
+        "kind": "policy",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "leaf_batch": 32
+      },
+      "games": 100,
+      "wins": 100,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        566.2,
+        null
+      ],
+      "target": "score > 55%",
+      "terminations": {
+        "checkmate": 100
+      },
+      "mean_plies": 73.4,
+      "player_seconds_per_move": 0.402,
+      "opponent_seconds_per_move": 0.001,
+      "wall_seconds": 382.4,
+      "pgn": "eval/results/base-best.full/mcts400-vs-policy.pgn",
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "08aa78e91079c671cdcaf3093611fec8b51685ba"
+    },
+    {
+      "slug": "mcts800-vs-stockfish-elo",
+      "name": "MCTS 800 vs Stockfish UCI_Elo 1320",
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32
+      },
+      "opponent": {
+        "name": "stockfish-elo-1320",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 1320,
+          "Threads": 1,
+          "Hash": 16
+        }
+      },
+      "games": 50,
+      "wins": 50,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        445.8,
+        null
+      ],
+      "target": "non-zero score",
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 50
+      },
+      "mean_plies": 57.1,
+      "player_seconds_per_move": null,
+      "opponent_seconds_per_move": null,
+      "wall_seconds": 677.0,
+      "pgn": null,
+      "recovered": "from the kernel log, after the run hung; the PGN was lost",
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "08aa78e91079c671cdcaf3093611fec8b51685ba"
+    }
+  ],
+  "puzzles": [],
+  "not_run": [
+    "policy-safe vs random",
+    "MCTS 800 vs Stockfish Skill Level 0",
+    "wide-best vs base, 800 playouts each",
+    "wide-best vs base, 1 s per move each",
+    "puzzles (policy)",
+    "puzzles (mcts-800)"
+  ],
+  "wall_seconds": 1090.9
+}

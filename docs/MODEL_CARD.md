@@ -78,3 +78,19 @@ Puzzles, first move: 500 from lichess_puzzles_500.csv.
 | policy | 84.8% | 73.6% | 62.4% | 44.0% | 66.2% |
 | mcts-200 | 99.2% | 91.2% | 82.4% | 69.6% | 85.6% |
 <!-- end eval: base-best quick -->
+
+<!-- eval: base-best full -->
+### base-best.pt, full suite
+
+2026-11-27, 2 x Tesla T4 (cuda, 4 worker(s)), chessnet 0.2.0.dev0. 50 balanced openings, each played with both colours.
+
+| Match | Games | W / D / L | Score | Elo (95% CI) | Target |
+|-------|------:|-----------|------:|--------------|--------|
+| policy vs random | 100 | 95 / 5 / 0 | 97.5% | +636 (+525 to +975) | score >= 98% |
+| MCTS 400 vs policy | 100 | 100 / 0 / 0 | 100.0% | +inf (+566 to +inf) | score > 55% |
+| MCTS 800 vs Stockfish UCI_Elo 1320 | 50 | 50 / 0 / 0 | 100.0% | +inf (+446 to +inf) | non-zero score |
+
+The Kaggle run hung after MCTS 800 vs Stockfish UCI_Elo 1320 (fixed since). That match's results were recovered from the kernel log; its PGN was lost.
+
+Not run: policy-safe vs random; MCTS 800 vs Stockfish Skill Level 0; wide-best vs base, 800 playouts each; wide-best vs base, 1 s per move each; puzzles (policy); puzzles (mcts-800).
+<!-- end eval: base-best full -->

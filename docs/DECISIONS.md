@@ -618,6 +618,9 @@ but its PGN was lost.
 - Retries of workers are bounded: after 4 in a row die without finishing anything, the
   rest of the run fails with the reason.
 - A heartbeat line every 60 s, and results saved after every match.
+- The evaluation kernel always runs with `--max-wall-time 11h` (the session limit is 12 h)
+  and asks for a CPU machine unless the metadata is changed: the owner prefers the laptop
+  or a Kaggle CPU kernel, and the GPU only when CPU time would be unreasonable.
 **Alternatives.** Making python-chess's thread a daemon (not configurable); `os._exit` at
 the end of each worker (skips closing the engines, which keep running); a timeout around
 the pool's shutdown alone (a stuck engine in the middle of a game would still hang, and the

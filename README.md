@@ -141,8 +141,9 @@ and a summary table to [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
 - **Puzzles:** 500 are committed in `tests/fixtures/puzzles/`. The full Lichess puzzle
   database (CC0, 310 MB) is not:
   `curl -L -o data/puzzles/lichess_db_puzzle.csv.zst https://database.lichess.org/lichess_db_puzzle.csv.zst`
-- The full suite takes hours on a laptop, so the Kaggle kernel `kaggle/eval/` runs it:
-  `uv run kaggle kernels push -p kaggle/eval`.
+- The full suite takes hours on a laptop. The Kaggle kernel `kaggle/eval/` runs it, or
+  chosen parts of it, on a CPU machine (or a T4 machine): set `CHESSNET_REF` and `ONLY` in
+  `kaggle/eval/eval.py`, then `uv run kaggle kernels push -p kaggle/eval`.
 - Long runs cannot hang: a stuck game or engine is killed and counted as an error, a
   heartbeat line appears every minute, each match is saved as soon as it ends, and
   `--max-wall-time 6h` stops cleanly with what has finished. `--only <part>,...` runs

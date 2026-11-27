@@ -2,14 +2,17 @@
 
 Uses the training kernel's output (kernel_sources) for run-base/best.pt and run-wide/best.pt,
 checks their SHA-256 against docs/TRAINING.md, installs Stockfish 16 (the official build),
-downloads the Lichess puzzle database, and runs
+downloads the Lichess puzzle database when puzzles are to run, and runs
 
-    chessnet eval --suite full --weights base-best.pt --compare wide-best.pt --workers 4
+    chessnet eval --suite full --weights base-best.pt --compare wide-best.pt \
+        --workers 4 (GPU) or 2 (CPU) --max-wall-time 11h [--only ONLY]
 
-Results (JSON, PGNs, the model card with the new table) land in /kaggle/working/eval.
+Results (JSON, PGNs, the model card with the new table) land in /kaggle/working/eval. With
+ONLY set, the results hold just those parts, to be merged into eval/results/ afterwards.
 
-Before pushing, set CHESSNET_REF (a tag or commit SHA, never a branch). Push from the
-repository root:
+Before pushing, set CHESSNET_REF (a tag or commit SHA, never a branch) and ONLY. The
+metadata asks for a CPU machine; for a T4, set "enable_gpu": true and "machine_shape":
+"NvidiaTeslaT4" in kernel-metadata.json. Push from the repository root:
 
     uv run kaggle kernels push -p kaggle/eval
 """
@@ -26,7 +29,11 @@ import urllib.request
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "08aa78e91079c671cdcaf3093611fec8b51685ba"  # evaluation code, pre-merge
+CHESSNET_REF = "512a474de9f795234cb471d18f22bfd241b3a734"  # hang-proof evaluation, pre-merge
+#: Parts of the suite to run (``chessnet eval --only``), or "" for the whole suite.
+ONLY = "compare-equal-nodes"
+#: The session limit is 12 h; the suite stops cleanly before it and keeps what finished.
+MAX_WALL_TIME = "11h"
 BASE_SHA256 = "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78"
 WIDE_SHA256 = "7a3d263826103e6f85fa74c55f95b21ab988a8e7680b8eb1be94ac4e1cd4ca74"
 CHECKPOINTS = {  # name in the results: (path in the training output, SHA-256)
@@ -38,7 +45,8 @@ STOCKFISH_URL = (
     "stockfish-ubuntu-x86-64-avx2.tar"
 )
 PUZZLES_URL = "https://database.lichess.org/lichess_db_puzzle.csv.zst"
-WORKERS = 4
+GPU_WORKERS = 4  # two per T4
+CPU_WORKERS = 2  # four vCPUs: two torch threads each
 INPUT = Path("/kaggle/input")
 WORKING = Path("/kaggle/working")
 TOOLS = Path("/tmp/tools")  # outside /kaggle/working, so it is not saved as output
@@ -96,6 +104,42 @@ def install_stockfish() -> Path | None:
     return binaries[0]
 
 
+def has_gpu() -> bool:
+    if shutil.which("nvidia-smi") is None:
+        return False
+    return subprocess.run(["nvidia-smi", "-L"], capture_output=True, check=False).returncode == 0
+
+
+def needs_puzzles(only: str) -> bool:
+    """The whole suite, or a selection with a puzzle run, needs the puzzle database."""
+    return not only or any(part.strip().startswith("puzzles-") for part in only.split(","))
+
+
+def eval_command(
+    weights: dict[str, Path],
+    *,
+    workers: int,
+    out: Path,
+    card: Path,
+    puzzles: Path | None,
+    stockfish: Path | None,
+    only: str = ONLY,
+) -> list[object]:
+    command: list[object] = [
+        sys.executable, "-m", "chessnet", "eval", "--suite", "full",
+        "--weights", weights["base-best.pt"], "--compare", weights["wide-best.pt"],
+        "--workers", workers, "--device", "auto", "--out", out, "--model-card", card,
+        "--max-wall-time", MAX_WALL_TIME,
+    ]  # fmt: skip
+    if puzzles is not None:
+        command += ["--puzzles", puzzles]
+    if stockfish is not None:
+        command += ["--stockfish", stockfish]
+    if only:
+        command += ["--only", only]
+    return command
+
+
 def main() -> None:
     if CHESSNET_REF.startswith("<"):
         sys.exit("Set CHESSNET_REF to a tag or commit SHA before pushing this kernel.")
@@ -105,21 +149,20 @@ def main() -> None:
     run("git", "-C", CHECKOUT, "checkout", "--quiet", "FETCH_HEAD")
     run(sys.executable, "-m", "pip", "install", "--quiet", f"{CHECKOUT}[train]")
     stockfish = install_stockfish()
-    puzzles = TOOLS / "lichess_db_puzzle.csv.zst"
-    run("curl", "-sS", "-L", "--retry", "3", "-o", puzzles, PUZZLES_URL)
-    run("curl", "-sSI", PUZZLES_URL)  # the database's date, for the record
+    puzzles = None
+    if needs_puzzles(ONLY):
+        puzzles = TOOLS / "lichess_db_puzzle.csv.zst"
+        run("curl", "-sS", "-L", "--retry", "3", "-o", puzzles, PUZZLES_URL)
+        run("curl", "-sSI", PUZZLES_URL)  # the database's date, for the record
     out = WORKING / "eval"
     out.mkdir(parents=True, exist_ok=True)
     card = out / "MODEL_CARD.md"
     shutil.copy(CHECKOUT / "docs" / "MODEL_CARD.md", card)
-    command = [
-        sys.executable, "-m", "chessnet", "eval", "--suite", "full",
-        "--weights", weights["base-best.pt"], "--compare", weights["wide-best.pt"],
-        "--workers", WORKERS, "--device", "auto", "--puzzles", puzzles,
-        "--out", out / "results", "--model-card", card,
-    ]  # fmt: skip
-    if stockfish is not None:
-        command += ["--stockfish", stockfish]
+    workers = GPU_WORKERS if has_gpu() else CPU_WORKERS
+    command = eval_command(
+        weights, workers=workers, out=out / "results", card=card, puzzles=puzzles,
+        stockfish=stockfish,
+    )  # fmt: skip
     os.environ["PYTHONUNBUFFERED"] = "1"
     run(*command, cwd=CHECKOUT)
 

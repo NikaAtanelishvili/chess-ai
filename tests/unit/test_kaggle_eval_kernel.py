@@ -77,3 +77,32 @@ def test_an_unset_ref_stops_before_doing_anything(
     monkeypatch.setattr(kernel, "run", lambda *args, **kwargs: pytest.fail("must not run"))
     with pytest.raises(SystemExit, match="Set CHESSNET_REF"):
         kernel.main()
+
+
+def test_the_command_is_bounded_in_time_and_runs_only_the_chosen_parts(
+    kernel: ModuleType,
+) -> None:
+    weights = {"base-best.pt": Path("b.pt"), "wide-best.pt": Path("w.pt")}
+    command = [str(part) for part in kernel.eval_command(
+        weights, workers=2, out=Path("out"), card=Path("card.md"), puzzles=None,
+        stockfish=Path("sf"), only="compare-equal-nodes",
+    )]  # fmt: skip
+    assert command[command.index("--max-wall-time") + 1] == kernel.MAX_WALL_TIME
+    assert command[command.index("--only") + 1] == "compare-equal-nodes"
+    assert "--puzzles" not in command
+    whole = kernel.eval_command(weights, workers=4, out=Path("out"), card=Path("card.md"),
+                                puzzles=Path("p.zst"), stockfish=None, only="")  # fmt: skip
+    assert "--only" not in whole
+    assert "--puzzles" in whole
+    assert kernel.needs_puzzles("")
+    assert kernel.needs_puzzles("a, puzzles-policy")
+    assert not kernel.needs_puzzles("compare-equal-nodes")
+
+
+def test_the_chosen_parts_exist_in_the_full_suite(kernel: ModuleType) -> None:
+    from chessnet.eval.suite import plan_suite, puzzle_slug
+
+    plan = plan_suite("full", "base-best.pt", compare="wide-best.pt")  # without Stockfish
+    known = {m.slug for m in plan.matches} | {puzzle_slug(p) for p in plan.puzzle_players}
+    known |= {"mcts800-vs-stockfish-elo", "mcts800-vs-stockfish-skill0"}
+    assert {part.strip() for part in kernel.ONLY.split(",") if part.strip()} <= known

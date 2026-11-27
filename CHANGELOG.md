@@ -51,6 +51,10 @@ All notable changes to this project are documented here. The format follows
   stalemate or allow a threefold-repetition claim while others exist). UCI `Mode policy` and
   `chessnet play --mode policy` now use it; the evaluation reports both it and the raw
   policy against a random mover. `chessnet eval --only` adds matches to earlier results.
+- Supervised evaluation runs: a game or puzzle that makes no progress for 5 minutes, takes
+  more than an hour, or hits an external engine's call timeout is killed with its engines
+  and recorded as an error; a heartbeat line every minute; results saved after every match;
+  `chessnet eval --max-wall-time` for a clean stop.
 
 ### Changed
 
@@ -62,6 +66,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- A full evaluation could hang forever: worker processes holding an external engine never
+  exited, so the run stalled after its first Stockfish match. Workers now close their
+  engines before exiting.
 - `go depth N` was ignored; it now limits the search to `10 x N^2` playouts, so a GUI's
   depth setting changes the engine's strength.
 - `uv run kaggle` crashed because the Kaggle CLI imports `six` without declaring it; `six`

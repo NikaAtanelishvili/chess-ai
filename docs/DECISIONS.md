@@ -595,3 +595,30 @@ Without search the policy cannot tell that stalemating a lone king throws the wi
   policy` use policy-safe, since a player wants the win.
 - The Kaggle full suite was already running, so policy-safe's 100 games against the random
   mover were played on the laptop and merged into its results with `--only`.
+
+## 2026-11-27: Hang-proof evaluation runs
+
+**Context.** The first full suite on Kaggle (2 x T4) finished three matches in 20 minutes
+and then printed nothing for 8.5 hours, until it was stopped by hand. python-chess runs
+each engine's event loop in a non-daemon thread. The worker processes (a
+`ProcessPoolExecutor`) closed their players in an `atexit` handler, but Python joins
+non-daemon threads before it runs `atexit` handlers, so a worker holding a Stockfish
+process never exited, and the pool's shutdown after the first Stockfish match waited for
+it forever. That match's results were still in memory; they were recovered from the log,
+but its PGN was lost.
+**Decision.**
+- Workers close their players in a `finally` block, before the interpreter waits for
+  threads. A regression test plays a match against an external engine in two workers.
+- A small supervisor replaces the process pool. Each worker has its own pipes, so killing
+  one cannot corrupt a shared queue, and leads its own process group, so killing it kills
+  its engines. Limits: 5 minutes without a move, 1 hour per game or puzzle, the suite's
+  `--max-wall-time`, and the engine call timeout of python-chess (move time + 30 s).
+- A game that hits a limit is recorded with its reason and left out of the score, rather
+  than retried: a retry could hang the same way, and the count of failures is reported.
+- Retries of workers are bounded: after 4 in a row die without finishing anything, the
+  rest of the run fails with the reason.
+- A heartbeat line every 60 s, and results saved after every match.
+**Alternatives.** Making python-chess's thread a daemon (not configurable); `os._exit` at
+the end of each worker (skips closing the engines, which keep running); a timeout around
+the pool's shutdown alone (a stuck engine in the middle of a game would still hang, and the
+results would still be lost).

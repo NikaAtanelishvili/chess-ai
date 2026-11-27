@@ -22,7 +22,8 @@ import chess.pgn
 from chessnet.engine.player import Player
 from chessnet.eval.elo import MatchStats
 from chessnet.eval.openings import Opening
-from chessnet.eval.players import PlayerSpec, map_with_players
+from chessnet.eval.players import PlayerSpec
+from chessnet.eval.workers import Failed, Watchdog, map_with_players
 
 MAX_PLIES = 600
 
@@ -64,9 +65,17 @@ class GameRecord:
 
 
 def play_game(
-    white: Player, black: Player, start: chess.Board, *, max_plies: int = MAX_PLIES
+    white: Player,
+    black: Player,
+    start: chess.Board,
+    *,
+    max_plies: int = MAX_PLIES,
+    on_move: Callable[[], None] | None = None,
 ) -> tuple[chess.Board, str, str, dict[chess.Color, float]]:
-    """Play from ``start``; returns the board, the result, the termination and thinking times."""
+    """Play from ``start``; returns the board, the result, the termination and thinking times.
+
+    ``on_move`` is called after every move (the supervisor's sign of progress).
+    """
     board = start.copy(stack=False)
     thinking = {chess.WHITE: 0.0, chess.BLACK: 0.0}
     while True:
@@ -86,14 +95,16 @@ def play_game(
         if move not in board.legal_moves:
             return board, "0-1" if mover == chess.WHITE else "1-0", "illegal_move", thinking
         board.push(move)
+        if on_move is not None:
+            on_move()
 
 
-def play_task(players: tuple[Player, ...], task: GameTask) -> GameRecord:
+def play_task(players: tuple[Player, ...], task: GameTask, beat: Callable[[], None]) -> GameRecord:
     """Play one scheduled game: ``players`` is (player, opponent)."""
     player, opponent = players
     white, black = (player, opponent) if task.player_white else (opponent, player)
     board, result, termination, thinking = play_game(
-        white, black, chess.Board(task.fen), max_plies=task.max_plies
+        white, black, chess.Board(task.fen), max_plies=task.max_plies, on_move=beat
     )
     player_colour = chess.WHITE if task.player_white else chess.BLACK
     return GameRecord(
@@ -133,6 +144,13 @@ class MatchResult:
     records: list[GameRecord] = field(default_factory=list)
     seconds: float = 0.0
     target: str | None = None
+    #: Games that did not finish: {"game": number, "opening", "reason", "stopped"}.
+    failures: list[dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def incomplete(self) -> bool:
+        """The wall-time limit stopped the match before all its games were played."""
+        return any(failure["stopped"] for failure in self.failures)
 
     @property
     def stats(self) -> MatchStats:
@@ -141,7 +159,16 @@ class MatchResult:
 
     def summary(self) -> dict[str, Any]:
         stats = self.stats
-        low, high = stats.elo_interval
+        score: float | None = None
+        elo: float | None = None
+        elo_95: list[float | None] = [None, None]
+        if stats.games:  # no finished game, no score
+            low, high = stats.elo_interval
+            score, elo, elo_95 = (
+                round(stats.score, 4),
+                _finite(stats.elo),
+                [_finite(low), _finite(high)],
+            )
         moves = sum(record.player_moves for record in self.records) or 1
         opponent_moves = sum(len(r.moves) - r.player_moves for r in self.records) or 1
         return {
@@ -152,10 +179,13 @@ class MatchResult:
             "wins": stats.wins,
             "draws": stats.draws,
             "losses": stats.losses,
-            "score": round(stats.score, 4),
-            "elo": _finite(stats.elo),
-            "elo_95": [_finite(low), _finite(high)],
+            "score": score,
+            "elo": elo,
+            "elo_95": elo_95,
             "target": self.target,
+            "incomplete": self.incomplete,
+            "errors": sum(not failure["stopped"] for failure in self.failures),
+            "failures": self.failures,
             "terminations": dict(Counter(record.termination for record in self.records)),
             "mean_plies": round(sum(len(r.moves) for r in self.records) / max(stats.games, 1), 1),
             "player_seconds_per_move": round(
@@ -184,15 +214,29 @@ def run_match(
     device: str = "cpu",
     max_plies: int = MAX_PLIES,
     target: str | None = None,
+    watchdog: Watchdog | None = None,
     report: Callable[[str], None] = print,
 ) -> MatchResult:
-    """Play ``games`` games of ``player`` against ``opponent``."""
+    """Play ``games`` games of ``player`` against ``opponent``.
+
+    With a ``watchdog`` the games run in supervised worker processes: a game that fails,
+    hangs or is cut off by the deadline is recorded in ``failures`` and not counted.
+    """
     result = MatchResult(name, player, opponent, target=target)
     tasks = schedule(games, openings, max_plies)
     started = time.monotonic()
     for record in map_with_players(
-        (player, opponent), play_task, tasks, workers=workers, device=device
-    ):
+        (player, opponent), play_task, tasks, workers=workers, device=device,
+        watchdog=watchdog, label=name, report=report,
+    ):  # fmt: skip
+        if isinstance(record, Failed):
+            task = record.item
+            result.failures.append(
+                {"game": task.index + 1, "opening": task.opening, "reason": record.reason,
+                 "stopped": record.stopped}
+            )  # fmt: skip
+            report(f"[{name}] game {task.index + 1}: not finished ({record.reason})")
+            continue
         result.records.append(record)
         stats = result.stats
         report(
@@ -201,6 +245,7 @@ def run_match(
             f"{stats.games}"
         )
     result.records.sort(key=lambda record: record.index)
+    result.failures.sort(key=lambda failure: failure["game"])
     result.seconds = time.monotonic() - started
     return result
 

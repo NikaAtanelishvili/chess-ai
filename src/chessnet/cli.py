@@ -313,6 +313,10 @@ def evaluate(
             "merge them into the suite's existing results.",
         ),
     ] = None,
+    max_wall_time: Annotated[
+        str | None,
+        typer.Option(help="Stop the suite cleanly after this long, e.g. 6h; saved as incomplete."),
+    ] = None,
 ) -> None:
     """Evaluate a network: matches (Elo with 95% CI, PGNs saved) and Lichess puzzles."""
     import json
@@ -320,6 +324,8 @@ def evaluate(
 
     from chessnet.engine.uci import default_weights
     from chessnet.eval.suite import estimate_suite, plan_suite, run_suite, update_model_card
+    from chessnet.eval.workers import Watchdog
+    from chessnet.train.loop import parse_duration
 
     if from_results is not None:
         update_model_card(model_card, json.loads(from_results.read_text(encoding="utf-8")))
@@ -347,7 +353,8 @@ def evaluate(
     try:
         run_suite(
             plan, str(path), workers=workers, device=device, out=out, model_card=model_card,
-            report=typer.echo, only=selected,
+            report=typer.echo, only=selected, watchdog=Watchdog(),
+            max_wall_time=parse_duration(max_wall_time) if max_wall_time else None,
         )  # fmt: skip
     except ValueError as error:
         raise typer.BadParameter(str(error), param_hint="--only") from error

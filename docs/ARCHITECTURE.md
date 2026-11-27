@@ -355,9 +355,10 @@ MCTS with playouts or time per move, or an external UCI engine such as Stockfish
   difference `-400 log10(1/score - 1)`. The 95% interval comes from the per-game variance
   of the score, or from the Wilson interval when every game had the same result, so 100
   wins in 100 games still give a finite lower bound (about +550).
-- **Parallel games:** with `--workers N`, N spawned processes each build the players once
-  (networks, search trees, engine processes) and take games as they free up. Torch threads
-  are shared out, and GPUs are assigned round-robin.
+- **Parallel games:** with `--workers N`, N worker processes each build the players once
+  (networks, search trees, engine processes) and take games as they free up, under the
+  supervisor described below. Torch threads are shared out, and GPUs are assigned
+  round-robin.
 - **PGNs:** every game of a match, with the opening's FEN, the players, the result and the
   termination.
 
@@ -382,5 +383,28 @@ committed fixture has 125 per bucket from the November 2026 database.
 `--only <match>,...` plays just those matches and merges them into the suite's existing
 results (for the same checkpoint); each match records the hardware it was played on, and
 the model card says so when it differs from the rest of the suite.
-Results are rewritten after every match, so a run that is cut short keeps what it
-finished. TensorBoard scalars go to `eval/results/tb/`.
+TensorBoard scalars go to `eval/results/tb/`.
+
+### Supervised runs
+
+`chessnet eval` plays every game and puzzle in worker processes under a supervisor
+(`chessnet.eval.workers`), so that no engine, network or deadlock can stall a run:
+
+- **Limits:** a worker that plays no move for 5 minutes, or spends more than an hour on one
+  game or puzzle, is killed together with its engines (each worker leads its own process
+  group) and replaced. An external engine also has a limit per call: python-chess gives up
+  after the move time plus 30 s (`PlayerSpec.timeout`), and the worker restarts its
+  players. Either way the game is recorded as an error, with its reason, and left out of
+  the score; the model card says how many games did not finish.
+- **No endless retries:** a worker that cannot build its players hands its game back.
+  After 4 workers in a row die without finishing anything, the rest of the match fails
+  with the reason.
+- **Heartbeat:** every 60 s, `[match] heartbeat: 37/50 done, 4 running, 12.3 min`.
+- **Saving:** each match is written (JSON and PGN) as soon as it ends, so a crash or a
+  cancelled session loses at most the match in progress.
+- **Wall time:** `--max-wall-time 6h` stops the suite cleanly. The running match or puzzle
+  run is cut off and saved as incomplete, and the parts that never started are listed as
+  not run.
+- **Exit:** workers close their players themselves before exiting. python-chess drives each
+  engine from a non-daemon thread, and Python waits for those threads before it runs exit
+  handlers, so a worker that left an engine open would never exit.

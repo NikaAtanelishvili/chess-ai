@@ -1,26 +1,22 @@
 """Players for evaluation, described by specs so that worker processes can rebuild them.
 
 A :class:`PlayerSpec` names a random mover, the network's policy, an MCTS player, or an
-external UCI engine such as Stockfish. :func:`map_with_players` runs a function over many
-items (games, puzzles) with the players built once per worker process.
+external UCI engine such as Stockfish. ``chessnet.eval.workers`` runs games and puzzles with
+the players built once per worker process.
 """
 
 from __future__ import annotations
 
-import atexit
-import multiprocessing
-from collections.abc import Callable, Iterable, Iterator
-from concurrent.futures import ProcessPoolExecutor, as_completed
+import contextlib
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
-from typing import Any, TypeVar
+from typing import Any
 
 import chess
 import chess.engine
 
 from chessnet.engine.player import MCTSPlayer, Player, PolicyPlayer, PolicySafePlayer, RandomPlayer
 
-Item = TypeVar("Item")
-Result = TypeVar("Result")
 OptionValue = str | int | bool
 
 
@@ -38,6 +34,7 @@ class PlayerSpec:
     command: tuple[str, ...] = ()  # uci: the engine's command line
     options: tuple[tuple[str, OptionValue], ...] = ()  # uci: options to set
     seed: int | None = None  # random
+    timeout: float = 30.0  # uci: seconds beyond the move time before the engine counts as stuck
 
     def describe(self) -> dict[str, Any]:
         """The spec without empty fields, for reports."""
@@ -56,10 +53,12 @@ class UCIPlayer:
         *,
         nodes: int | None = None,
         movetime: float | None = None,
+        timeout: float = 30.0,
     ) -> None:
         if nodes is None and movetime is None:
             raise ValueError("a UCI player needs nodes or movetime per move")
-        self.engine = chess.engine.SimpleEngine.popen_uci(list(command), timeout=60)
+        # python-chess gives up on a call after ``timeout`` seconds (plus the move time).
+        self.engine = chess.engine.SimpleEngine.popen_uci(list(command), timeout=timeout)
         if options:
             self.engine.configure(options)
         self.limit = chess.engine.Limit(nodes=nodes, time=movetime)
@@ -71,7 +70,12 @@ class UCIPlayer:
         return move
 
     def close(self) -> None:
-        self.engine.quit()
+        """Quit the engine; kill it if it does not quit in time. Safe to call twice."""
+        try:
+            self.engine.quit()
+        except Exception:
+            with contextlib.suppress(Exception):
+                self.engine.close()
 
 
 def uci_option_range(command: tuple[str, ...], name: str) -> tuple[int, int]:
@@ -112,7 +116,13 @@ def build_players(specs: tuple[PlayerSpec, ...], device: str) -> tuple[Player, .
         elif spec.kind == "uci":
             options = dict(spec.options)
             players.append(
-                UCIPlayer(spec.command, options, nodes=spec.nodes, movetime=spec.movetime)
+                UCIPlayer(
+                    spec.command,
+                    options,
+                    nodes=spec.nodes,
+                    movetime=spec.movetime,
+                    timeout=spec.timeout,
+                )
             )
         elif spec.kind in ("policy", "policy-safe", "mcts"):
             if spec.weights is None:
@@ -145,59 +155,3 @@ def close_players(players: Iterable[Player]) -> None:
         close = getattr(player, "close", None)
         if close is not None:
             close()
-
-
-_worker_players: tuple[Player, ...] = ()
-
-
-def _start_worker(specs: tuple[PlayerSpec, ...], device: str, threads: int) -> None:
-    global _worker_players
-    import torch
-
-    torch.set_num_threads(threads)
-    identity = multiprocessing.current_process()._identity
-    worker = identity[0] - 1 if identity else 0
-    _worker_players = build_players(specs, resolve_device(device, worker))
-    atexit.register(close_players, _worker_players)
-
-
-def _run_in_worker(function: Callable[[tuple[Player, ...], Item], Result], item: Item) -> Result:
-    return function(_worker_players, item)
-
-
-def map_with_players(
-    specs: tuple[PlayerSpec, ...],
-    function: Callable[[tuple[Player, ...], Item], Result],
-    items: list[Item],
-    *,
-    workers: int = 1,
-    device: str = "cpu",
-    threads: int | None = None,
-) -> Iterator[Result]:
-    """``function(players, item)`` for every item, results in the order they finish.
-
-    With one worker everything runs in this process. Otherwise each of ``workers`` spawned
-    processes builds its own players once (``threads`` torch threads each, by default the
-    CPU count shared out) and takes items as it frees up. ``function`` must be a
-    module-level function, so that it can be sent to the workers.
-    """
-    if workers <= 1:
-        players = build_players(specs, resolve_device(device))
-        try:
-            for item in items:
-                yield function(players, item)
-        finally:
-            close_players(players)
-        return
-    cpus = multiprocessing.cpu_count()
-    per_worker = threads or max(1, cpus // workers)
-    context = multiprocessing.get_context("spawn")
-    with ProcessPoolExecutor(
-        max_workers=workers,
-        mp_context=context,
-        initializer=_start_worker,
-        initargs=(specs, device, per_worker),
-    ) as pool:
-        futures = [pool.submit(_run_in_worker, function, item) for item in items]
-        for future in as_completed(futures):
-            yield future.result()

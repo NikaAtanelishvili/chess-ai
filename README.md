@@ -143,6 +143,10 @@ and a summary table to [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
   `curl -L -o data/puzzles/lichess_db_puzzle.csv.zst https://database.lichess.org/lichess_db_puzzle.csv.zst`
 - The full suite takes hours on a laptop, so the Kaggle kernel `kaggle/eval/` runs it:
   `uv run kaggle kernels push -p kaggle/eval`.
+- Long runs cannot hang: a stuck game or engine is killed and counted as an error, a
+  heartbeat line appears every minute, each match is saved as soon as it ends, and
+  `--max-wall-time 6h` stops cleanly with what has finished. `--only <match>,...` plays
+  single matches and merges them into earlier results.
 
 ## Contributing
 

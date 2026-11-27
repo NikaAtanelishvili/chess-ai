@@ -9,7 +9,7 @@ from typer.testing import CliRunner
 
 from chessnet.cli import app
 from chessnet.eval.players import PlayerSpec
-from chessnet.eval.puzzles import read_puzzles
+from chessnet.eval.puzzles import BUCKETS, read_puzzles
 from chessnet.eval.suite import (
     FIXTURE_PUZZLES,
     MatchPlan,
@@ -110,6 +110,36 @@ def test_summary_table_shows_unbounded_elo() -> None:
     }  # fmt: skip
     table = summary_table(results)
     assert "| 100 / 0 / 0 | 100.0% | +inf (+553 to +inf) | score >= 98% |" in table
+
+
+def test_summary_table_marks_what_did_not_finish() -> None:
+    stopped = {
+        "game": 2,
+        "opening": "x",
+        "reason": "stopped at the wall-time limit",
+        "stopped": True,
+    }
+    timeout = {"game": 1, "opening": "x", "reason": "TimeoutError: ", "stopped": False}
+    buckets = {label: {"puzzles": 0, "solved": 0, "accuracy": None} for label, _, _ in BUCKETS}
+    results = {
+        "checkpoint": "base-best.pt", "suite": "full", "created": "2026-11-27T10:00:00+00:00",
+        "hardware": "CPU", "device": "cpu", "workers": 1, "chessnet_version": "0",
+        "openings": "50 balanced openings", "notes": [],
+        "matches": [
+            {"name": "random vs stuck", "games": 0, "wins": 0, "draws": 0, "losses": 0,
+             "score": None, "elo": None, "elo_95": [None, None], "target": None,
+             "incomplete": True, "errors": 1, "failures": [stopped, timeout]},
+        ],
+        "puzzles": [
+            {"player": {"name": "policy"}, "source": "3", "accuracy": None, "buckets": buckets,
+             "incomplete": True, "errors": 1, "failures": {"abc": "TimeoutError: "}},
+        ],
+    }  # fmt: skip
+    table = summary_table(results)
+    assert "| random vs stuck (incomplete) | 0 | 0 / 0 / 0 | - | - | - |" in table
+    assert "| policy (incomplete) | - | - | - | - | - |" in table
+    assert "1 game(s) of random vs stuck did not finish (TimeoutError: )" in table
+    assert "1 puzzle(s) for policy did not finish (TimeoutError: )" in table
 
 
 def plain(text: str) -> str:

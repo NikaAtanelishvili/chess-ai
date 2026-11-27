@@ -40,7 +40,10 @@ def score_interval(wins: int, draws: int, losses: int, z: float = Z95) -> tuple[
     centre = (score + z * z / (2 * games)) / (1 + z * z / games)
     half = z * math.sqrt(score * (1 - score) / games + z * z / (4 * games * games))
     half /= 1 + z * z / games
-    return max(centre - half, 0.0), min(centre + half, 1.0)
+    # A sweep's outer bound is exactly 1 (or 0); rounding must not make it finite in Elo.
+    low = 0.0 if score == 0.0 else max(centre - half, 0.0)
+    high = 1.0 if score == 1.0 else min(centre + half, 1.0)
+    return low, high
 
 
 @dataclass(frozen=True)

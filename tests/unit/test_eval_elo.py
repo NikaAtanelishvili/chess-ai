@@ -38,6 +38,16 @@ def test_a_clean_sweep_still_has_a_finite_lower_bound() -> None:
     )
 
 
+def test_a_clean_sweep_has_an_unbounded_upper_end_for_every_number_of_games() -> None:
+    """Regression: rounding put the Wilson bound of 50 wins in 50 games just below 1, which
+    printed an Elo interval of '+446 to +6261' instead of '+446 to +inf'."""
+    for games in range(1, 201):
+        assert score_interval(games, 0, 0)[1] == 1.0, games
+        assert score_interval(0, 0, games)[0] == 0.0, games
+        assert MatchStats(games, 0, 0).elo_interval[1] == math.inf, games
+        assert MatchStats(0, 0, games).elo_interval[0] == -math.inf, games
+
+
 def test_match_stats() -> None:
     stats = MatchStats(wins=7, draws=2, losses=1)
     assert stats.games == 10

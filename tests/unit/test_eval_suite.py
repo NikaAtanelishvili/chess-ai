@@ -15,7 +15,9 @@ from chessnet.eval.suite import (
     MatchPlan,
     SuitePlan,
     estimate_suite,
+    hardware,
     plan_suite,
+    resolved_device,
     run_suite,
     summary_table,
     update_model_card,
@@ -136,3 +138,10 @@ def test_estimate_extrapolates_from_a_few_games_and_puzzles(weights: Path) -> No
         assert total >= unit
     assert lines[0] == "Estimated wall time of the quick suite (2 worker(s)):"
     assert lines[-1].lstrip().startswith("total")
+
+
+def test_hardware_names_the_cpu_or_the_gpus() -> None:
+    assert resolved_device("cpu") == "cpu"
+    name = hardware("cpu")
+    assert name
+    assert name != "x86_64" or not Path("/proc/cpuinfo").exists()  # the model, not the arch

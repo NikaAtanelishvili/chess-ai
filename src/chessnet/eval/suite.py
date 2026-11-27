@@ -177,11 +177,27 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def resolved_device(device: str) -> str:
+    """'cuda' when the suite's workers will use GPUs, else 'cpu'."""
+    if device == "cpu":
+        return "cpu"
+    import torch
+
+    return "cuda" if torch.cuda.is_available() else "cpu"
+
+
 def hardware(device: str) -> str:
-    if device.startswith("cuda"):
+    """The GPUs' name when the suite runs on them, else the CPU's model."""
+    if resolved_device(device) == "cuda":
         import torch
 
-        return torch.cuda.get_device_name(0)
+        return f"{torch.cuda.device_count()} x {torch.cuda.get_device_name(0)}"
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                return line.split(":", 1)[1].strip()
+    except OSError:
+        pass
     return platform.processor() or platform.machine()
 
 
@@ -206,7 +222,7 @@ def run_suite(
         "created": datetime.now(UTC).isoformat(timespec="seconds"),
         "chessnet_version": __version__,
         "git_commit": git_commit(),
-        "device": device,
+        "device": resolved_device(device),
         "hardware": hardware(device),
         "workers": workers,
         "openings": "50 balanced openings, each played with both colours",

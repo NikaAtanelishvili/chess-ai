@@ -32,7 +32,7 @@ import urllib.request
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "93f77c8b653238b43bfef45395c05a7a06adf74c"  # hang-proof evaluation, pre-merge
+CHESSNET_REF = "813d45409a0103d43103811cf033493634f87d16"  # hang-proof evaluation, pre-merge
 #: Parts of the suite to run (``chessnet eval --only``), or "" for the whole suite. The
 #: policy's puzzle run is repeated here so that both puzzle runs score the same sample.
 ONLY = (

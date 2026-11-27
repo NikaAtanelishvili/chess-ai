@@ -59,3 +59,21 @@ where human games are.
 of every game, and the tables below. Matches start from 50 balanced openings, each played
 once with each colour. Elo differences come with 95% confidence intervals. Puzzles are
 scored on the first move of the solution, by Lichess rating.
+
+<!-- eval: base-best quick -->
+### base-best.pt, quick suite
+
+2026-11-27, 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu, 1 worker(s)), chessnet 0.2.0.dev0. 50 balanced openings, each played with both colours.
+
+| Match | Games | W / D / L | Score | Elo (95% CI) | Target |
+|-------|------:|-----------|------:|--------------|--------|
+| policy vs random | 20 | 16 / 4 / 0 | 90.0% | +382 (+255 to +761) | score >= 98% |
+| MCTS 400 vs policy | 20 | 20 / 0 / 0 | 100.0% | +inf (+287 to +inf) | score > 55% |
+
+Puzzles, first move: 500 from lichess_puzzles_500.csv.
+
+| Player | <=1000 | 1001-1500 | 1501-2000 | >2000 | All |
+|--------|---:|---:|---:|---:|---:|
+| policy | 84.8% | 73.6% | 62.4% | 44.0% | 66.2% |
+| mcts-200 | 99.2% | 91.2% | 82.4% | 69.6% | 85.6% |
+<!-- end eval: base-best quick -->

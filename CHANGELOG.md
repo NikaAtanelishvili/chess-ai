@@ -56,7 +56,10 @@ All notable changes to this project are documented here. The format follows
 - Supervised evaluation runs: a game or puzzle that makes no progress for 5 minutes, takes
   more than an hour, or hits an external engine's call timeout is killed with its engines
   and recorded as an error; a heartbeat line every minute; results saved after every match;
-  `chessnet eval --max-wall-time` for a clean stop.
+  `chessnet eval --max-wall-time` for a clean stop, and `--heartbeat` to set the interval.
+- `chessnet eval --games/--label` (labelled variants of chosen matches, such as a 20-game
+  run on a laptop CPU) and `--merge-results` (results from another machine, with PGNs).
+  Matches with a time limit per move play one game per GPU, or one at a time on a CPU.
 
 ### Changed
 

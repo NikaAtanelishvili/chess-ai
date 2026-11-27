@@ -317,13 +317,42 @@ def evaluate(
         str | None,
         typer.Option(help="Stop the suite cleanly after this long, e.g. 6h; saved as incomplete."),
     ] = None,
+    heartbeat: Annotated[
+        float, typer.Option(min=1, help="Seconds between heartbeat lines during long matches.")
+    ] = 60.0,
+    games: Annotated[
+        int | None,
+        typer.Option(min=1, help="Games per match for the matches chosen with --only."),
+    ] = None,
+    label: Annotated[
+        str | None,
+        typer.Option(
+            help="Record the matches chosen with --only as labelled variants, e.g. 'laptop CPU' "
+            "(kept next to the planned matches)."
+        ),
+    ] = None,
+    merge_results: Annotated[
+        Path | None,
+        typer.Option(
+            exists=True,
+            dir_okay=False,
+            help="Merge a results JSON of this suite from another machine (PGNs next to it) "
+            "into ours, then stop.",
+        ),
+    ] = None,
 ) -> None:
     """Evaluate a network: matches (Elo with 95% CI, PGNs saved) and Lichess puzzles."""
     import json
     import shutil
 
     from chessnet.engine.uci import default_weights
-    from chessnet.eval.suite import estimate_suite, plan_suite, run_suite, update_model_card
+    from chessnet.eval.suite import (
+        estimate_suite,
+        merge_suite_results,
+        plan_suite,
+        run_suite,
+        update_model_card,
+    )
     from chessnet.eval.workers import Watchdog
     from chessnet.train.loop import parse_duration
 
@@ -349,12 +378,25 @@ def evaluate(
     if estimate:
         estimate_suite(plan, workers=workers, device=device, report=typer.echo)
         return
+    if merge_results is not None:
+        try:
+            merge_suite_results(
+                plan, str(path), merge_results, out=out, model_card=model_card, report=typer.echo
+            )
+        except ValueError as error:
+            raise typer.BadParameter(str(error), param_hint="--merge-results") from error
+        return
     selected = {name.strip() for name in only.split(",")} if only else None
+    if (games is not None or label) and selected is None:
+        raise typer.BadParameter(
+            "needs --only: it applies to the chosen matches", param_hint="--games/--label"
+        )
     try:
         run_suite(
             plan, str(path), workers=workers, device=device, out=out, model_card=model_card,
-            report=typer.echo, only=selected, watchdog=Watchdog(),
+            report=typer.echo, only=selected, watchdog=Watchdog(heartbeat=heartbeat),
             max_wall_time=parse_duration(max_wall_time) if max_wall_time else None,
+            games=games, label=label,
         )  # fmt: skip
     except ValueError as error:
         raise typer.BadParameter(str(error), param_hint="--only") from error

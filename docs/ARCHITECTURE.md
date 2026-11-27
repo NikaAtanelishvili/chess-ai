@@ -384,7 +384,15 @@ committed fixture has 125 per bucket from the November 2026 database.
 `puzzles-mcts-800`) and merges them into the suite's existing results (for the same
 checkpoint). Each part records the hardware, date and commit it ran on, and the model card
 says so when the hardware differs from the rest of the suite. The results list the parts
-of the suite that have not run yet (`not_run`).
+of the suite that have not run yet (`not_run`). With `--games N --label TEXT` the chosen
+matches are played as labelled variants, kept next to the planned ones: the laptop's
+20-game equal-time comparison is `--only compare-equal-time --games 20 --label "laptop CPU"
+--device cpu`. `--merge-results <file>` merges a results file of the same suite and
+checkpoint from another machine, with its PGNs, into ours.
+
+Matches in which a search has a time limit per move (the equal-time comparison) play one
+game per GPU, or one at a time on a CPU, whatever `--workers` says: parallel games would
+take each other's compute, and the time limit would buy fewer playouts.
 TensorBoard scalars go to `eval/results/tb/`.
 
 ### Supervised runs

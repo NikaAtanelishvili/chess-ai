@@ -622,9 +622,17 @@ but its PGN was lost.
 - Retries of workers are bounded: after 4 in a row die without finishing anything, the
   rest of the run fails with the reason.
 - A heartbeat line every 60 s, and results saved after every match.
-- The evaluation kernel always runs with `--max-wall-time 11h` (the session limit is 12 h)
-  and asks for a CPU machine unless the metadata is changed: the owner prefers the laptop
-  or a Kaggle CPU kernel, and the GPU only when CPU time would be unreasonable.
+- The evaluation kernel always runs with a wall-time limit (`MAX_WALL_TIME`, below the
+  12-h session limit). The owner prefers the laptop or a Kaggle CPU kernel, and the GPU
+  only when CPU time would be unreasonable, with an estimate first.
+- Owner decision: the parts of the full suite still missing after the hang (Stockfish at
+  Skill Level 0, wide vs base at equal playouts and at equal time, the MCTS 800 puzzles) run
+  on the T4 x2 machine with `--max-wall-time 3h`, plus the policy's puzzle run again, so
+  that both puzzle rows score one download of the database. The equal-time comparison then
+  measures the GPU, so a 20-game equal-time comparison on the laptop CPU, the hardware the
+  engine is played on, is recorded as its own labelled match.
+- Matches with a time limit per move play one game per device (GPU, or the CPU): parallel
+  games would share the compute and the time limit would buy fewer playouts.
 **Alternatives.** Making python-chess's thread a daemon (not configurable); `os._exit` at
 the end of each worker (skips closing the engines, which keep running); a timeout around
 the pool's shutdown alone (a stuck engine in the middle of a game would still hang, and the

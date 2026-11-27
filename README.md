@@ -143,13 +143,15 @@ and a summary table to [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
   database (CC0, 310 MB) is not:
   `curl -L -o data/puzzles/lichess_db_puzzle.csv.zst https://database.lichess.org/lichess_db_puzzle.csv.zst`
 - The full suite takes hours on a laptop. The Kaggle kernel `kaggle/eval/` runs it, or
-  chosen parts of it, on a CPU machine (or a T4 machine): set `CHESSNET_REF` and `ONLY` in
-  `kaggle/eval/eval.py`, then `uv run kaggle kernels push -p kaggle/eval`.
+  chosen parts of it, on the T4 x2 machine (or a CPU machine): set `CHESSNET_REF`, `ONLY`
+  and `MAX_WALL_TIME` in `kaggle/eval/eval.py`, then
+  `uv run kaggle kernels push -p kaggle/eval`.
 - Long runs cannot hang: a stuck game or engine is killed and counted as an error, a
   heartbeat line appears every minute, each match is saved as soon as it ends, and
   `--max-wall-time 6h` stops cleanly with what has finished. `--only <part>,...` runs
   single matches or puzzle runs (such as `puzzles-mcts-800`) and merges them into earlier
-  results.
+  results; `--games` and `--label` play them as labelled variants (such as a shorter run
+  on another machine), and `--merge-results` merges a results file from another machine.
 
 ## Contributing
 

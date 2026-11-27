@@ -14,6 +14,8 @@ from __future__ import annotations
 import hashlib
 import json
 import platform
+import re
+import shutil
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
@@ -47,6 +49,30 @@ class MatchPlan:
     opponent: PlayerSpec
     games: int
     target: str | None = None
+    variant_of: str | None = None  # the planned match this is a labelled variant of
+
+    @property
+    def timed(self) -> bool:
+        """A search has a time limit per move, so parallel games would share its compute."""
+        return any(
+            spec.kind == "mcts" and spec.movetime is not None
+            for spec in (self.player, self.opponent)
+        )
+
+
+def variant(match: MatchPlan, *, games: int | None = None, label: str | None = None) -> MatchPlan:
+    """``match`` with another number of games and/or a label such as 'laptop CPU'.
+
+    A labelled variant is a match of its own (name and slug), kept next to the planned one.
+    """
+    games = games or match.games
+    if not label:
+        return replace(match, games=games)
+    suffix = re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")
+    return replace(
+        match, name=f"{match.name} ({label})", slug=f"{match.slug}-{suffix}", games=games,
+        variant_of=match.slug,
+    )  # fmt: skip
 
 
 @dataclass
@@ -191,6 +217,15 @@ def resolved_device(device: str) -> str:
     return "cuda" if torch.cuda.is_available() else "cpu"
 
 
+def device_slots(device: str) -> int:
+    """Games that can run at once without sharing a device: one per GPU, or one on the CPU."""
+    if resolved_device(device) == "cuda":
+        import torch
+
+        return max(1, torch.cuda.device_count())
+    return 1
+
+
 def hardware(device: str) -> str:
     """The GPUs' name when the suite runs on them, else the CPU's model."""
     if resolved_device(device) == "cuda":
@@ -223,6 +258,8 @@ def run_suite(
     only: set[str] | None = None,
     watchdog: Watchdog | None = None,
     max_wall_time: float | None = None,
+    games: int | None = None,
+    label: str | None = None,
 ) -> dict[str, Any]:
     """Run every match and puzzle run of ``plan``; returns (and saves) the results.
 
@@ -232,10 +269,14 @@ def run_suite(
     existing results file; each part records where and when it ran. With a ``watchdog``
     games and puzzles run in supervised workers. ``max_wall_time`` (seconds) stops the suite
     cleanly: the running part is saved as incomplete, and the rest is left as not run.
+    ``games`` and ``label`` turn the chosen matches into variants (see :func:`variant`).
+    Matches with a time limit per move run one game per GPU, or one at a time on a CPU.
     """
     stem = Path(weights).stem
     results_path = out / f"{stem}.{plan.name}.json"
     matches, players = plan.matches, plan.puzzle_players
+    if (games is not None or label) and only is None:
+        raise ValueError("games and label apply to the matches chosen with only")
     if only is not None:
         known = {match.slug for match in matches} | {puzzle_slug(p) for p in players}
         unknown = only - known
@@ -244,7 +285,9 @@ def run_suite(
                 f"no match or puzzle run {', '.join(sorted(unknown))} in the {plan.name} suite "
                 f"(choose from {', '.join(sorted(known))})"
             )
-        matches = [match for match in matches if match.slug in only]
+        matches = [
+            variant(match, games=games, label=label) for match in matches if match.slug in only
+        ]
         players = [player for player in players if puzzle_slug(player) in only]
     if max_wall_time is not None:
         watchdog = replace(watchdog or Watchdog(), deadline=time.monotonic() + max_wall_time)
@@ -306,11 +349,11 @@ class _Run:
         deadline = self.watchdog.deadline if self.watchdog else None
         return deadline is not None and time.monotonic() >= deadline
 
-    def provenance(self) -> dict[str, Any]:
+    def provenance(self, workers: int | None = None) -> dict[str, Any]:
         return {
             "device": resolved_device(self.device),
             "hardware": hardware(self.device),
-            "workers": self.workers,
+            "workers": self.workers if workers is None else workers,
             "date": datetime.now(UTC).date().isoformat(),
             "git_commit": git_commit(),
         }
@@ -329,31 +372,50 @@ class _Run:
     def matches(self, matches: list[MatchPlan]) -> bool:
         """Play ``matches`` (kept in the plan's order); False if the wall time ran out."""
         openings = load_openings()
-        order = self.plan.matches
         for match in matches:
             if self.out_of_time():
                 return False
+            workers = self.workers
+            if match.timed:  # parallel games would take each other's thinking time
+                workers = min(workers, device_slots(self.device))
             result = run_match(
                 match.name, match.player, match.opponent, games=match.games, openings=openings,
-                workers=self.workers, device=self.device, target=match.target,
+                workers=workers, device=self.device, target=match.target,
                 watchdog=self.watchdog, report=self.report,
             )  # fmt: skip
             pgn = write_pgn(result, self.games_dir / f"{match.slug}.pgn")
             entry = {"slug": match.slug, **result.summary(), "pgn": pgn.as_posix(),
-                     **self.provenance()}  # fmt: skip
-            kept = [m for m in self.results["matches"] if not _same_match(m, match)]
-            rank = {plan.slug: index for index, plan in enumerate(order)}
-            self.results["matches"] = sorted(
-                [*kept, entry], key=lambda m: rank.get(m.get("slug", ""), _rank_by_name(m, order))
-            )
+                     **self.provenance(workers)}  # fmt: skip
+            if match.variant_of:
+                entry["variant_of"] = match.variant_of
+            self.add_match(entry)
             self.save()
             if result.incomplete:
                 return False
         return True
 
+    def add_match(self, entry: dict[str, Any]) -> None:
+        """Add or replace a match's entry, in the plan's order (variants after their match)."""
+        key = entry.get("slug", entry["name"])
+        kept = [m for m in self.results["matches"]
+                if m.get("slug", m["name"]) != key and m["name"] != entry["name"]]  # fmt: skip
+        order = self.plan.matches
+        self.results["matches"] = sorted([*kept, entry], key=lambda m: _match_rank(m, order))
+
+    def add_puzzles(self, entry: dict[str, Any]) -> None:
+        """Add or replace a puzzle run's entry, in the plan's order."""
+        names = [player.name for player in self.plan.puzzle_players]
+        name = entry["player"]["name"]
+        kept = [r for r in self.results["puzzles"] if r["player"]["name"] != name]
+        self.results["puzzles"] = sorted(
+            [*kept, entry],
+            key=lambda r: (
+                names.index(r["player"]["name"]) if r["player"]["name"] in names else len(names)
+            ),
+        )
+
     def puzzles(self, players: list[PlayerSpec]) -> bool:
         """Puzzle runs for ``players`` (in the plan's order); False if the wall time ran out."""
-        names = [player.name for player in self.plan.puzzle_players]
         for player in players:
             if self.out_of_time():
                 return False
@@ -361,23 +423,70 @@ class _Run:
                 player, self.plan.puzzles, workers=self.workers, device=self.device,
                 source=self.plan.puzzle_source, watchdog=self.watchdog, report=self.report,
             )  # fmt: skip
-            entry = {**solved.summary(), **self.provenance()}
-            kept = [r for r in self.results["puzzles"] if r["player"]["name"] != player.name]
-            self.results["puzzles"] = sorted(
-                [*kept, entry],
-                key=lambda r: (
-                    names.index(r["player"]["name"]) if r["player"]["name"] in names else len(names)
-                ),
-            )
+            self.add_puzzles({**solved.summary(), **self.provenance()})
             self.save()
             if solved.incomplete:
                 return False
         return True
 
 
-def _rank_by_name(entry: dict[str, Any], order: list[MatchPlan]) -> int:
-    names = [match.name for match in order]
-    return names.index(entry["name"]) if entry["name"] in names else len(names)
+def _match_rank(entry: dict[str, Any], order: list[MatchPlan]) -> float:
+    """The plan's order; a variant right after its match; anything else at the end."""
+    slugs, names = [match.slug for match in order], [match.name for match in order]
+    base = entry.get("variant_of") or entry.get("slug")
+    if base in slugs:
+        index = slugs.index(base)
+    elif entry["name"] in names:
+        index = names.index(entry["name"])
+    else:
+        return float(len(order))
+    return index + (0.5 if entry.get("variant_of") else 0.0)
+
+
+def merge_suite_results(
+    plan: SuitePlan,
+    weights: str,
+    other: Path,
+    *,
+    out: Path = Path("eval/results"),
+    model_card: Path | None = None,
+    report: Callable[[str], None] = print,
+) -> dict[str, Any]:
+    """Merge results of the same checkpoint and suite from another machine into ours.
+
+    Every match and puzzle run in ``other`` replaces ours with the same slug (or name, or
+    player). Its PGN is copied from the directory next to ``other`` (as the suite writes
+    them) into ours, and the parts not run are recomputed from ``plan``.
+    """
+    stem = Path(weights).stem
+    path = out / f"{stem}.{plan.name}.json"
+    results = json.loads(path.read_text(encoding="utf-8"))
+    theirs = json.loads(other.read_text(encoding="utf-8"))
+    for key in ("sha256", "suite"):
+        if results[key] != theirs[key]:
+            raise ValueError(f"{other} holds results for another {key} than {path}")
+    run = _Run(plan, results, path, out / f"{stem}.{plan.name}", 1, "cpu", None, report,
+               keep_wall_time=True)  # fmt: skip
+    source = other.with_suffix("")  # the PGN directory next to the results file
+    for entry in theirs["matches"]:
+        if entry.get("pgn"):
+            pgn = source / Path(entry["pgn"]).name
+            if not pgn.is_file():
+                raise FileNotFoundError(f"the PGN of {entry['name']} is missing: {pgn}")
+            run.games_dir.mkdir(parents=True, exist_ok=True)
+            target = run.games_dir / pgn.name
+            shutil.copyfile(pgn, target)
+            entry = {**entry, "pgn": target.as_posix()}
+        run.add_match(entry)
+        report(f"merged {entry['name']}")
+    for entry in theirs["puzzles"]:
+        run.add_puzzles(entry)
+        report(f"merged puzzles ({entry['player']['name']})")
+    run.save()
+    if model_card is not None:
+        update_model_card(model_card, results)
+    report(f"results: {path}")
+    return results
 
 
 def _log_scalars(directory: Path, results: dict[str, Any]) -> None:

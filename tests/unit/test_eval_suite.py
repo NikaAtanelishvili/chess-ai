@@ -117,6 +117,25 @@ def test_summary_table_shows_unbounded_elo() -> None:
     assert "| 100 / 0 / 0 | 100.0% | +inf (+553 to +inf) | score >= 98% |" in table
 
 
+def test_summary_table_says_where_and_how_many_at_a_time_a_match_was_played() -> None:
+    match = {"games": 50, "wins": 25, "draws": 0, "losses": 25, "score": 0.5, "elo": 0.0,
+             "elo_95": [-50.0, 50.0], "target": None}  # fmt: skip
+    results = {
+        "checkpoint": "base-best.pt", "suite": "full", "created": "2026-11-27T10:00:00+00:00",
+        "hardware": "2 x Tesla T4", "device": "cuda", "workers": 4, "chessnet_version": "0",
+        "openings": "50 balanced openings", "notes": [], "puzzles": [],
+        "matches": [
+            {**match, "name": "parallel"},  # like the suite: no note
+            {**match, "name": "timed", "hardware": "2 x Tesla T4", "device": "cuda", "workers": 2},
+            {**match, "name": "laptop", "hardware": "a laptop CPU", "device": "cpu", "workers": 1},
+        ],
+    }  # fmt: skip
+    table = summary_table(results)
+    assert "parallel was played" not in table
+    assert "timed was played 2 games at a time." in table
+    assert "laptop was played on a laptop CPU (cpu), 1 game at a time." in table
+
+
 def test_summary_table_marks_what_did_not_finish() -> None:
     stopped = {
         "game": 2,

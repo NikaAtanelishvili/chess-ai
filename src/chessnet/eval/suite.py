@@ -542,11 +542,8 @@ def summary_table(results: dict[str, Any]) -> str:
             name = run["player"]["name"] + (" (incomplete)" if run.get("incomplete") else "")
             cells = [_percent(run["buckets"][label]["accuracy"]) for label in labels]
             lines.append(f"| {name} | " + " | ".join(cells) + f" | {_percent(run['accuracy'])} |")
-    elsewhere = [
-        f"{match['name']} was played on {match['hardware']} ({match['device']})."
-        for match in results["matches"]
-        if match.get("hardware", results["hardware"]) != results["hardware"]
-    ] + [
+    played = (_played(match, results) for match in results["matches"])
+    elsewhere = [note for note in played if note] + [
         f"Puzzles ({run['player']['name']}) ran on {run['hardware']} ({run['device']})."
         for run in results["puzzles"]
         if run.get("hardware", results["hardware"]) != results["hardware"]
@@ -578,6 +575,17 @@ def summary_table(results: dict[str, Any]) -> str:
     for note in [*results["notes"], *elsewhere, *unfinished, *stopped, *not_run]:
         lines += ["", note]
     return "\n".join(lines) + "\n"
+
+
+def _played(match: dict[str, Any], results: dict[str, Any]) -> str | None:
+    """Where, and how many games at a time, a match was played if unlike the suite."""
+    parts = []
+    if match.get("hardware", results["hardware"]) != results["hardware"]:
+        parts.append(f"on {match['hardware']} ({match['device']})")
+    workers = match.get("workers", results["workers"])
+    if workers != results["workers"]:
+        parts.append(f"{workers} game{'' if workers == 1 else 's'} at a time")
+    return f"{match['name']} was played {', '.join(parts)}." if parts else None
 
 
 def _percent(value: float | None) -> str:

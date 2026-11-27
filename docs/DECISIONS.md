@@ -545,8 +545,11 @@ stays available for a fixed-node comparison in evaluation.
   `isready` or at the first `go`.
 - **Score mapping:** Lichess's win-chance model, `cp = ln((1 + v) / (1 - v)) / 0.00368208`.
   It is a standard logistic mapping, and it was fitted to the same population of games.
-- **Depth:** the principal variation's length. `go depth` is accepted but does not limit
-  the search; MCTS has no meaningful depth limit.
+- **Depth:** reported as the principal variation's length. MCTS has no depth limit of its
+  own, so `go depth N` becomes a playout budget, `10 x N^2` (capped at a million). It
+  grows with N, puts depth 9 at about the default 800 playouts, and keeps the depths GUIs
+  offer (up to about 20 to 30) at seconds per move on a CPU. (2026-11-27; it was ignored
+  before.)
 - **Defaults:** `LeafBatch` 32, the fastest batch on both CPUs measured; `Simulations` 800,
   about 1.5 s a move on a laptop CPU. `MoveOverhead` (100 ms) is an option, because the
   time lost per move depends on the GUI and the machine.

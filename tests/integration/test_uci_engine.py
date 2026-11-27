@@ -92,6 +92,15 @@ def test_options_change_the_search(engine: chess.engine.SimpleEngine) -> None:
     assert result.info["nodes"] >= 30
 
 
+def test_a_depth_limit_sets_the_node_budget(engine: chess.engine.SimpleEngine) -> None:
+    board = chess.Board()
+    shallow = engine.play(board, chess.engine.Limit(depth=2), info=chess.engine.INFO_ALL)
+    endgame = chess.Board("8/8/4k3/8/8/4K3/4P3/8 w - - 0 1")  # another game: a fresh tree
+    deep = engine.play(endgame, chess.engine.Limit(depth=5), info=chess.engine.INFO_ALL)
+    assert shallow.info["nodes"] == 40  # 10 * 2**2
+    assert deep.info["nodes"] == 250  # 10 * 5**2
+
+
 def play_on_the_clock(
     engine: chess.engine.SimpleEngine, base: float, increment: float, plies: int
 ) -> None:

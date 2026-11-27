@@ -603,11 +603,19 @@ def _elo_text(value: float | None, positive: bool) -> str:
     return format_elo(value)
 
 
-def update_model_card(path: Path, results: dict[str, Any]) -> Path:
-    """Put the run's table into the model card, replacing an earlier run of the same suite."""
+def update_model_card(
+    path: Path,
+    results: dict[str, Any],
+    table: Callable[[dict[str, Any]], str] | None = None,
+) -> Path:
+    """Put the run's table into the model card, replacing an earlier run of the same suite.
+
+    ``table`` renders the section (by default :func:`summary_table`); text after the
+    section, such as an interpretation, is kept.
+    """
     key = f"{Path(results['checkpoint']).stem} {results['suite']}"
     start, end = f"<!-- eval: {key} -->", f"<!-- end eval: {key} -->"
-    section = f"{start}\n{summary_table(results)}{end}\n"
+    section = f"{start}\n{(table or summary_table)(results)}{end}\n"
     text = path.read_text(encoding="utf-8") if path.exists() else "# Model card\n"
     if start in text and end in text:
         before, rest = text.split(start, 1)

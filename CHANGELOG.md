@@ -57,6 +57,10 @@ All notable changes to this project are documented here. The format follows
   more than an hour, or hits an external engine's call timeout is killed with its engines
   and recorded as an error; a heartbeat line every minute; results saved after every match;
   `chessnet eval --max-wall-time` for a clean stop, and `--heartbeat` to set the interval.
+- `chessnet ladder`: MCTS 800 against Stockfish at rising UCI_Elo levels until it scores
+  below 25%, a maximum-likelihood rating on Stockfish's UCI_Elo scale with a 95% interval,
+  then strength against playouts (50 to 1,600) against the level nearest 50%, with an SVG
+  chart for the model card. The Kaggle evaluation kernel runs it (`TASK = "ladder"`).
 - `chessnet eval --games/--label` (labelled variants of chosen matches, such as a 20-game
   run on a laptop CPU) and `--merge-results` (results from another machine, with PGNs).
   Matches with a time limit per move play one game per GPU, or one at a time on a CPU.

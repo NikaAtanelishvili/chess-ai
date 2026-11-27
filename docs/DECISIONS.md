@@ -659,3 +659,25 @@ one-thread call.
 **Alternatives.** A looser tolerance (it would hide real differences, which Adam
 amplifies); training on one thread (slower); a warm-up in the tests only (the race breaks a
 real resume on the CPU too).
+
+## 2026-11-27: Stockfish ladder and playout scaling (owner request)
+
+**Context.** The full suite's Stockfish matches are floors: MCTS 800 won all 100 games at
+Stockfish's weakest setting. Stockfish 16's source converts `UCI_Elo` into a fractional
+skill level, `e = (elo - 1320) / 1870`, `level = clamp(((37.2473e - 40.8525)e + 22.2943)e -
+0.311438, 0, 19)`, anchored to CCRL ratings (goldfish 1.13 = 2000, fitted to games at 60 s +
+0.6 s). So UCI_Elo 1320 is level 0.0, the same opponent as `Skill Level 0`; the games differ
+only because its weakened move choice draws from a clock-seeded random generator.
+**Decision.**
+- A ladder at UCI_Elo 1500 to 2300 in steps of 200 (skill levels 1.5 to 5.5), 40 games per
+  level, climbing until a level scores below 25%: above that, more levels add little.
+- The rating is a maximum-likelihood fit to all ladder games with a likelihood-ratio
+  interval, not an average of per-level estimates: levels near 50% weigh most, and a sweep
+  at a low level still bounds the rating.
+- Ratings are labelled as Stockfish 16's UCI_Elo scale (an engine scale anchored to CCRL),
+  never as FIDE or Lichess ratings.
+- The scaling curve plays against the ladder level nearest 50% for MCTS 800, where scores
+  measure Elo best, rather than against MCTS 400: self-play inflates gains, and an external
+  reference puts the curve on the ladder's scale. The 800 point reuses the ladder match.
+- The chart is an SVG written from the results (no plotting dependency), so it can be
+  rebuilt with the tables.

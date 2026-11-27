@@ -128,6 +128,7 @@ uv run chessnet eval --suite quick              # about 10 minutes on a laptop C
 uv run chessnet eval --suite full --estimate    # times a few games, estimates the full suite
 uv run chessnet eval --suite full --workers 2 --compare checkpoints/session2/wide-best.pt \
     --puzzles data/puzzles/lichess_db_puzzle.csv.zst
+uv run chessnet ladder --workers 2              # Stockfish UCI_Elo ladder and playout scaling
 ```
 
 The quick suite plays the raw policy and policy-safe against a random mover and MCTS (400

@@ -393,6 +393,25 @@ checkpoint from another machine, with its PGNs, into ours.
 Matches in which a search has a time limit per move (the equal-time comparison) play one
 game per GPU, or one at a time on a CPU, whatever `--workers` says: parallel games would
 take each other's compute, and the time limit would buy fewer playouts.
+
+### Stockfish ladder and playout scaling
+
+`chessnet ladder` (`chessnet.eval.ladder`) rates MCTS on Stockfish's scale:
+
+- **Ladder:** MCTS 800 against Stockfish 16 with `UCI_LimitStrength` at UCI_Elo 1500, 1700,
+  1900, 2100 and 2300 (40 games each, 1 s per Stockfish move, the balanced openings with
+  both colours). It stops climbing after the first level scored below 25%.
+- **Rating:** the maximum-likelihood fit of the Elo model to every ladder game (a draw is
+  half a win), with a 95% likelihood-ratio interval. Stockfish 16 turns UCI_Elo into a
+  fractional skill level (1320 is level 0) fitted to CCRL engine ratings, so the result is
+  an engine rating on that scale, not a FIDE or Lichess rating.
+- **Scaling:** MCTS at 50, 100, 200, 400, 800 and 1,600 playouts (32 games each) against the
+  ladder level where MCTS 800 scored closest to 50%, where an Elo difference is measured
+  most precisely. A point's rating is that level plus its Elo difference; the 800 point is
+  the ladder's own match. The chart (`<checkpoint>.ladder.svg`, rating against log2 of the
+  playouts with 95% intervals, light and dark) and the tables go to the model card.
+- The same supervised workers, heartbeat, per-match saving and `--max-wall-time` as the
+  suites. `--import-results` brings a run from another machine, with its PGNs.
 TensorBoard scalars go to `eval/results/tb/`.
 
 ### Supervised runs

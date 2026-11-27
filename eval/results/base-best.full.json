@@ -59,6 +59,51 @@
       "git_commit": "08aa78e91079c671cdcaf3093611fec8b51685ba"
     },
     {
+      "slug": "policy-safe-vs-random",
+      "name": "policy-safe vs random",
+      "player": {
+        "name": "policy-safe",
+        "kind": "policy-safe",
+        "weights": "checkpoints/session2/base-best.pt",
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "random",
+        "kind": "random",
+        "leaf_batch": 32,
+        "seed": 0,
+        "timeout": 30.0
+      },
+      "games": 100,
+      "wins": 100,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        566.2,
+        null
+      ],
+      "target": "score >= 98%",
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 100
+      },
+      "mean_plies": 30.8,
+      "player_seconds_per_move": 0.008,
+      "opponent_seconds_per_move": 0.0,
+      "wall_seconds": 14.9,
+      "pgn": "eval/results/base-best.full/policy-safe-vs-random.pgn",
+      "device": "cpu",
+      "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+      "workers": 1,
+      "date": "2026-11-27",
+      "git_commit": "512a474de9f795234cb471d18f22bfd241b3a734"
+    },
+    {
       "slug": "mcts400-vs-policy",
       "name": "MCTS 400 vs policy",
       "player": {
@@ -157,13 +202,58 @@
       "git_commit": "08aa78e91079c671cdcaf3093611fec8b51685ba"
     }
   ],
-  "puzzles": [],
+  "puzzles": [
+    {
+      "player": {
+        "name": "policy",
+        "kind": "policy",
+        "weights": "checkpoints/session2/base-best.pt",
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "source": "2000 sampled from lichess_db_puzzle.csv.zst (seed 0)",
+      "puzzles": 2000,
+      "solved": 1284,
+      "accuracy": 0.642,
+      "buckets": {
+        "<=1000": {
+          "puzzles": 500,
+          "solved": 414,
+          "accuracy": 0.828
+        },
+        "1001-1500": {
+          "puzzles": 500,
+          "solved": 346,
+          "accuracy": 0.692
+        },
+        "1501-2000": {
+          "puzzles": 500,
+          "solved": 278,
+          "accuracy": 0.556
+        },
+        ">2000": {
+          "puzzles": 500,
+          "solved": 246,
+          "accuracy": 0.492
+        }
+      },
+      "incomplete": false,
+      "not_run": 0,
+      "errors": 0,
+      "failures": {},
+      "seconds_per_puzzle": 0.008,
+      "wall_seconds": 15.0,
+      "device": "cpu",
+      "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+      "workers": 1,
+      "date": "2026-11-27",
+      "git_commit": "512a474de9f795234cb471d18f22bfd241b3a734-dirty"
+    }
+  ],
   "not_run": [
-    "policy-safe vs random",
     "MCTS 800 vs Stockfish Skill Level 0",
     "wide-best vs base, 800 playouts each",
     "wide-best vs base, 1 s per move each",
-    "puzzles (policy)",
     "puzzles (mcts-800)"
   ],
   "wall_seconds": 1090.9

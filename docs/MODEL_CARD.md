@@ -87,10 +87,21 @@ Puzzles, first move: 500 from lichess_puzzles_500.csv.
 | Match | Games | W / D / L | Score | Elo (95% CI) | Target |
 |-------|------:|-----------|------:|--------------|--------|
 | policy vs random | 100 | 95 / 5 / 0 | 97.5% | +636 (+525 to +975) | score >= 98% |
+| policy-safe vs random | 100 | 100 / 0 / 0 | 100.0% | +inf (+566 to +inf) | score >= 98% |
 | MCTS 400 vs policy | 100 | 100 / 0 / 0 | 100.0% | +inf (+566 to +inf) | score > 55% |
 | MCTS 800 vs Stockfish UCI_Elo 1320 | 50 | 50 / 0 / 0 | 100.0% | +inf (+446 to +inf) | non-zero score |
 
+Puzzles, first move: 2000 sampled from lichess_db_puzzle.csv.zst (seed 0).
+
+| Player | <=1000 | 1001-1500 | 1501-2000 | >2000 | All |
+|--------|---:|---:|---:|---:|---:|
+| policy | 82.8% | 69.2% | 55.6% | 49.2% | 64.2% |
+
 The Kaggle run hung after MCTS 800 vs Stockfish UCI_Elo 1320 (fixed since). That match's results were recovered from the kernel log; its PGN was lost.
 
-Not run: policy-safe vs random; MCTS 800 vs Stockfish Skill Level 0; wide-best vs base, 800 playouts each; wide-best vs base, 1 s per move each; puzzles (policy); puzzles (mcts-800).
+policy-safe vs random was played on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu).
+
+Puzzles (policy) ran on 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz (cpu).
+
+Not run: MCTS 800 vs Stockfish Skill Level 0; wide-best vs base, 800 playouts each; wide-best vs base, 1 s per move each; puzzles (mcts-800).
 <!-- end eval: base-best full -->

@@ -5,14 +5,17 @@ checks their SHA-256 against docs/TRAINING.md, installs Stockfish 16 (the offici
 downloads the Lichess puzzle database when puzzles are to run, and runs
 
     chessnet eval --suite full --weights base-best.pt --compare wide-best.pt \
-        --workers 4 (GPU) or 2 (CPU) --max-wall-time 11h [--only ONLY]
+        --workers 4 (GPU) or 2 (CPU) --max-wall-time MAX_WALL_TIME --heartbeat 60 \
+        [--only ONLY]
 
-Results (JSON, PGNs, the model card with the new table) land in /kaggle/working/eval. With
-ONLY set, the results hold just those parts, to be merged into eval/results/ afterwards.
+Matches with a time limit per move play one game per GPU. Results (JSON, PGNs, the model
+card with the new table) land in /kaggle/working/eval. With ONLY set, the results hold just
+those parts; merge them into eval/results/ with `chessnet eval --merge-results`.
 
-Before pushing, set CHESSNET_REF (a tag or commit SHA, never a branch) and ONLY. The
-metadata asks for a CPU machine; for a T4, set "enable_gpu": true and "machine_shape":
-"NvidiaTeslaT4" in kernel-metadata.json. Push from the repository root:
+Before pushing, set CHESSNET_REF (a tag or commit SHA, never a branch), ONLY and
+MAX_WALL_TIME. The metadata asks for the T4 x2 machine; for a CPU machine, set
+"enable_gpu": false and drop "machine_shape" in kernel-metadata.json. Push from the
+repository root:
 
     uv run kaggle kernels push -p kaggle/eval
 """
@@ -30,10 +33,15 @@ from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
 CHESSNET_REF = "93f77c8b653238b43bfef45395c05a7a06adf74c"  # hang-proof evaluation, pre-merge
-#: Parts of the suite to run (``chessnet eval --only``), or "" for the whole suite.
-ONLY = "compare-equal-nodes"
-#: The session limit is 12 h; the suite stops cleanly before it and keeps what finished.
-MAX_WALL_TIME = "11h"
+#: Parts of the suite to run (``chessnet eval --only``), or "" for the whole suite. The
+#: policy's puzzle run is repeated here so that both puzzle runs score the same sample.
+ONLY = (
+    "mcts800-vs-stockfish-skill0,compare-equal-nodes,compare-equal-time,"
+    "puzzles-policy,puzzles-mcts-800"
+)
+#: The suite stops cleanly at this wall time (estimate: about 1.8 h) and keeps what finished.
+MAX_WALL_TIME = "3h"
+HEARTBEAT_SECONDS = 60
 BASE_SHA256 = "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78"
 WIDE_SHA256 = "7a3d263826103e6f85fa74c55f95b21ab988a8e7680b8eb1be94ac4e1cd4ca74"
 CHECKPOINTS = {  # name in the results: (path in the training output, SHA-256)
@@ -129,7 +137,7 @@ def eval_command(
         sys.executable, "-m", "chessnet", "eval", "--suite", "full",
         "--weights", weights["base-best.pt"], "--compare", weights["wide-best.pt"],
         "--workers", workers, "--device", "auto", "--out", out, "--model-card", card,
-        "--max-wall-time", MAX_WALL_TIME,
+        "--max-wall-time", MAX_WALL_TIME, "--heartbeat", HEARTBEAT_SECONDS,
     ]  # fmt: skip
     if puzzles is not None:
         command += ["--puzzles", puzzles]

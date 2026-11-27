@@ -88,6 +88,7 @@ def test_the_command_is_bounded_in_time_and_runs_only_the_chosen_parts(
         stockfish=Path("sf"), only="compare-equal-nodes",
     )]  # fmt: skip
     assert command[command.index("--max-wall-time") + 1] == kernel.MAX_WALL_TIME
+    assert command[command.index("--heartbeat") + 1] == "60"
     assert command[command.index("--only") + 1] == "compare-equal-nodes"
     assert "--puzzles" not in command
     whole = kernel.eval_command(weights, workers=4, out=Path("out"), card=Path("card.md"),
@@ -106,3 +107,12 @@ def test_the_chosen_parts_exist_in_the_full_suite(kernel: ModuleType) -> None:
     known = {m.slug for m in plan.matches} | {puzzle_slug(p) for p in plan.puzzle_players}
     known |= {"mcts800-vs-stockfish-elo", "mcts800-vs-stockfish-skill0"}
     assert {part.strip() for part in kernel.ONLY.split(",") if part.strip()} <= known
+
+
+def test_the_metadata_matches_the_machine_the_parts_are_sized_for(kernel: ModuleType) -> None:
+    import json
+
+    metadata = json.loads((KERNEL.parent / "kernel-metadata.json").read_text(encoding="utf-8"))
+    assert metadata["enable_gpu"] is True
+    assert metadata["machine_shape"] == "NvidiaTeslaT4"  # T4 x2
+    assert metadata["kernel_sources"] == ["nikaatanelishvili/chessnet-train"]

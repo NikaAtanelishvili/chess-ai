@@ -356,7 +356,7 @@ class UCIEngine:
             from chessnet.engine.player import safe_policy_move
 
             [evaluation] = evaluator.evaluate([board])
-            move = safe_policy_move(board, evaluation.priors)  # policy-safe, see the player
+            move = safe_policy_move(board, evaluation.priors, value=evaluation.value)
             cp = value_to_cp(evaluation.value)
             self.send(f"info depth 1 score cp {cp} nodes 1 pv {move.uci()}")
             return move

@@ -595,6 +595,10 @@ Without search the policy cannot tell that stalemating a lone king throws the wi
   policy` use policy-safe, since a player wants the win.
 - The Kaggle full suite was already running, so policy-safe's 100 games against the random
   mover were played on the laptop and merged into its results with `--only`.
+- Refined the same day (owner decision): the draw rules apply only when the value head
+  rates the side to move better (`v > 0`). Level or worse, a draw is welcome, so moves that
+  stalemate or repeat are allowed. A mate in one is always taken. The results against the
+  random mover were replayed with the refined player.
 
 ## 2026-11-27: Hang-proof evaluation runs
 

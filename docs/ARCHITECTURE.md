@@ -240,11 +240,11 @@ refused** (`EncodingVersionError`), as is data built with another version.
 - `RandomPlayer`: a random legal move.
 - `PolicyPlayer`: the masked policy's most likely move, with no search; the evaluation's
   baseline for the raw network.
-- `PolicySafePlayer`: the policy with three rules, in prior order. It takes a mate in one;
-  otherwise it plays the first move that neither stalemates nor leaves a threefold
-  repetition to claim (completed by the move, or reachable by the opponent's reply); if
-  every move does one of those, it plays the most likely move. UCI `Mode policy` and
-  `chessnet play --mode policy` use it.
+- `PolicySafePlayer`: the policy with rules, in prior order. It takes a mate in one. When
+  the value head rates the side to move better (`v > 0`), it then plays the first move that
+  neither stalemates nor leaves a threefold repetition to claim (completed by the move, or
+  reachable by the opponent's reply). Level or worse, or if every move draws, it plays the
+  most likely move. UCI `Mode policy` and `chessnet play --mode policy` use it.
 - `MCTSPlayer(simulations | movetime)`: search with tree reuse between its moves;
   `last_result` keeps the statistics (value, principal variation, nodes, speed).
 

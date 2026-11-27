@@ -47,8 +47,9 @@ All notable changes to this project are documented here. The format follows
   bucket; `--estimate` for wall time; results in `eval/results/` and `docs/MODEL_CARD.md`.
 - A 500-puzzle Lichess sample in `tests/fixtures/puzzles/`, and the Kaggle kernel
   `kaggle/eval/` for the full suite.
-- `PolicySafePlayer`: the policy plus three rules (take a mate in one; avoid moves that
-  stalemate or allow a threefold-repetition claim while others exist). UCI `Mode policy` and
+- `PolicySafePlayer`: the policy plus rules (take a mate in one; when the value head rates
+  the position better than level, avoid moves that stalemate or allow a threefold-repetition
+  claim while others exist). UCI `Mode policy` and
   `chessnet play --mode policy` now use it; the evaluation reports both it and the raw
   policy against a random mover. `chessnet eval --only` adds matches and puzzle runs to
   earlier results, which list the parts of the suite not run yet.

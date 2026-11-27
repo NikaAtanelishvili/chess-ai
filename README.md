@@ -108,8 +108,9 @@ laptop CPU it searches about 500 nodes per second, so 800 playouts take about 1.
 | `MoveOverhead` | 100 | milliseconds kept back per move for GUI and system lag |
 
 `Mode policy` plays **policy-safe**: the network's most likely move, except that it takes
-a mate in one when it has one, and avoids moves that stalemate or let either side claim a
-threefold repetition while it has other moves. The evaluation's `policy` player stays the
+a mate in one when it has one, and, when the network rates its position better than level,
+avoids moves that stalemate or let either side claim a threefold repetition while it has
+other moves. Level or worse, a draw is welcome. The evaluation's `policy` player stays the
 raw network, for an honest baseline.
 
 The engine understands `go nodes`, `movetime`, `depth`, `wtime`/`btime`/`winc`/`binc`/

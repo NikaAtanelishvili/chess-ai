@@ -108,10 +108,10 @@ def test_mcts_player_reuses_its_tree_during_a_game() -> None:
 
 
 class Preferring(UniformEvaluator):
-    """Uniform priors, except 0.9 on one move (the policy's favourite)."""
+    """Uniform priors, except 0.9 on one move (the policy's favourite), and a fixed value."""
 
-    def __init__(self, favourite: chess.Move) -> None:
-        super().__init__()
+    def __init__(self, favourite: chess.Move, value: float = 0.0) -> None:
+        super().__init__(lambda board: value)
         self.favourite = favourite
 
     def evaluate(self, boards):  # type: ignore[no-untyped-def]
@@ -135,26 +135,45 @@ def both_colours(fen: str, *moves: str) -> list[tuple[chess.Board, list[chess.Mo
     return [(board, white), (board.mirror(), [mirrored(m) for m in white])]
 
 
-def safe_and_plain(board: chess.Board, favourite: chess.Move) -> tuple[chess.Move, chess.Move]:
-    evaluator = Preferring(favourite)
+BETTER, LEVEL, WORSE = 0.5, 0.0, -0.5  # the value head's view of the side to move
+
+
+def safe_and_plain(
+    board: chess.Board, favourite: chess.Move, value: float = BETTER
+) -> tuple[chess.Move, chess.Move]:
+    evaluator = Preferring(favourite, value)
     return PolicySafePlayer(evaluator).choose(board), PolicyPlayer(evaluator).choose(board)
 
 
 def test_policy_safe_takes_a_mate_in_one() -> None:
     for board, (favourite, mate) in both_colours(MATE_IN_ONE, "g1f1", "d1d8"):
-        safe, plain = safe_and_plain(board, favourite)
-        assert safe == mate
-        assert plain == favourite  # the pure policy baseline is unchanged
+        for value in (BETTER, LEVEL, WORSE):  # whatever the value head says
+            safe, plain = safe_and_plain(board, favourite, value)
+            assert safe == mate
+            assert plain == favourite  # the pure policy baseline is unchanged
 
 
-def test_policy_safe_avoids_a_stalemate() -> None:
-    # Ka1 Qa2 against Kc1: Qe2 stalemates, nothing mates.
-    for board, (favourite,) in both_colours("8/8/8/8/8/8/Q7/K1k5 w - - 0 1", "a2e2"):
-        safe, plain = safe_and_plain(board, favourite)
+STALEMATE_FROM = "8/8/8/8/8/8/Q7/K1k5 w - - 0 1"  # Ka1 Qa2 against Kc1: Qe2 stalemates
+
+
+def test_policy_safe_avoids_a_stalemate_when_better() -> None:
+    for board, (favourite,) in both_colours(STALEMATE_FROM, "a2e2"):
+        safe, plain = safe_and_plain(board, favourite, BETTER)
         assert plain == favourite
         assert safe != favourite
         board.push(safe)
         assert not board.is_stalemate()
+
+
+def test_policy_safe_allows_a_stalemate_when_level_or_worse() -> None:
+    """A draw is welcome when the side to move is not better (owner decision)."""
+    for board, (favourite,) in both_colours(STALEMATE_FROM, "a2e2"):
+        for value in (LEVEL, WORSE):
+            safe, _ = safe_and_plain(board, favourite, value)
+            assert safe == favourite
+            board.push(safe)
+            assert board.is_stalemate()
+            board.pop()
 
 
 SHUFFLE_FROM = "3qk3/8/8/8/8/8/8/R3K1NR w - - 0 1"
@@ -174,19 +193,19 @@ def shuffled(colour: chess.Color, plies: int) -> tuple[chess.Board, list[chess.M
     return board, moves[plies:]
 
 
-def test_policy_safe_does_not_complete_a_threefold_repetition() -> None:
+def test_policy_safe_does_not_complete_a_threefold_repetition_when_better() -> None:
     for colour in (chess.WHITE, chess.BLACK):
         board, rest = shuffled(colour, 7)  # the next move repeats the start a third time
         favourite = rest[0]
         board.push(favourite)
         assert board.can_claim_threefold_repetition()
         board.pop()
-        safe, plain = safe_and_plain(board, favourite)
+        safe, plain = safe_and_plain(board, favourite, BETTER)
         assert plain == favourite
         assert safe != favourite
 
 
-def test_policy_safe_does_not_allow_a_threefold_claim() -> None:
+def test_policy_safe_does_not_allow_a_threefold_claim_when_better() -> None:
     for colour in (chess.WHITE, chess.BLACK):
         board, rest = shuffled(colour, 6)  # retreating lets the opponent repeat a third time
         favourite = rest[0]
@@ -194,9 +213,20 @@ def test_policy_safe_does_not_allow_a_threefold_claim() -> None:
         assert not board.is_repetition(3)  # nothing completed yet...
         assert board.can_claim_threefold_repetition()  # ...but the reply would
         board.pop()
-        safe, plain = safe_and_plain(board, favourite)
+        safe, plain = safe_and_plain(board, favourite, BETTER)
         assert plain == favourite
         assert safe != favourite
+
+
+def test_policy_safe_repeats_when_level_or_worse() -> None:
+    """Completing a threefold repetition, or allowing one, is fine without an advantage."""
+    for colour in (chess.WHITE, chess.BLACK):
+        for plies in (7, 6):  # completes the repetition; lets the opponent complete it
+            board, rest = shuffled(colour, plies)
+            favourite = rest[0]
+            for value in (LEVEL, WORSE):
+                safe, plain = safe_and_plain(board, favourite, value)
+                assert safe == plain == favourite
 
 
 def test_policy_safe_plays_the_favourite_when_it_is_safe_and_falls_back_when_nothing_is() -> None:
@@ -205,5 +235,5 @@ def test_policy_safe_plays_the_favourite_when_it_is_safe_and_falls_back_when_not
     assert safe_and_plain(board, e4) == (e4, e4)
     stalemate = chess.Board("8/8/8/8/8/8/Q7/K1k5 w - - 0 1")
     qe2 = chess.Move.from_uci("a2e2")
-    assert safe_policy_move(stalemate, {qe2: 1.0}) == qe2  # the only candidate, unsafe or not
+    assert safe_policy_move(stalemate, {qe2: 1.0}, value=BETTER) == qe2  # the only candidate
     assert stalemate.move_stack == []  # the board is restored

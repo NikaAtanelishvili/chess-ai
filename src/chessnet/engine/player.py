@@ -49,13 +49,18 @@ class PolicyPlayer:
         return max(priors, key=priors.__getitem__)
 
 
-def safe_policy_move(board: chess.Board, priors: Mapping[chess.Move, float]) -> chess.Move:
-    """The most likely move after three rules, in prior order:
+def safe_policy_move(
+    board: chess.Board, priors: Mapping[chess.Move, float], *, value: float
+) -> chess.Move:
+    """The most likely move after these rules, in prior order:
 
     1. a move that checkmates, if there is one;
-    2. otherwise the first move that neither stalemates nor leaves a threefold repetition to
-       claim (completed by the move, or reachable by the opponent's reply);
-    3. if every move does one of those, the most likely move.
+    2. when the side to move is better (``value``, the network's expected outcome for it,
+       above 0), the first move that neither stalemates nor leaves a threefold repetition to
+       claim (completed by the move, or reachable by the opponent's reply), since a draw
+       would give the advantage away;
+    3. otherwise the most likely move: level or worse, a draw is welcome. Also when every
+       move would draw.
 
     ``board`` is restored before returning.
     """
@@ -66,6 +71,8 @@ def safe_policy_move(board: chess.Board, priors: Mapping[chess.Move, float]) -> 
         board.pop()
         if mates:
             return move
+    if value <= 0.0:
+        return ranked[0]
     for move in ranked:
         board.push(move)
         unsafe = board.is_stalemate() or board.can_claim_threefold_repetition()
@@ -76,16 +83,17 @@ def safe_policy_move(board: chess.Board, priors: Mapping[chess.Move, float]) -> 
 
 
 class PolicySafePlayer:
-    """The policy with three safety rules: it takes a mate in one, and it avoids moves that
-    stalemate or allow a threefold-repetition claim while it has others (no search)."""
+    """The policy with safety rules (no search): it takes a mate in one, and when the value
+    head rates its position better than level it avoids moves that stalemate or allow a
+    threefold-repetition claim while it has others. See :func:`safe_policy_move`."""
 
     def __init__(self, evaluator: Evaluator) -> None:
         self.evaluator = evaluator
 
     def choose(self, board: chess.Board) -> chess.Move:
         _require_moves(board)
-        priors = self.evaluator.evaluate([board])[0].priors
-        return safe_policy_move(board, priors)
+        [evaluation] = self.evaluator.evaluate([board])
+        return safe_policy_move(board, evaluation.priors, value=evaluation.value)
 
 
 class MCTSPlayer:

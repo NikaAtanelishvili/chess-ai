@@ -180,6 +180,27 @@ def find_checkpoint(resume: str, out_dir: Path, resume_dirs: Sequence[Path]) -> 
     return max(candidates, key=lambda p: (int(p.stem.removeprefix("step-")), str(p)), default=None)
 
 
+#: torch functions that run on MKL's vector math on the CPU, and that training may use.
+_VECTOR_MATH = (
+    torch.sqrt, torch.rsqrt, torch.exp, torch.expm1, torch.log, torch.log1p, torch.tanh,
+    torch.sigmoid, torch.erf, torch.sin, torch.cos,
+)  # fmt: skip
+
+
+def warm_up_vector_math() -> None:
+    """Run torch's MKL vector-math kernels once, on this thread alone.
+
+    MKL sets them up on first use. When that first use is split across threads (torch hands
+    2,048-element chunks to its threads), one thread can compute at reduced accuracy: the
+    first square root Adam took was off by up to 3e-4 relative in 1 to 7 of every 8 fresh
+    processes on a 2-core laptop, so a run could differ from its resumed copy. 1,024 values
+    stay below the chunk size, so these calls never leave the calling thread.
+    """
+    values = torch.full((1024,), 0.5)
+    for function in _VECTOR_MATH:
+        function(values)
+
+
 def _seed_everything(seed: int, deterministic: bool) -> None:
     random.seed(seed)
     np.random.seed(seed)
@@ -317,6 +338,7 @@ def train(
     out_dir.mkdir(parents=True, exist_ok=True)
     torch_device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
     use_amp = config.amp and torch_device.type == "cuda"
+    warm_up_vector_math()  # before any parallel CPU work, or a resumed run can differ
     _seed_everything(config.seed, config.deterministic)
 
     read_manifest(data_dir)  # refuses data from another encoding version

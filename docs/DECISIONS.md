@@ -559,3 +559,25 @@ stays available for a fixed-node comparison in evaluation.
   several times; that can come later.
 - **Robustness:** errors (bad weights, illegal moves in `position`, malformed `go`) become
   `info string` lines, and the engine keeps running.
+
+## 2026-11-27: Deterministic training on the CPU (MKL's vector math)
+
+**Context.** The nightly kill-and-resume test failed now and then: a resumed run's losses
+differed from the uninterrupted run's by 1e-6 relative or more. The first training run in
+a fresh process sometimes differed from all later ones, at Adam's first step: the first
+parallel call of an MKL vector-math function, here `torch.sqrt`, which torch splits across
+threads in 2,048-element chunks, could compute one thread's chunk at reduced accuracy (up
+to 3e-4 relative). Adam normalises every update, so the difference then grows. It
+reproduces without training: the first two-thread `torch.sqrt` of 10,944 values in a fresh
+process was wrong in exactly one thread's half in 2 of 30 processes, and never after a
+one-thread call.
+**Decision.**
+- `train()` first calls each MKL-backed elementwise function of torch on 1,024 values,
+  below the chunk size, so on the calling thread alone (`warm_up_vector_math`). The first
+  and second runs of a fresh process differed in 3 of 24 processes before (7 of 11 in
+  shorter samples) and in 0 of 30 after.
+- The kill-and-resume test requires bit-for-bit equality, and a slow test compares first
+  and second runs in 10 fresh processes.
+**Alternatives.** A looser tolerance (it would hide real differences, which Adam
+amplifies); training on one thread (slower); a warm-up in the tests only (the race breaks a
+real resume on the CPU too).

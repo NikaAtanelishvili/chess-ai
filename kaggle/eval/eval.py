@@ -29,7 +29,7 @@ import urllib.request
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "512a474de9f795234cb471d18f22bfd241b3a734"  # hang-proof evaluation, pre-merge
+CHESSNET_REF = "93f77c8b653238b43bfef45395c05a7a06adf74c"  # hang-proof evaluation, pre-merge
 #: Parts of the suite to run (``chessnet eval --only``), or "" for the whole suite.
 ONLY = "compare-equal-nodes"
 #: The session limit is 12 h; the suite stops cleanly before it and keeps what finished.
@@ -46,7 +46,7 @@ STOCKFISH_URL = (
 )
 PUZZLES_URL = "https://database.lichess.org/lichess_db_puzzle.csv.zst"
 GPU_WORKERS = 4  # two per T4
-CPU_WORKERS = 2  # four vCPUs: two torch threads each
+CPU_WORKERS = 2  # sharing torch's threads
 INPUT = Path("/kaggle/input")
 WORKING = Path("/kaggle/working")
 TOOLS = Path("/tmp/tools")  # outside /kaggle/working, so it is not saved as output

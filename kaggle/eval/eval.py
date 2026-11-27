@@ -1,4 +1,8 @@
-"""Kaggle script kernel (internet on): the full evaluation suite of the trained networks.
+"""Kaggle script kernel (internet on): evaluation of the trained networks.
+
+TASK "suite" runs parts of the full evaluation suite (ONLY); TASK "ladder" rates MCTS 800
+on Stockfish's UCI_Elo scale with a ladder, then plays the playout-scaling curve
+(`chessnet ladder`, LADDER_ARGS).
 
 Uses the training kernel's output (kernel_sources) for run-base/best.pt and run-wide/best.pt,
 checks their SHA-256 against docs/TRAINING.md, installs Stockfish 16 (the official build),
@@ -32,15 +36,23 @@ import urllib.request
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "813d45409a0103d43103811cf033493634f87d16"  # hang-proof evaluation, pre-merge
+CHESSNET_REF = "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2"  # the ladder, pre-merge
+#: "suite" (chessnet eval, with ONLY) or "ladder" (chessnet ladder, with LADDER_ARGS).
+TASK = "ladder"
+#: The ladder: UCI_Elo levels, games per level, the stop, then the playout-scaling curve.
+LADDER_ARGS = (
+    "--levels", "1500,1700,1900,2100,2300", "--games", "40", "--stop-below", "0.25",
+    "--simulations", "800", "--scaling", "50,100,200,400,800,1600", "--scaling-games", "32",
+)  # fmt: skip
 #: Parts of the suite to run (``chessnet eval --only``), or "" for the whole suite. The
 #: policy's puzzle run is repeated here so that both puzzle runs score the same sample.
 ONLY = (
     "mcts800-vs-stockfish-skill0,compare-equal-nodes,compare-equal-time,"
     "puzzles-policy,puzzles-mcts-800"
 )
-#: The suite stops cleanly at this wall time (estimate: about 1.8 h) and keeps what finished.
-MAX_WALL_TIME = "3h"
+#: The run stops cleanly at this wall time and keeps what finished (ladder estimate: 1.7 to
+#: 2.4 h).
+MAX_WALL_TIME = "3h30m"
 HEARTBEAT_SECONDS = 60
 BASE_SHA256 = "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78"
 WIDE_SHA256 = "7a3d263826103e6f85fa74c55f95b21ab988a8e7680b8eb1be94ac4e1cd4ca74"
@@ -148,17 +160,32 @@ def eval_command(
     return command
 
 
+def ladder_command(
+    weights: dict[str, Path], *, workers: int, out: Path, card: Path, stockfish: Path
+) -> list[object]:
+    return [
+        sys.executable, "-m", "chessnet", "ladder", "--weights", weights["base-best.pt"],
+        "--stockfish", stockfish, "--workers", workers, "--device", "auto", "--out", out,
+        "--model-card", card, "--max-wall-time", MAX_WALL_TIME,
+        "--heartbeat", HEARTBEAT_SECONDS, *LADDER_ARGS,
+    ]  # fmt: skip
+
+
 def main() -> None:
     if CHESSNET_REF.startswith("<"):
         sys.exit("Set CHESSNET_REF to a tag or commit SHA before pushing this kernel.")
+    if TASK not in ("suite", "ladder"):
+        sys.exit(f"TASK is 'suite' or 'ladder', not {TASK!r}.")
     weights = find_checkpoints(TOOLS / "weights")
     run("git", "clone", "--quiet", REPOSITORY, CHECKOUT)
     run("git", "-C", CHECKOUT, "fetch", "--quiet", "origin", CHESSNET_REF)
     run("git", "-C", CHECKOUT, "checkout", "--quiet", "FETCH_HEAD")
     run(sys.executable, "-m", "pip", "install", "--quiet", f"{CHECKOUT}[train]")
     stockfish = install_stockfish()
+    if TASK == "ladder" and stockfish is None:
+        sys.exit("The ladder needs Stockfish, and it could not be installed.")
     puzzles = None
-    if needs_puzzles(ONLY):
+    if TASK == "suite" and needs_puzzles(ONLY):
         puzzles = TOOLS / "lichess_db_puzzle.csv.zst"
         run("curl", "-sS", "-L", "--retry", "3", "-o", puzzles, PUZZLES_URL)
         run("curl", "-sSI", PUZZLES_URL)  # the database's date, for the record
@@ -167,10 +194,16 @@ def main() -> None:
     card = out / "MODEL_CARD.md"
     shutil.copy(CHECKOUT / "docs" / "MODEL_CARD.md", card)
     workers = GPU_WORKERS if has_gpu() else CPU_WORKERS
-    command = eval_command(
-        weights, workers=workers, out=out / "results", card=card, puzzles=puzzles,
-        stockfish=stockfish,
-    )  # fmt: skip
+    if TASK == "ladder":
+        assert stockfish is not None
+        command = ladder_command(
+            weights, workers=workers, out=out / "results", card=card, stockfish=stockfish
+        )
+    else:
+        command = eval_command(
+            weights, workers=workers, out=out / "results", card=card, puzzles=puzzles,
+            stockfish=stockfish,
+        )  # fmt: skip
     os.environ["PYTHONUNBUFFERED"] = "1"
     run(*command, cwd=CHECKOUT)
 

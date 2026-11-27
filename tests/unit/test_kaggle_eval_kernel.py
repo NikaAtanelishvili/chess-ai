@@ -116,3 +116,29 @@ def test_the_metadata_matches_the_machine_the_parts_are_sized_for(kernel: Module
     assert metadata["enable_gpu"] is True
     assert metadata["machine_shape"] == "NvidiaTeslaT4"  # T4 x2
     assert metadata["kernel_sources"] == ["nikaatanelishvili/chessnet-train"]
+
+
+def test_the_ladder_command_is_bounded_in_time_and_parses(
+    kernel: ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from typer.testing import CliRunner
+
+    from chessnet.cli import app
+
+    assert kernel.TASK in ("suite", "ladder")
+    weights = {"base-best.pt": Path("b.pt"), "wide-best.pt": Path("w.pt")}
+    command = [str(part) for part in kernel.ladder_command(
+        weights, workers=4, out=Path("out"), card=Path("card.md"), stockfish=Path("sf"),
+    )]  # fmt: skip
+    assert command[command.index("--max-wall-time") + 1] == kernel.MAX_WALL_TIME
+    assert command[command.index("--heartbeat") + 1] == "60"
+    assert command[3] == "ladder"
+    plans = []
+    monkeypatch.setattr(
+        "chessnet.eval.ladder.run_ladder", lambda plan, **kwargs: plans.append(plan)
+    )
+    monkeypatch.setattr(Path, "is_file", lambda self: True)
+    result = CliRunner().invoke(app, command[3:])  # the arguments the CLI really accepts
+    assert result.exit_code == 0, result.output
+    assert plans[0].levels == (1500, 1700, 1900, 2100, 2300)
+    assert (plans[0].games, plans[0].scaling_games, plans[0].simulations) == (40, 32, 800)

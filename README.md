@@ -84,8 +84,8 @@ laptop CPU it searches about 500 nodes per second, so 800 playouts take about 1.
    the `chessnet-uci` path printed above. Save the engine, which is named
    `chessnet 0.2.0.dev0`.
 3. To play: open a new tab with **+**, choose **Play Chess**, set the opponent to the
-   engine **chessnet**, and limit it by **nodes** (for example 800) or **time**. A depth
-   limit is accepted but ignored; the engine then plays its default 800 playouts.
+   engine **chessnet**, and limit it by **nodes** (for example 800), **time** or **depth**.
+   Depth N means `10 x N^2` playouts: depth 9 is about the default 800, depth 20 is 4,000.
 
 **Cute Chess (Ubuntu):**
 
@@ -107,8 +107,10 @@ laptop CPU it searches about 500 nodes per second, so 800 playouts take about 1.
 | `Device` | `auto` | `auto`, `cpu` or `cuda` |
 | `MoveOverhead` | 100 | milliseconds kept back per move for GUI and system lag |
 
-The engine understands `go nodes`, `movetime`, `wtime`/`btime`/`winc`/`binc`/`movestogo`,
-and `infinite` with `stop`. With a clock it thinks for `remaining / 30 + 0.8 x increment`,
+The engine understands `go nodes`, `movetime`, `depth`, `wtime`/`btime`/`winc`/`binc`/
+`movestogo`, and `infinite` with `stop`. MCTS has no fixed depth, so `go depth N` runs
+`10 x N^2` playouts (at most a million): 10 at depth 1, 810 at depth 9, 4,000 at depth 20.
+With a clock it thinks for `remaining / 30 + 0.8 x increment`,
 less the move overhead, and never more than half the remaining time. Scores are converted
 from the network's expected outcome `v` with Lichess's win-chance model,
 `cp = ln((1 + v) / (1 - v)) / 0.00368208` (`v = 0.18` is about one pawn).

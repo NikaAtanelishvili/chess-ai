@@ -58,6 +58,20 @@ def value_to_cp(value: float) -> int:
     return round(math.log((1 + clipped) / (1 - clipped)) / CP_SLOPE)
 
 
+#: ``go depth N`` searches ``DEPTH_NODES * N**2`` playouts, capped here.
+DEPTH_NODES = 10
+MAX_DEPTH_NODES = 1_000_000
+
+
+def depth_to_nodes(depth: int) -> int:
+    """The playout budget for ``go depth N``: ``10 * N**2``, capped at a million.
+
+    MCTS has no fixed depth, so a depth setting becomes a node budget that grows with it:
+    depth 1 is 10 playouts, depth 9 is 810 (about the default), depth 20 is 4,000.
+    """
+    return min(DEPTH_NODES * depth * depth, MAX_DEPTH_NODES)
+
+
 def node_budget() -> int:
     """Root visits a tree may hold: half the memory available at start-up, at ~10 KB each."""
     try:
@@ -150,7 +164,7 @@ class GoLimits:
     binc: float = 0.0
     movestogo: int | None = None
     infinite: bool = False
-    depth: int | None = None  # accepted, but a search is limited by playouts or time
+    depth: int | None = None  # becomes a playout budget: depth_to_nodes
 
 
 _MILLISECONDS = ("wtime", "btime", "winc", "binc", "movetime")
@@ -369,8 +383,11 @@ class UCIEngine:
             managed = move_time(clock, increment, moves_to_go=limits.movestogo, overhead=overhead)
             movetime = managed if movetime is None else min(movetime, managed)
         simulations = limits.nodes
+        if limits.depth is not None:
+            by_depth = depth_to_nodes(limits.depth)
+            simulations = by_depth if simulations is None else min(simulations, by_depth)
         if simulations is None and movetime is None:
-            simulations = self.options.simulations  # plain "go", or go depth/mate
+            simulations = self.options.simulations  # plain "go", or go mate
         return simulations, movetime
 
     def _tree(self, evaluator: NetworkEvaluator) -> MCTS:

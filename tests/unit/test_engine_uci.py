@@ -1,5 +1,6 @@
 """The UCI engine in-process: protocol parsing, options, time management, scores, searches."""
 
+import itertools
 import threading
 import time
 from pathlib import Path
@@ -13,6 +14,7 @@ from chessnet.engine.uci import (
     GoLimits,
     Options,
     UCIEngine,
+    depth_to_nodes,
     info_line,
     parse_go,
     parse_position,
@@ -325,3 +327,32 @@ def test_the_tree_is_reused_and_ucinewgame_drops_it(weights: Path) -> None:
         .split()[0]
     )
     assert fresh == 50
+
+
+def last_nodes(session: Session) -> int:
+    line = next(line for line in reversed(session.lines) if " nodes " in line)
+    return int(line.split(" nodes ")[1].split()[0])
+
+
+@pytest.mark.parametrize("depth", [1, 3, 9])
+def test_go_depth_limits_the_search(weights: Path, depth: int) -> None:
+    """A GUI's depth setting must change the search, not be ignored (it was)."""
+    session = Session(weights)
+    session.send("position startpos", f"go depth {depth}")
+    session.best_move()
+    assert last_nodes(session) == depth_to_nodes(depth)
+
+
+def test_depth_to_nodes_grows_with_depth() -> None:
+    assert [depth_to_nodes(depth) for depth in (1, 2, 5, 9, 12, 20)] == [
+        10,
+        40,
+        250,
+        810,
+        1440,
+        4000,
+    ]
+    budgets = [depth_to_nodes(depth) for depth in range(1, 400)]
+    assert all(a < b for a, b in itertools.pairwise(budgets) if b < 1_000_000)
+    assert budgets == sorted(budgets)
+    assert depth_to_nodes(10_000) == 1_000_000  # capped

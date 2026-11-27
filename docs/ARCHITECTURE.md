@@ -294,8 +294,11 @@ with both, whichever comes first. With a clock (`wtime`/`btime`/`winc`/`binc`), 
 gets `remaining / 30 + 0.8 x increment - overhead` seconds, at most half of the remaining
 time after the overhead, and with `movestogo` the time is spread over at most that many
 moves. `MoveOverhead` (100 ms) covers the leaf batch that runs past the deadline (about
-60 ms on a laptop CPU at batch 32) and the protocol latency. Without node or time limits
-(including `go depth`), the engine runs `Simulations` playouts. A test simulates 100-move
+60 ms on a laptop CPU at batch 32) and the protocol latency. `go depth N` becomes a node
+budget of `10 x N^2` playouts, capped at a million, so a GUI's depth setting changes the
+strength: depth 1 is 10 playouts, depth 9 is 810 (about the default), depth 20 is 4,000.
+With other limits, whichever comes first applies. Without any limit, the engine runs
+`Simulations` playouts. A test simulates 100-move
 games at bullet and blitz controls with a pessimistic cost per move and checks that the
 clock never runs out. Another plays real games through python-chess on 5-second and
 20-second clocks.

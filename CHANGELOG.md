@@ -52,6 +52,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `go depth N` was ignored; it now limits the search to `10 x N^2` playouts, so a GUI's
+  depth setting changes the engine's strength.
 - `uv run kaggle` crashed because the Kaggle CLI imports `six` without declaring it; `six`
   is now in the `dev` group, and CI checks that the CLI starts.
 

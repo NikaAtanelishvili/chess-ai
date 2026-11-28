@@ -2,9 +2,10 @@
 
 Snapshot audited: tag **`legacy-v0`** → commit `f083561` (identical to the default branch
 at audit time, 15 commits). All `file:line` references below are against that tag, where
-the code lived in `src/`; it has since moved unchanged to `legacy/` (GUI removed).
-Run `scripts/legacy_bug_demo.py` (see [Reproducing](#reproducing-the-findings)) to see
-the main defects happen.
+the code lived in `src/`. It later moved unchanged to `legacy/` (GUI removed) and was
+deleted for the 1.0.0 release; the tag keeps it. Run `scripts/legacy_bug_demo.py` from a
+checkout of the tag (see [Reproducing](#reproducing-the-findings)) to see the main defects
+happen.
 
 **Verdict.** None of the legacy pipeline can be trusted or salvaged. The training
 pipeline does not run at the tagged commit. The only existing checkpoint was trained with
@@ -435,7 +436,8 @@ new code base, so it cannot come back silently.
 ## Reproducing the findings
 
 ```bash
-.venv/bin/python scripts/legacy_bug_demo.py
+git worktree add /tmp/legacy-v0 legacy-v0   # the legacy code exists only at this tag now
+cd /tmp/legacy-v0 && python scripts/legacy_bug_demo.py
 ```
 
 It loads the legacy modules from `src/` with the import-time side effect of `utils.py`

@@ -37,7 +37,7 @@ import urllib.request
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
-CHESSNET_REF = "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2"  # the ladder, pre-merge
+CHESSNET_REF = "598b63766c426e2090fed6348786cd2289c4f73f"  # main: extended ladders (#20)
 #: "suite" (chessnet eval, with ONLY) or "ladder" (chessnet ladder, with LADDERS).
 TASK = "ladder"
 #: Ladder runs, in order, as (name, arguments): the results go to <checkpoint>.<name>.json.

@@ -409,7 +409,10 @@ class UCIEngine:
             return self._evaluator
         path = Path(self.options.weights).expanduser()
         if not path.is_file():
-            self.send(f"info string no weights at {path}: set the Weights option")
+            self.send(
+                f"info string no weights at {path}: set the Weights option, or run "
+                "chessnet download-weights"
+            )
             return None
         from chessnet.search.evaluator import NetworkEvaluator
 

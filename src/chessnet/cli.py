@@ -163,6 +163,10 @@ def train(
     )
 
 
+def _missing_weights(path: Path) -> str:
+    return f"no checkpoint at {path} (run `chessnet download-weights` to get the released one)"
+
+
 WeightsOption = Annotated[
     Path | None,
     typer.Option(
@@ -215,7 +219,7 @@ def play(
         raise typer.BadParameter("use 'mcts' or 'policy'", param_hint="--mode")
     path = weights or Path(default_weights())
     if not path.is_file():
-        raise typer.BadParameter(f"no checkpoint at {path}", param_hint="--weights")
+        raise typer.BadParameter(_missing_weights(path), param_hint="--weights")
     human = colours[color] if color in colours else random.choice([chess.WHITE, chess.BLACK])
     evaluator = NetworkEvaluator.from_checkpoint(path, device=resolve_device(device))
     player: Player
@@ -362,7 +366,7 @@ def evaluate(
         return
     path = weights or Path(default_weights())
     if not path.is_file():
-        raise typer.BadParameter(f"no checkpoint at {path}", param_hint="--weights")
+        raise typer.BadParameter(_missing_weights(path), param_hint="--weights")
     try:
         plan = plan_suite(
             suite,
@@ -487,7 +491,7 @@ def ladder(
         return
     path = weights or Path(default_weights())
     if not path.is_file():
-        raise typer.BadParameter(f"no checkpoint at {path}", param_hint="--weights")
+        raise typer.BadParameter(_missing_weights(path), param_hint="--weights")
     command = stockfish or shutil.which("stockfish")
     if command is None:
         raise typer.BadParameter("Stockfish was not found", param_hint="--stockfish")
@@ -511,3 +515,35 @@ def ladder(
     except ValueError as error:
         raise typer.BadParameter(str(error), param_hint="--name") from error
     typer.echo(f"results: {out / f'{path.stem}.{name}.json'}")
+
+
+@app.command("download-weights")
+def download_weights(
+    out: Annotated[
+        Path | None,
+        typer.Option(
+            dir_okay=False,
+            help="Where to save base-best.pt (default: where the engine looks, "
+            "checkpoints/session2/ in this checkout).",
+        ),
+    ] = None,
+    onnx: Annotated[
+        bool, typer.Option(help="Also fetch the ONNX export, saved next to the checkpoint.")
+    ] = False,
+    force: Annotated[
+        bool, typer.Option(help="Replace a file that is there with another SHA-256.")
+    ] = False,
+) -> None:
+    """Download the released network and check its SHA-256, so the engine can play."""
+    from chessnet.engine.uci import REPOSITORY_WEIGHTS
+    from chessnet.weights import RELEASE_TAG, fetch
+
+    target = out or REPOSITORY_WEIGHTS
+    typer.echo(f"chessnet {RELEASE_TAG} weights")
+    try:
+        fetch("base-best.pt", target, force=force, report=typer.echo)
+        if onnx:
+            fetch("base-best.onnx", target.with_suffix(".onnx"), force=force, report=typer.echo)
+    except (FileExistsError, ValueError, OSError) as error:
+        typer.echo(f"error: {error}", err=True)
+        raise typer.Exit(1) from error

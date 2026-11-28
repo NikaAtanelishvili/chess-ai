@@ -4,6 +4,7 @@ import json
 import math
 import time
 import xml.etree.ElementTree as ET
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -257,3 +258,53 @@ def test_the_scaling_curve_is_fitted_as_a_line_in_log2_playouts() -> None:
     assert bent is not None
     assert bent["curvature_p"] < 0.01  # flattening is detected
     assert scaling_fit(curve_points(lambda n: 2400.0, budgets=(100, 400)), 2300) is None
+
+
+def test_a_named_ladder_has_its_own_results_and_section(
+    weights: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("chessnet.eval.ladder.run_match", fake_match({(1600, 1700): 0.6}, []))
+    card = tmp_path / "card.md"
+    plan = LadderPlan(str(weights), ("sf",), name="ladder-1600", levels=(1700,), games=10,
+                      simulations=1600, scaling=())  # fmt: skip
+    results = run_ladder(plan, out=tmp_path, model_card=card, report=lambda line: None)
+    assert results["suite"] == "ladder-1600"
+    assert (tmp_path / "tiny.ladder-1600.json").exists()
+    assert (tmp_path / "tiny.ladder-1600" / "ladder-1700.pgn").exists()
+    text = card.read_text()
+    assert "<!-- eval: tiny ladder-1600 -->" in text
+    assert "### tiny.pt, Stockfish ladder, MCTS 1600\n" in text
+    with pytest.raises(ValueError, match="a ladder's name"):
+        run_ladder(replace(plan, name="../oops"), out=tmp_path, report=lambda line: None)
+
+
+def test_an_extension_is_merged_into_the_ladder_it_continues(
+    weights: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scores = {(800, 1500): 0.9, (800, 1700): 0.8, (800, 1900): 0.6, (800, 2100): 0.4,
+              (100, 1700): 0.5}  # fmt: skip
+    monkeypatch.setattr("chessnet.eval.ladder.run_match", fake_match(scores, []))
+    ours, kaggle = tmp_path / "eval", tmp_path / "kaggle"
+    first = LadderPlan(str(weights), ("sf",), levels=(1500, 1700), games=10, scaling=(100,),
+                       scaling_games=10)  # fmt: skip
+    run_ladder(first, out=ours, report=lambda line: None)
+    before = json.loads((ours / "tiny.ladder.json").read_text())
+    more = replace(first, levels=(1900, 2100), scaling=())
+    run_ladder(more, out=kaggle, report=lambda line: None)
+    merged = import_ladder_results(kaggle / "tiny.ladder.json", out=ours, merge=True,
+                                   report=lambda line: None)  # fmt: skip
+    assert [e["level"] for e in merged["ladder"]] == [1500, 1700, 1900, 2100]
+    assert merged["scaling"] == before["scaling"]  # the curve stays
+    assert merged["reference"] == before["reference"] == 1700
+    assert merged["rating"] == rate_ladder(merged["ladder"])
+    assert merged["rating"]["bracket"] == [1900, 2100]
+    assert merged["plan"]["levels"] == [1500, 1700, 1900, 2100]
+    assert [run["levels"] for run in merged["runs"]] == [[1500, 1700], [1900, 2100]]
+    assert (ours / "tiny.ladder" / "ladder-2100.pgn").exists()
+    other = replace(more, simulations=1600, name="ladder")
+    monkeypatch.setattr("chessnet.eval.ladder.run_match",
+                        fake_match({(1600, 1900): 0.5, (1600, 2100): 0.5}, []))  # fmt: skip
+    run_ladder(other, out=kaggle, report=lambda line: None)
+    with pytest.raises(ValueError, match="other playouts"):
+        import_ladder_results(kaggle / "tiny.ladder.json", out=ours, merge=True,
+                              report=lambda line: None)  # fmt: skip

@@ -118,7 +118,7 @@ def test_the_metadata_matches_the_machine_the_parts_are_sized_for(kernel: Module
     assert metadata["kernel_sources"] == ["nikaatanelishvili/chessnet-train"]
 
 
-def test_the_ladder_command_is_bounded_in_time_and_parses(
+def test_the_ladder_commands_share_the_wall_time_and_parse(
     kernel: ModuleType, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from typer.testing import CliRunner
@@ -126,19 +126,26 @@ def test_the_ladder_command_is_bounded_in_time_and_parses(
     from chessnet.cli import app
 
     assert kernel.TASK in ("suite", "ladder")
+    assert kernel.wall_seconds("3h30m") == 12_600
+    assert kernel.wall_seconds("45m") == 2_700
     weights = {"base-best.pt": Path("b.pt"), "wide-best.pt": Path("w.pt")}
-    command = [str(part) for part in kernel.ladder_command(
-        weights, workers=4, out=Path("out"), card=Path("card.md"), stockfish=Path("sf"),
-    )]  # fmt: skip
-    assert command[command.index("--max-wall-time") + 1] == kernel.MAX_WALL_TIME
-    assert command[command.index("--heartbeat") + 1] == "60"
-    assert command[3] == "ladder"
     plans = []
     monkeypatch.setattr(
         "chessnet.eval.ladder.run_ladder", lambda plan, **kwargs: plans.append(plan)
     )
     monkeypatch.setattr(Path, "is_file", lambda self: True)
-    result = CliRunner().invoke(app, command[3:])  # the arguments the CLI really accepts
-    assert result.exit_code == 0, result.output
-    assert plans[0].levels == (1500, 1700, 1900, 2100, 2300)
-    assert (plans[0].games, plans[0].scaling_games, plans[0].simulations) == (40, 32, 800)
+    for name, arguments in kernel.LADDERS:
+        command = [str(part) for part in kernel.ladder_command(
+            weights, name=name, arguments=arguments, workers=4, out=Path("out"),
+            card=Path("card.md"), stockfish=Path("sf"), seconds=1234,
+        )]  # fmt: skip
+        assert command[3] == "ladder"
+        assert command[command.index("--max-wall-time") + 1] == "1234s"
+        assert command[command.index("--heartbeat") + 1] == "60"
+        result = CliRunner().invoke(app, command[3:])  # the arguments the CLI really accepts
+        assert result.exit_code == 0, result.output
+    assert [(p.name, p.simulations, p.levels) for p in plans] == [
+        ("ladder", 800, (2500, 2700)),
+        ("ladder-1600", 1600, (2100, 2300, 2500, 2700)),
+    ]
+    assert all((p.games, p.stop_below, p.scaling) == (40, 0.25, ()) for p in plans)

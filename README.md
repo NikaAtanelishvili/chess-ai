@@ -138,6 +138,12 @@ second network against the first, and 2,000 puzzles. Games start from 50 balance
 openings, each played with both colours. Results go to `eval/results/` (JSON and PGNs),
 and a summary table to [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
 
+- **Strength:** on Stockfish 16's limited-strength UCI_Elo scale, MCTS with 800 playouts
+  rates about 2490 (95% CI 2400 to 2600; see the [model card](docs/MODEL_CARD.md)). That
+  scale is not comparable with human FIDE or Lichess ratings: limited-strength Stockfish
+  weakens itself with injected mistakes that a search engine exploits easily, and its
+  levels disagree (85% at UCI_Elo 2100 implies about 2400, 84% at 2300 about 2590). A
+  Lichess bot rating would be the real-world check.
 - **Stockfish** is optional; its matches are skipped without it. On Ubuntu:
   `sudo apt install stockfish`.
 - **Puzzles:** 500 are committed in `tests/fixtures/puzzles/`. The full Lichess puzzle

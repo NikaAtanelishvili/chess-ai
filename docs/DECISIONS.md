@@ -685,3 +685,22 @@ only because its weakened move choice draws from a clock-seeded random generator
   likelihood ratio says whether gains flatten.
 - The chart is an SVG written from the results (no plotting dependency), so it can be
   rebuilt with the tables.
+
+## 2026-11-28: Release 1.0.0, and bracket the ratings first (owner decisions)
+
+**Context.** Every "must" strength target is met except the raw policy against a random
+mover: 97.5% (95 wins, 5 draws, no losses) against 98%. Policy-safe, the policy mode the
+engine ships, scores 100%. The ladder rated MCTS 800 above its top level (84% at UCI_Elo
+2300), so the rating was not bracketed.
+**Decision.**
+- Release as 1.0.0, counting policy-safe for the vs-random target. The model card shows
+  both results and states the decision.
+- Before the release, bracket the ratings on the T4 x2 machine, 40 games per level: MCTS
+  800's ladder climbs on to UCI_Elo 2500 and 2700, and MCTS 1600 gets a ladder at 2100 to
+  2700 (stopping below 25%). The Elo gap between them is checked against the scaling
+  curve's +94 per doubling.
+- The model card and the README say plainly that the rating is on Stockfish's
+  limited-strength UCI_Elo scale, not comparable with human FIDE or Lichess ratings, and
+  that a Lichess bot rating would be the real-world check.
+- `chessnet ladder --name` gives a run its own results file and model card section, and
+  `--import-results --merge` adds the levels of a later run to an earlier ladder.

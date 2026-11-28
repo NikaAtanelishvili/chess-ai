@@ -114,9 +114,12 @@ wide-best vs base, 1 s per move each (laptop CPU) was played on 11th Gen Intel(R
 
 ### What the full suite shows
 
-- **Against a random mover** the raw policy scores 97.5%: 95 wins and 5 draws (4
-  stalemates, 1 threefold repetition), half a point short of the 98% target. Policy-safe,
-  the engine's policy mode, wins all 100 games.
+- **Against a random mover** (target: a 98% score) the raw policy scores 97.5%: 95 wins,
+  5 draws (4 stalemates, 1 threefold repetition) and no losses. Policy-safe, the policy
+  mode the engine ships (UCI `Mode policy`, `chessnet play --mode policy`), wins all 100
+  games. **Decision (owner, 2026-11-28):** the 1.0.0 release counts policy-safe for this
+  target, because it is what the engine plays in policy mode; the raw network's 97.5% is
+  reported next to it so that the baseline stays visible.
 - **Search over the policy:** MCTS with 400 playouts wins all 100 games against the raw
   policy (target: above 55%).
 - **Stockfish at its weakest:** in Stockfish 16, `UCI_Elo 1320` converts to skill level
@@ -142,7 +145,7 @@ wide-best vs base, 1 s per move each (laptop CPU) was played on 11th Gen Intel(R
   (95%).
 
 <!-- eval: base-best ladder -->
-### base-best.pt, Stockfish ladder and playout scaling
+### base-best.pt, Stockfish ladder, MCTS 800 and playout scaling
 
 2026-11-27, 2 x Tesla T4 (cuda, 4 worker(s)), chessnet 0.2.0.dev0. MCTS 800 against Stockfish 16 with `UCI_LimitStrength`, 1 s per Stockfish move; 50 balanced openings, each played with both colours. Ratings are on Stockfish 16's UCI_Elo scale, which it anchors to CCRL engine ratings (goldfish 1.13 = 2000, games at 60 s + 0.6 s): an engine rating, not a FIDE or Lichess one.
 
@@ -156,7 +159,7 @@ wide-best vs base, 1 s per move each (laptop CPU) was played on 11th Gen Intel(R
 
 **Rating of MCTS 800 on Stockfish's scale: 2493 (95% CI 2402 to 2595)**, the maximum-likelihood fit to all 200 ladder games. It scored 50% or more at every level, up to UCI_Elo 2300.
 
-Strength against playouts, each budget against Stockfish at UCI_Elo 2300 (the ladder level where MCTS 800 scored closest to 50%):
+Strength against playouts, each budget against Stockfish at UCI_Elo 2300 (the level nearest 50% for MCTS 800 when the curve was played):
 
 | Playouts | Games | W / D / L | Score | Elo vs UCI_Elo 2300 | Stockfish scale (95% CI) |
 |---------:|------:|-----------|------:|---------------:|--------------------------|
@@ -184,9 +187,13 @@ The 800-playout point is the ladder's match at UCI_Elo 2300.
   level. One rating explains all five levels acceptably (chi-squared p = 0.20), but each
   level alone implies a higher rating as the level rises (2336 at 1900, 2401 at 2100, 2585
   at 2300). Levels of 2500 to 2700 would bracket it.
-- **The scale:** Stockfish 16 turns UCI_Elo into a skill level fitted to CCRL engine
-  ratings at 60 s + 0.6 s. These are engine ratings, not FIDE or Lichess ratings, and a
-  weakened Stockfish makes different mistakes from a human of the same rating.
+- **What the number means:** it is on Stockfish's limited-strength UCI_Elo scale.
+  Stockfish 16 turns UCI_Elo into a skill level fitted to CCRL engine ratings at 60 s +
+  0.6 s, and plays weaker by injecting deliberate mistakes. The per-level implied ratings
+  disagree (85% at UCI_Elo 2100 implies about 2400, 84% at 2300 about 2590), which fits
+  those injected mistakes being easy for a search engine to exploit. **The number is not
+  comparable with human FIDE or Lichess ratings**; a rating earned by a Lichess bot
+  account would be the real-world check.
 - **Scaling:** against UCI_Elo 2300, strength grows by **+94 Elo per doubling of the
   playouts (95% CI +62 to +129)**: about 2120 at 50 playouts and 2590 at 1,600 on the
   fitted line. A straight line in log2(playouts) fits the points (p = 0.20) and a curve

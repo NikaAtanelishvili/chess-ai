@@ -414,7 +414,10 @@ take each other's compute, and the time limit would buy fewer playouts.
   (`<checkpoint>.ladder.svg`: the points with 95% intervals and the fitted line, light and
   dark) and the tables go to the model card.
 - The same supervised workers, heartbeat, per-match saving and `--max-wall-time` as the
-  suites. `--import-results` brings a run from another machine, with its PGNs.
+  suites. `--import-results` brings a run from another machine, with its PGNs; with
+  `--merge` its levels join an earlier ladder of the same playouts (a ladder extended
+  upwards). `--name ladder-1600` keeps a second ladder, for another playout budget, in its
+  own results file and model card section.
 TensorBoard scalars go to `eval/results/tb/`.
 
 ### Supervised runs

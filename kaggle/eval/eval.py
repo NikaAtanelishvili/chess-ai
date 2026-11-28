@@ -1,8 +1,7 @@
 """Kaggle script kernel (internet on): evaluation of the trained networks.
 
-TASK "suite" runs parts of the full evaluation suite (ONLY); TASK "ladder" rates MCTS 800
-on Stockfish's UCI_Elo scale with a ladder, then plays the playout-scaling curve
-(`chessnet ladder`, LADDER_ARGS).
+TASK "suite" runs parts of the full evaluation suite (ONLY); TASK "ladder" runs Stockfish
+UCI_Elo ladders one after another (`chessnet ladder`, LADDERS), sharing MAX_WALL_TIME.
 
 Uses the training kernel's output (kernel_sources) for run-base/best.pt and run-wide/best.pt,
 checks their SHA-256 against docs/TRAINING.md, installs Stockfish 16 (the official build),
@@ -14,7 +13,8 @@ downloads the Lichess puzzle database when puzzles are to run, and runs
 
 Matches with a time limit per move play one game per GPU. Results (JSON, PGNs, the model
 card with the new table) land in /kaggle/working/eval. With ONLY set, the results hold just
-those parts; merge them into eval/results/ with `chessnet eval --merge-results`.
+those parts; merge them into eval/results/ with `chessnet eval --merge-results`. Ladder
+results are imported with `chessnet ladder --import-results` (`--merge` to extend a ladder).
 
 Before pushing, set CHESSNET_REF (a tag or commit SHA, never a branch), ONLY and
 MAX_WALL_TIME. The metadata asks for the T4 x2 machine; for a CPU machine, set
@@ -32,26 +32,30 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import time
 import urllib.request
 from pathlib import Path
 
 REPOSITORY = "https://github.com/NikaAtanelishvili/chess-ai"
 CHESSNET_REF = "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2"  # the ladder, pre-merge
-#: "suite" (chessnet eval, with ONLY) or "ladder" (chessnet ladder, with LADDER_ARGS).
+#: "suite" (chessnet eval, with ONLY) or "ladder" (chessnet ladder, with LADDERS).
 TASK = "ladder"
-#: The ladder: UCI_Elo levels, games per level, the stop, then the playout-scaling curve.
-LADDER_ARGS = (
-    "--levels", "1500,1700,1900,2100,2300", "--games", "40", "--stop-below", "0.25",
-    "--simulations", "800", "--scaling", "50,100,200,400,800,1600", "--scaling-games", "32",
-)  # fmt: skip
+#: Ladder runs, in order, as (name, arguments): the results go to <checkpoint>.<name>.json.
+#: Here MCTS 800's ladder (1500 to 2300 played before) climbs on to 2500 and 2700, and MCTS
+#: 1600 gets a ladder of its own; both stop climbing below a 25% score.
+LADDERS = (
+    ("ladder", ("--levels", "2500,2700", "--simulations", "800")),
+    ("ladder-1600", ("--levels", "2100,2300,2500,2700", "--simulations", "1600")),
+)
+LADDER_COMMON = ("--games", "40", "--stop-below", "0.25", "--scaling", "")
 #: Parts of the suite to run (``chessnet eval --only``), or "" for the whole suite. The
 #: policy's puzzle run is repeated here so that both puzzle runs score the same sample.
 ONLY = (
     "mcts800-vs-stockfish-skill0,compare-equal-nodes,compare-equal-time,"
     "puzzles-policy,puzzles-mcts-800"
 )
-#: The run stops cleanly at this wall time and keeps what finished (ladder estimate: 1.7 to
-#: 2.4 h).
+#: The whole run stops cleanly at this wall time and keeps what finished (estimate for the
+#: ladders above: 1.6 to 2.4 h).
 MAX_WALL_TIME = "3h30m"
 HEARTBEAT_SECONDS = 60
 BASE_SHA256 = "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78"
@@ -161,14 +165,29 @@ def eval_command(
 
 
 def ladder_command(
-    weights: dict[str, Path], *, workers: int, out: Path, card: Path, stockfish: Path
+    weights: dict[str, Path],
+    *,
+    name: str,
+    arguments: tuple[str, ...],
+    workers: int,
+    out: Path,
+    card: Path,
+    stockfish: Path,
+    seconds: int,
 ) -> list[object]:
     return [
         sys.executable, "-m", "chessnet", "ladder", "--weights", weights["base-best.pt"],
-        "--stockfish", stockfish, "--workers", workers, "--device", "auto", "--out", out,
-        "--model-card", card, "--max-wall-time", MAX_WALL_TIME,
-        "--heartbeat", HEARTBEAT_SECONDS, *LADDER_ARGS,
+        "--name", name, "--stockfish", stockfish, "--workers", workers, "--device", "auto",
+        "--out", out, "--model-card", card, "--max-wall-time", f"{seconds}s",
+        "--heartbeat", HEARTBEAT_SECONDS, *LADDER_COMMON, *arguments,
     ]  # fmt: skip
+
+
+def wall_seconds(text: str) -> int:
+    """Seconds in a duration like 3h30m (the chessnet CLI's format)."""
+    hours, _, rest = text.partition("h") if "h" in text else ("0", "", text)
+    minutes = rest.removesuffix("m") or "0"
+    return int(float(hours) * 3600 + float(minutes) * 60)
 
 
 def main() -> None:
@@ -194,18 +213,26 @@ def main() -> None:
     card = out / "MODEL_CARD.md"
     shutil.copy(CHECKOUT / "docs" / "MODEL_CARD.md", card)
     workers = GPU_WORKERS if has_gpu() else CPU_WORKERS
-    if TASK == "ladder":
-        assert stockfish is not None
-        command = ladder_command(
-            weights, workers=workers, out=out / "results", card=card, stockfish=stockfish
-        )
-    else:
+    os.environ["PYTHONUNBUFFERED"] = "1"
+    if TASK == "suite":
         command = eval_command(
             weights, workers=workers, out=out / "results", card=card, puzzles=puzzles,
             stockfish=stockfish,
         )  # fmt: skip
-    os.environ["PYTHONUNBUFFERED"] = "1"
-    run(*command, cwd=CHECKOUT)
+        run(*command, cwd=CHECKOUT)
+        return
+    assert stockfish is not None
+    deadline = time.monotonic() + wall_seconds(MAX_WALL_TIME)
+    for name, arguments in LADDERS:  # each ladder gets the time that is left
+        seconds = int(deadline - time.monotonic())
+        if seconds < 60:
+            print(f"Not run, out of time: {name} {' '.join(arguments)}", flush=True)
+            continue
+        command = ladder_command(
+            weights, name=name, arguments=arguments, workers=workers, out=out / "results",
+            card=card, stockfish=stockfish, seconds=seconds,
+        )  # fmt: skip
+        run(*command, cwd=CHECKOUT)
 
 
 if __name__ == "__main__":

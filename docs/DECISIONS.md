@@ -679,5 +679,9 @@ only because its weakened move choice draws from a clock-seeded random generator
 - The scaling curve plays against the ladder level nearest 50% for MCTS 800, where scores
   measure Elo best, rather than against MCTS 400: self-play inflates gains, and an external
   reference puts the curve on the ladder's scale. The 800 point reuses the ladder match.
+- Elo per doubling comes from one straight line in log2(playouts) fitted to every scaling
+  game (maximum likelihood, profile-likelihood interval), not from differences between
+  neighbouring points, which are too noisy at 32 games each; a curvature term tested by
+  likelihood ratio says whether gains flatten.
 - The chart is an SVG written from the results (no plotting dependency), so it can be
   rebuilt with the tables.

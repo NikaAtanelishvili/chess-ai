@@ -145,6 +145,8 @@ def test_the_ladder_stops_climbing_and_scales_against_the_level_nearest_50_perce
     assert "| 1900 (3.8) | 20 | 9 / 0 / 11 | 45.0% |" in text
     assert "![Rating against playouts on Stockfish's scale](results/tiny.ladder.svg)" in text
     assert "Not climbed: UCI_Elo 2300." in text
+    assert "Elo per doubling of the playouts (95% CI" in text
+    assert results["scaling_fit"]["elo_per_doubling"] > 0
     assert "not a FIDE or Lichess one" in text
 
 
@@ -230,3 +232,28 @@ def test_a_sweep_on_the_ladder_is_reported_as_a_bound() -> None:
     lost = rate_ladder([entry(1500, 0, 0, 40)])
     assert lost is not None
     assert "below 50% from the first level, UCI_Elo 1500." in _rating_sentence(lost, 800)
+
+
+def curve_points(rating, budgets=(50, 100, 200, 400, 800, 1600), games=2000):  # type: ignore[no-untyped-def]
+    """Scaling points whose scores against UCI_Elo 2300 follow ``rating(playouts)`` exactly."""
+    return [{"simulations": n, "games": games, "wins": games * expected_score(rating(n), 2300),
+             "draws": 0, "losses": 0} for n in budgets]  # fmt: skip
+
+
+def test_the_scaling_curve_is_fitted_as_a_line_in_log2_playouts() -> None:
+    from chessnet.eval.ladder import scaling_fit
+
+    fit = scaling_fit(curve_points(lambda n: 2400 + 100 * math.log2(n / 400)), 2300)
+    assert fit is not None
+    assert fit["elo_per_doubling"] == pytest.approx(100, abs=0.5)
+    assert fit["low"] < 100 < fit["high"]
+    assert fit["curvature_p"] > 0.9
+    assert fit["fit_p"] > 0.9
+    assert [n for n, _ in fit["line"]] == [50, 100, 200, 400, 800, 1600]
+    assert fit["line"][3][1] == pytest.approx(2400, abs=0.5)
+    json.dumps(fit)  # plain numbers, ready for the results file
+    bent = scaling_fit(curve_points(lambda n: 2400 + 100 * math.log2(n / 400)
+                                    - 40 * math.log2(n / 400) ** 2), 2300)  # fmt: skip
+    assert bent is not None
+    assert bent["curvature_p"] < 0.01  # flattening is detected
+    assert scaling_fit(curve_points(lambda n: 2400.0, budgets=(100, 400)), 2300) is None

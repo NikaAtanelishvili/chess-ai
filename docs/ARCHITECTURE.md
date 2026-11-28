@@ -408,8 +408,11 @@ take each other's compute, and the time limit would buy fewer playouts.
 - **Scaling:** MCTS at 50, 100, 200, 400, 800 and 1,600 playouts (32 games each) against the
   ladder level where MCTS 800 scored closest to 50%, where an Elo difference is measured
   most precisely. A point's rating is that level plus its Elo difference; the 800 point is
-  the ladder's own match. The chart (`<checkpoint>.ladder.svg`, rating against log2 of the
-  playouts with 95% intervals, light and dark) and the tables go to the model card.
+  the ladder's own match. A straight line in log2(playouts), fitted to every scaling game
+  by maximum likelihood, gives the Elo per doubling with a profile-likelihood interval; a
+  likelihood-ratio test of a curvature term says whether the curve flattens. The chart
+  (`<checkpoint>.ladder.svg`: the points with 95% intervals and the fitted line, light and
+  dark) and the tables go to the model card.
 - The same supervised workers, heartbeat, per-match saving and `--max-wall-time` as the
   suites. `--import-results` brings a run from another machine, with its PGNs.
 TensorBoard scalars go to `eval/results/tb/`.

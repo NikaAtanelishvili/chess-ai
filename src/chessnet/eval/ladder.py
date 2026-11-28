@@ -28,6 +28,8 @@ from pathlib import Path
 from typing import Any
 from xml.sax.saxutils import escape
 
+import numpy as np
+
 from chessnet import __version__
 from chessnet.eval.arena import run_match, write_pgn
 from chessnet.eval.elo import format_elo
@@ -315,13 +317,90 @@ def _rate_point(entry: dict[str, Any], simulations: int, reference: int) -> dict
     }
 
 
+def _chi2_sf(x: float, df: int) -> float:
+    """P(chi-squared with ``df`` degrees of freedom > x), in closed form."""
+    half = x / 2
+    if df % 2 == 0:
+        return math.exp(-half) * sum(half**i / math.factorial(i) for i in range(df // 2))
+    tail = math.erfc(math.sqrt(half))
+    return tail + sum(
+        math.exp(-half) * half ** (i - 0.5) / math.gamma(i + 0.5) for i in range(1, (df + 1) // 2)
+    )
+
+
+def _curve_fit(
+    xs: np.ndarray, points: np.ndarray, games: np.ndarray, reference: float, degree: int,
+    slope: float | None = None,
+) -> tuple[np.ndarray, float]:  # fmt: skip
+    """Maximum-likelihood rating polynomial in ``xs`` against ``reference`` (Newton steps)."""
+    design = np.vander(xs, degree + 1, increasing=True)
+    beta = np.zeros(degree + 1)
+    beta[0] = reference
+    free = list(range(degree + 1))
+    if slope is not None:
+        beta[1] = slope
+        free.remove(1)
+    for _ in range(200):
+        p = 1 / (1 + np.exp(-(design @ beta - reference) * _LN10_400))
+        gradient = _LN10_400 * design.T @ (points - games * p)
+        hessian = -(_LN10_400**2) * (design * (games * p * (1 - p))[:, None]).T @ design
+        step = np.clip(np.linalg.solve(hessian[np.ix_(free, free)], gradient[free]), -200, 200)
+        beta[free] -= step
+        if np.max(np.abs(step)) < 1e-7:
+            break
+    d = (design @ beta - reference) * _LN10_400
+    loglik = -float(np.sum(points * np.logaddexp(0, -d) + (games - points) * np.logaddexp(0, d)))
+    return beta, loglik
+
+
+def scaling_fit(points: Sequence[dict[str, Any]], reference: int) -> dict[str, Any] | None:
+    """Rating as a straight line in log2(playouts), fitted to every scaling game.
+
+    Returns the Elo gained per doubling with a 95% profile-likelihood interval, the line at
+    each budget, the p-value of a curvature term (a parabola instead of the line), and the
+    p-value of the line's fit to the points. None with fewer than three budgets, or when
+    every game had one result.
+    """
+    data = [(math.log2(p["simulations"]), p["wins"] + p["draws"] / 2, p["games"])
+            for p in points if p["games"]]  # fmt: skip
+    if len(data) < 3 or not 0 < sum(d[1] for d in data) < sum(d[2] for d in data):
+        return None
+    centre = sum(d[0] for d in data) / len(data)
+    xs = np.array([d[0] - centre for d in data])
+    won, games = np.array([d[1] for d in data]), np.array([d[2] for d in data], dtype=float)
+    beta, best = _curve_fit(xs, won, games, reference, 1)
+    if not np.all(np.isfinite(beta)) or abs(beta[1]) > 1500:
+        return None  # the budgets separate wins from losses completely: no finite slope
+
+    def drop(slope: float) -> float:
+        return best - _curve_fit(xs, won, games, reference, 1, slope)[1]
+
+    high = _root(lambda b: drop(b) - _HALF_CHI2_95, beta[1], beta[1] + 1000)
+    low = _root(lambda b: _HALF_CHI2_95 - drop(b), beta[1] - 1000, beta[1])
+    curved = _curve_fit(xs, won, games, reference, 2)[1]
+    expected = games / (1 + np.exp(-(beta[0] + beta[1] * xs - reference) * _LN10_400))
+    pearson = float(np.sum((won - expected) ** 2 / (expected * (1 - expected / games))))
+    return {
+        "elo_per_doubling": round(float(beta[1]), 1),
+        "low": _rounded(low),
+        "high": _rounded(high),
+        "curvature_p": round(_chi2_sf(max(2 * (curved - best), 0.0), 1), 3),
+        "fit_p": round(_chi2_sf(pearson, len(data) - 2), 3),
+        "line": [[round(2 ** (x + centre)), round(float(beta[0] + beta[1] * x), 1)] for x in xs],
+    }
+
+
 def _finish(results: dict[str, Any], path: Path, model_card: Path | None) -> dict[str, Any]:
+    """Fit the scaling curve, draw the chart, save, and write the model card section."""
+    results["scaling_fit"] = None
+    if results["scaling"] and results["reference"] is not None:
+        results["scaling_fit"] = scaling_fit(results["scaling"], results["reference"])
     chart = path.with_suffix(".svg")
     svg = scaling_chart(results)
     if svg is not None:
         chart.write_text(svg, encoding="utf-8")
         results["chart"] = chart.as_posix()
-        path.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
     if model_card is not None:
         update_model_card(model_card, results, table=partial(ladder_table, card=model_card))
     return results
@@ -434,6 +513,16 @@ def ladder_table(results: dict[str, Any], card: Path | None = None) -> str:
             lines.append(f"| {point['simulations']} | {point['games']} | {point['wins']} / "
                          f"{point['draws']} / {point['losses']} | {score} | {elo} | "
                          f"{rating_cell} |")  # fmt: skip
+        fit = results.get("scaling_fit")
+        if fit:
+            verdict = "adds nothing significant" if fit["curvature_p"] >= 0.05 else "fits better"
+            lines += [
+                "",
+                f"A straight line in log2(playouts) describes the points (fit p = "
+                f"{fit['fit_p']:.2f}): **{fit['elo_per_doubling']:+.0f} Elo per doubling of the "
+                f"playouts (95% CI {fit['low']:+.0f} to {fit['high']:+.0f})**. A curve "
+                f"{verdict} (p = {fit['curvature_p']:.2f}).",
+            ]  # fmt: skip
         if results.get("chart"):
             target = results["chart"]
             if card is not None:
@@ -522,7 +611,9 @@ def scaling_chart(results: dict[str, Any]) -> str | None:
     left, right, top, bottom = 68, 96, 64, 56
     xs = [math.log2(p["simulations"]) for p in points]
     x_low, x_high = min(xs) - 0.4, max(xs) + 0.4
+    fit = results.get("scaling_fit")
     finite = [v for p in points for v in (p["rating"], *p["rating_95"]) if v is not None]
+    finite += [rating for _, rating in fit["line"]] if fit else []
     y_low = math.floor((min(finite) - 25) / 100) * 100
     y_high = math.ceil((max(finite) + 25) / 100) * 100
     step = 100 if y_high - y_low <= 800 else 200
@@ -569,13 +660,14 @@ def scaling_chart(results: dict[str, Any]) -> str | None:
                      f'y2="{y:.1f}"/>')  # fmt: skip
         parts.append(f'<text class="label" x="{width - right + 6}" y="{y + 4:.1f}">'
                      f"UCI_Elo {reference}</text>")  # fmt: skip
-    line = [(sx(x), sy(p["rating"])) for p, x in zip(points, xs, strict=True)
-            if p["rating"] is not None]  # fmt: skip
-    if len(line) > 1:
-        path = " ".join(
-            f"{'M' if i == 0 else 'L'}{px:.1f},{py:.1f}" for i, (px, py) in enumerate(line)
-        )
-        parts.append(f'<path class="line" d="{path}"/>')
+    if fit:  # the fitted line, under the measured points
+        (first, r_first), (last, r_last) = fit["line"][0], fit["line"][-1]
+        parts.append(f'<line class="line" x1="{sx(math.log2(first)):.1f}" '
+                     f'y1="{sy(r_first):.1f}" x2="{sx(math.log2(last)):.1f}" '
+                     f'y2="{sy(r_last):.1f}"/>')  # fmt: skip
+        parts.append(f'<text class="label" x="{left + 10}" y="{top + 16}">Line: fit, '
+                     f"{fit['elo_per_doubling']:+.0f} Elo per doubling (95% CI "
+                     f"{fit['low']:+.0f} to {fit['high']:+.0f})</text>")  # fmt: skip
     for point, x in zip(points, xs, strict=True):
         cx = sx(x)
         low, high = point["rating_95"]
@@ -600,11 +692,5 @@ def scaling_chart(results: dict[str, Any]) -> str | None:
             parts.append(f'<circle class="open" cx="{cx:.1f}" cy="{known:.1f}" r="5"/>')
         parts.append(f'<rect class="hit" x="{cx - 14:.1f}" y="{top}" width="28" '
                      f'height="{base - top}"/></g>')  # fmt: skip
-    for point in (points[0], points[-1]):
-        if point["rating"] is not None:
-            x, y = sx(math.log2(point["simulations"])), sy(point["rating"])
-            anchor, dx = ("end", -10) if point is points[0] else ("start", 10)
-            parts.append(f'<text class="label" x="{x + dx:.1f}" y="{y - 8:.1f}" '
-                         f'text-anchor="{anchor}">{point["rating"]:.0f}</text>')  # fmt: skip
     parts.append("</svg>")
     return "\n".join(parts) + "\n"

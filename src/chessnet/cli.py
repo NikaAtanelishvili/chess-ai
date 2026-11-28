@@ -453,6 +453,20 @@ def ladder(
             "write the chart and the model card section, then stop.",
         ),
     ] = None,
+    merge: Annotated[
+        bool,
+        typer.Option(
+            help="With --import-results: add its levels to our results of the same name "
+            "instead of replacing them (a ladder extended in a later run)."
+        ),
+    ] = False,
+    name: Annotated[
+        str,
+        typer.Option(
+            help="The run's name, 'ladder' or 'ladder-...': its results file "
+            "<checkpoint>.<name>.json and its model card section."
+        ),
+    ] = "ladder",
 ) -> None:
     """Rate MCTS on Stockfish's UCI_Elo scale (a ladder), and its strength against playouts."""
     import shutil
@@ -464,7 +478,9 @@ def ladder(
 
     if import_results is not None:
         try:
-            import_ladder_results(import_results, out=out, model_card=model_card, report=typer.echo)
+            import_ladder_results(
+                import_results, out=out, model_card=model_card, report=typer.echo, merge=merge
+            )
         except (ValueError, FileNotFoundError) as error:
             raise typer.BadParameter(str(error), param_hint="--import-results") from error
         typer.echo(f"updated {model_card}")
@@ -478,6 +494,7 @@ def ladder(
     plan = LadderPlan(
         weights=str(path),
         stockfish=(command,),
+        name=name,
         levels=tuple(sorted(_numbers(levels, "--levels"))),
         games=games,
         stop_below=stop_below,
@@ -485,9 +502,12 @@ def ladder(
         scaling=_numbers(scaling, "--scaling") if scaling.strip() else (),
         scaling_games=scaling_games,
     )
-    run_ladder(
-        plan, workers=workers, device=device, out=out, model_card=model_card, report=typer.echo,
-        watchdog=Watchdog(heartbeat=heartbeat),
-        max_wall_time=parse_duration(max_wall_time) if max_wall_time else None,
-    )  # fmt: skip
-    typer.echo(f"results: {out / (path.stem + '.ladder.json')}")
+    try:
+        run_ladder(
+            plan, workers=workers, device=device, out=out, model_card=model_card,
+            report=typer.echo, watchdog=Watchdog(heartbeat=heartbeat),
+            max_wall_time=parse_duration(max_wall_time) if max_wall_time else None,
+        )  # fmt: skip
+    except ValueError as error:
+        raise typer.BadParameter(str(error), param_hint="--name") from error
+    typer.echo(f"results: {out / f'{path.stem}.{name}.json'}")

@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import shutil
 import time
 from collections.abc import Callable, Sequence
@@ -165,6 +166,8 @@ def rate_ladder(entries: Sequence[dict[str, Any]]) -> dict[str, Any] | None:
 class LadderPlan:
     weights: str
     stockfish: tuple[str, ...]
+    #: The run's name: ``<checkpoint>.<name>.json`` and its model card section.
+    name: str = "ladder"
     levels: tuple[int, ...] = LADDER_LEVELS
     games: int = LADDER_GAMES
     stop_below: float = STOP_BELOW
@@ -187,12 +190,14 @@ def run_ladder(
 ) -> dict[str, Any]:
     """Climb the ladder, then play the scaling curve; returns (and saves) the results.
 
-    The results (``<checkpoint>.ladder.json``) are rewritten after every match, PGNs go to
-    ``<checkpoint>.ladder/``, the chart to ``<checkpoint>.ladder.svg``. ``max_wall_time``
+    The results (``<checkpoint>.<name>.json``) are rewritten after every match, PGNs go to
+    ``<checkpoint>.<name>/``, the chart to ``<checkpoint>.<name>.svg``. ``max_wall_time``
     (seconds) stops the run cleanly; the parts it cut off are listed in ``not_run``.
     """
+    if not re.fullmatch(r"ladder[a-z0-9-]*", plan.name):
+        raise ValueError(f"a ladder's name is 'ladder' or starts with 'ladder-', not {plan.name!r}")
     stem = Path(plan.weights).stem
-    path, games_dir = out / f"{stem}.ladder.json", out / f"{stem}.ladder"
+    path, games_dir = out / f"{stem}.{plan.name}.json", out / f"{stem}.{plan.name}"
     if max_wall_time is not None:
         watchdog = replace(watchdog or Watchdog(), deadline=time.monotonic() + max_wall_time)
     deadline = watchdog.deadline if watchdog else None
@@ -200,7 +205,7 @@ def run_ladder(
     results: dict[str, Any] = {
         "checkpoint": Path(plan.weights).name,
         "sha256": sha256(Path(plan.weights)),
-        "suite": "ladder",
+        "suite": plan.name,
         "created": datetime.now(UTC).isoformat(timespec="seconds"),
         "chessnet_version": __version__,
         "git_commit": git_commit(),
@@ -412,22 +417,33 @@ def import_ladder_results(
     out: Path = Path("eval/results"),
     model_card: Path | None = None,
     report: Callable[[str], None] = print,
+    merge: bool = False,
 ) -> dict[str, Any]:
-    """Bring ladder results from another machine (PGNs in the directory next to them) here."""
-    results = json.loads(other.read_text(encoding="utf-8"))
-    if results.get("suite") != "ladder":
+    """Bring ladder results from another machine (PGNs in the directory next to them) here.
+
+    With ``merge``, the levels of ``other`` join (or replace) those of our results of the
+    same name, checkpoint and playouts, which keep their scaling curve: a ladder extended
+    with more levels in a later run.
+    """
+    theirs = json.loads(other.read_text(encoding="utf-8"))
+    if not str(theirs.get("suite", "")).startswith("ladder"):
         raise ValueError(f"{other} holds no ladder results")
-    stem = Path(results["checkpoint"]).stem
-    path, games_dir = out / f"{stem}.ladder.json", out / f"{stem}.ladder"
+    stem, name = Path(theirs["checkpoint"]).stem, theirs["suite"]
+    path, games_dir = out / f"{stem}.{name}.json", out / f"{stem}.{name}"
     source = other.with_suffix("")
-    for entry in [*results["ladder"], *results["scaling"]]:
+    for entry in [*theirs["ladder"], *theirs["scaling"]]:
         if entry.get("pgn"):
             pgn = source / Path(entry["pgn"]).name
             if not pgn.is_file():
                 raise FileNotFoundError(f"the PGN of {entry['name']} is missing: {pgn}")
             games_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(pgn, games_dir / pgn.name)
+            if pgn.resolve() != (games_dir / pgn.name).resolve():  # not already in place
+                shutil.copyfile(pgn, games_dir / pgn.name)
             entry["pgn"] = (games_dir / pgn.name).as_posix()
+    results = theirs
+    if merge and path.exists():
+        results = _merge_ladders(json.loads(path.read_text(encoding="utf-8")), theirs, path)
+        report(f"merged UCI_Elo {', '.join(str(e['level']) for e in theirs['ladder'])} into {path}")
     results.pop("chart", None)
     # Ratings are derived from the games, so they always follow this code's method.
     results["rating"] = rate_ladder(results["ladder"])
@@ -440,6 +456,40 @@ def import_ladder_results(
     path.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
     report(f"results: {path}")
     return _finish(results, path, model_card)
+
+
+def _merge_ladders(ours: dict[str, Any], theirs: dict[str, Any], path: Path) -> dict[str, Any]:
+    """Our ladder with the levels of ``theirs`` (same checkpoint and playouts) added."""
+    for key in ("sha256",):
+        if ours[key] != theirs[key]:
+            raise ValueError(f"the results to merge are for another checkpoint than {path}")
+    if ours["plan"]["simulations"] != theirs["plan"]["simulations"]:
+        raise ValueError(f"the results to merge use other playouts than {path}")
+    levels = {entry["level"]: entry for entry in ours["ladder"]}
+    levels.update({entry["level"]: entry for entry in theirs["ladder"]})
+    played = sorted(levels)
+    merged = dict(ours)
+    merged["ladder"] = [levels[level] for level in played]
+    planned = set(ours["plan"]["levels"]) | set(theirs["plan"]["levels"])
+    merged["plan"] = {**ours["plan"], "levels": sorted(planned)}
+    merged["not_climbed"] = sorted(
+        (set(ours["not_climbed"]) | set(theirs["not_climbed"])) - set(played)
+    )
+    merged["not_run"] = [*ours["not_run"], *theirs["not_run"]]
+    merged["notes"] = list(dict.fromkeys([*ours["notes"], *theirs["notes"]]))
+    merged["runs"] = [*ours.get("runs", [_run_summary(ours)]), _run_summary(theirs)]
+    return merged
+
+
+def _run_summary(results: dict[str, Any]) -> dict[str, Any]:
+    """Where and when one run of a merged ladder was played."""
+    return {
+        "created": results["created"],
+        "hardware": results["hardware"],
+        "git_commit": results["git_commit"],
+        "levels": [entry["level"] for entry in results["ladder"]],
+        "scaling": [point["simulations"] for point in results["scaling"]],
+    }
 
 
 def _elo_range(low: float | None, high: float | None) -> str:
@@ -468,8 +518,9 @@ def _rating_range(low: float | None, high: float | None) -> str:
 def ladder_table(results: dict[str, Any], card: Path | None = None) -> str:
     """The Markdown section for a ladder run (the chart linked relative to ``card``)."""
     plan = results["plan"]
+    title = f"### {results['checkpoint']}, Stockfish ladder, MCTS {plan['simulations']}"
     lines = [
-        f"### {results['checkpoint']}, Stockfish ladder and playout scaling",
+        title + (" and playout scaling" if results["scaling"] else ""),
         "",
         f"{results['created'][:10]}, {results['hardware']} ({results['device']}, "
         f"{results['workers']} worker(s)), chessnet {results['chessnet_version']}. "
@@ -497,7 +548,7 @@ def ladder_table(results: dict[str, Any], card: Path | None = None) -> str:
         lines += [
             "",
             f"Strength against playouts, each budget against Stockfish at UCI_Elo {reference} "
-            f"(the ladder level where MCTS {plan['simulations']} scored closest to 50%):",
+            f"(the level nearest 50% for MCTS {plan['simulations']} when the curve was played):",
             "",
             f"| Playouts | Games | W / D / L | Score | Elo vs UCI_Elo {reference} | "
             "Stockfish scale (95% CI) |",

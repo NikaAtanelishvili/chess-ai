@@ -339,6 +339,25 @@ same schedule shape and validation subset).
 | 3 | `train` | Only if a run of session 2 stops before its end: each run resumes from its own directory | 0-2 |
 | - | - | Reserve for a fix or a re-run | ~5 |
 
+### GPU hours used
+
+Kaggle counts a GPU session's whole length against the weekly quota. Every GPU session of
+this project so far, from the kernel logs:
+
+| Date | Kernel | Machine | What | GPU hours |
+|------|--------|---------|------|----------:|
+| 2026-11-24 | `chessnet-preprocess` | CPU | the dataset (0.92 h, no GPU quota) | 0 |
+| 2026-11-25 | `chessnet-train`, session 1 | T4 x2 | GPU tests, benchmark, smoke run | 0.12 |
+| 2026-11-25 | `chessnet-train`, session 2 | T4 x2 | base (10.08 h) and wide (8.73 h) at once | 10.10 |
+| 2026-11-26 | `chessnet-search` | T4 | search speed | 0.04 |
+| 2026-11-27 | `chessnet-eval`, full suite | T4 x2 | three matches in 20 min, then hung until stopped | about 8.8 |
+| 2026-11-27 | `chessnet-eval`, the missing parts | T4 x2 | Skill Level 0, wide vs base, puzzles | 1.65 |
+| 2026-11-27 | `chessnet-eval`, ladder | T4 x2 | UCI_Elo ladder and playout scaling | 1.81 |
+| | | | **Total** | **about 22.5** |
+
+Training the released network took 10.1 GPU hours. The 8.5 hours lost to the hung
+evaluation led to the supervised workers (DECISIONS.md, "Hang-proof evaluation runs").
+
 ### Steps
 
 1. **Session 1 (smoke)**, done on 2026-11-25 (results above). In `kaggle/train/train.py`,
@@ -470,3 +489,25 @@ Top-5 moves from the masked policy (softmax over legal moves):
 
 The value head rates the start position about even (+0.04 for White). After 3...Nf6?? it
 gives White only +0.29, because it does not calculate the mate; the search will.
+
+## Reproducing the released network
+
+The release `v1.0.0` ships `base-best.pt`, its ONNX export, the dataset's `manifest.json`
+and their SHA-256. Every step that produced the network is pinned:
+
+1. **Data:** the preprocessing kernel at `v0.1.0` (`873a1af`) streams the October 2026
+   Lichess dump (`lichess_db_standard_rated_2026-10.pgn.zst`) into shards with the
+   filters and seed recorded in `manifest.json`. The Kaggle Dataset built that way is
+   private, so to reproduce it, run the kernel (or `chessnet preprocess` locally) and
+   compare each shard with the SHA-256 in `manifest.json`. The manifest's own SHA-256,
+   `88d5cddd...6793ea`, is stored in the checkpoint.
+2. **Training:** the training kernel `kaggle/train/` pinned to `fd50dcf` with `MODE =
+   "train"` and `configs/train/kaggle_t4.yaml` (session 2 above). The checkpoint records
+   the commit (`git_sha`), the config and the dataset hash; `base-best.pt` is the step with
+   the lowest validation loss.
+3. **Evaluation:** `kaggle/eval/` and `chessnet eval` / `chessnet ladder`, with every
+   game in `eval/results/`.
+
+Training on a GPU uses fp16 and `torch.compile`, so a rerun matches in its metrics, not
+bit for bit; on the CPU, training is deterministic (DECISIONS.md, "Deterministic training
+on the CPU").

@@ -1,8 +1,29 @@
 # Architecture
 
-This document describes the conventions the code relies on. It grows with the project; it
-covers the encoding layer (`chessnet.encoding`), which every other component builds on, and
-the network (`chessnet.model`).
+How chessnet works, and the conventions the code relies on: the encoding, which every
+other component builds on, the network, the search and the players, the UCI engine, and the
+evaluation. Training is described in [TRAINING.md](TRAINING.md).
+
+```
+Lichess PGN dump --preprocess--> shards (packed positions) --train--> checkpoint (.pt)
+                                                                          |
+                     board --encode--> planes --network--> priors + value
+                                                                          |
+                     MCTS (PUCT): priors guide the search, values score its leaves
+                                                                          |
+              chessnet play (terminal) / chessnet-uci (GUIs) / chessnet eval, ladder
+```
+
+| Package | Role |
+|---------|------|
+| `chessnet.encoding` | board planes, the 4672 move index, value targets, packed records |
+| `chessnet.data` | streaming Lichess dumps into shards; the training data loader |
+| `chessnet.model` | the SE-ResNet, checkpoints, inference and ONNX export |
+| `chessnet.train` | the training loop, losses, metrics, loggers |
+| `chessnet.search` | the network evaluator (with a cache) and MCTS |
+| `chessnet.engine` | players, the UCI engine |
+| `chessnet.eval` | matches, puzzles, suites, the Stockfish ladder |
+| `chessnet.weights` | downloading the released network and checking its SHA-256 |
 
 ## Encoding (`ENCODING_VERSION = 1`)
 

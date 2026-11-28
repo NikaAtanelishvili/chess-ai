@@ -58,7 +58,8 @@ where human games are.
 `chessnet eval --suite quick|full` writes `eval/results/<checkpoint>.<suite>.json`, PGNs
 of every game, and the tables below. Matches start from 50 balanced openings, each played
 once with each colour. Elo differences come with 95% confidence intervals. Puzzles are
-scored on the first move of the solution, by Lichess rating.
+scored on the first move of the solution, by Lichess rating. `chessnet ladder` places MCTS
+on Stockfish's UCI_Elo scale and measures strength against playouts (last section).
 
 <!-- eval: base-best quick -->
 ### base-best.pt, quick suite
@@ -139,3 +140,61 @@ wide-best vs base, 1 s per move each (laptop CPU) was played on 11th Gen Intel(R
   across the buckets; MCTS 800 still finds the first move of 84.6% of puzzles rated above
   2000. Each bucket has 500 puzzles, so each figure is within about +-0.7 to +-4.4 points
   (95%).
+
+<!-- eval: base-best ladder -->
+### base-best.pt, Stockfish ladder and playout scaling
+
+2026-11-27, 2 x Tesla T4 (cuda, 4 worker(s)), chessnet 0.2.0.dev0. MCTS 800 against Stockfish 16 with `UCI_LimitStrength`, 1 s per Stockfish move; 50 balanced openings, each played with both colours. Ratings are on Stockfish 16's UCI_Elo scale, which it anchors to CCRL engine ratings (goldfish 1.13 = 2000, games at 60 s + 0.6 s): an engine rating, not a FIDE or Lichess one.
+
+| Stockfish UCI_Elo (skill level) | Games | W / D / L | Score | Elo difference (95% CI) |
+|---------------------------------|------:|-----------|------:|-------------------------|
+| 1500 (1.5) | 40 | 40 / 0 / 0 | 100.0% | +inf (+407 to +inf) |
+| 1700 (2.8) | 40 | 40 / 0 / 0 | 100.0% | +inf (+407 to +inf) |
+| 1900 (3.8) | 40 | 35 / 4 / 1 | 92.5% | +436 (+315 to +803) |
+| 2100 (4.6) | 40 | 33 / 2 / 5 | 85.0% | +301 (+186 to +531) |
+| 2300 (5.5) | 40 | 33 / 1 / 6 | 83.8% | +285 (+169 to +508) |
+
+**Rating of MCTS 800 on Stockfish's scale: 2493 (95% CI 2402 to 2595)**, the maximum-likelihood fit to all 200 ladder games. It scored 50% or more at every level, up to UCI_Elo 2300.
+
+Strength against playouts, each budget against Stockfish at UCI_Elo 2300 (the ladder level where MCTS 800 scored closest to 50%):
+
+| Playouts | Games | W / D / L | Score | Elo vs UCI_Elo 2300 | Stockfish scale (95% CI) |
+|---------:|------:|-----------|------:|---------------:|--------------------------|
+| 50 | 32 | 7 / 5 / 20 | 29.7% | -150 | 2150 (2010 to 2277) |
+| 100 | 32 | 11 / 7 / 14 | 45.3% | -33 | 2267 (2144 to 2388) |
+| 200 | 32 | 7 / 9 / 16 | 35.9% | -100 | 2200 (2068 to 2322) |
+| 400 | 32 | 15 / 7 / 10 | 57.8% | +55 | 2355 (2234 to 2480) |
+| 800 | 40 | 33 / 1 / 6 | 83.8% | +285 | 2585 (2450 to 2747) |
+| 1600 | 32 | 26 / 2 / 4 | 84.4% | +293 | 2593 (2442 to 2781) |
+
+A straight line in log2(playouts) describes the points (fit p = 0.20): **+94 Elo per doubling of the playouts (95% CI +62 to +129)**. A curve adds nothing significant (p = 0.21).
+
+![Rating against playouts on Stockfish's scale](../eval/results/base-best.ladder.svg)
+
+The rating and the scaling points have likelihood-ratio intervals; the ladder table's intervals are the match tables' (normal approximation, Wilson for a sweep).
+
+The 800-playout point is the ladder's match at UCI_Elo 2300.
+<!-- end eval: base-best ladder -->
+
+### What the ladder and the scaling curve show
+
+- **Rating:** MCTS 800 scored 100%, 100%, 92.5%, 85% and 84% at UCI_Elo 1500 to 2300, so it
+  never fell to 50% and the ladder does not bracket it. Its rating, **2493 (95% CI 2402 to
+  2595) on Stockfish 16's UCI_Elo scale**, is the Elo model's estimate from above the top
+  level. One rating explains all five levels acceptably (chi-squared p = 0.20), but each
+  level alone implies a higher rating as the level rises (2336 at 1900, 2401 at 2100, 2585
+  at 2300). Levels of 2500 to 2700 would bracket it.
+- **The scale:** Stockfish 16 turns UCI_Elo into a skill level fitted to CCRL engine
+  ratings at 60 s + 0.6 s. These are engine ratings, not FIDE or Lichess ratings, and a
+  weakened Stockfish makes different mistakes from a human of the same rating.
+- **Scaling:** against UCI_Elo 2300, strength grows by **+94 Elo per doubling of the
+  playouts (95% CI +62 to +129)**: about 2120 at 50 playouts and 2590 at 1,600 on the
+  fitted line. A straight line in log2(playouts) fits the points (p = 0.20) and a curve
+  adds nothing significant (p = 0.21), so there is no sign of flattening up to 1,600
+  playouts. Single points are only +-120 to +-170 Elo with 32 games each; the 200-playout
+  point lies below the line, and the 800 and 1,600 points score 84% against the reference,
+  where each game tells little. The line puts 800 playouts at 2496, in line with the
+  ladder's 2493.
+- **For play:** strength depends on playouts, not hardware. 800 playouts take about 0.8 s
+  per move on a T4 and about 1.6 s on the laptop CPU (about 500 per second); each halving
+  of the playouts costs roughly 94 Elo.

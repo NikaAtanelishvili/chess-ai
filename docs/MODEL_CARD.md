@@ -1,7 +1,11 @@
 # Model card: chessnet base
 
-The network that the engine plays with: `checkpoints/session2/base-best.pt` (not in git;
-source and SHA-256 `370248af...` in [TRAINING.md](TRAINING.md#checkpoints)).
+The network the engine plays with, released as **`chessnet-base-e1-20261126`** (preset
+`base`, encoding version 1, trained on 2026-11-26) with chessnet 1.0.0. The file is
+`base-best.pt` (42 MB, SHA-256 `370248af...`), attached to the
+[v1.0.0 release](https://github.com/NikaAtanelishvili/chess-ai/releases/tag/v1.0.0) with its
+ONNX export and the dataset's `manifest.json`. `chessnet download-weights` fetches and
+checks it; [TRAINING.md](TRAINING.md#reproducing-the-released-network) says how it was made.
 
 ## Model
 
@@ -26,8 +30,9 @@ Recipe and figures: [TRAINING.md](TRAINING.md#data-recipe).
 
 Supervised learning: policy cross-entropy (label smoothing 0.05) plus 0.5 x the WDL
 cross-entropy, AdamW (learning rate 1e-3, warmup and cosine decay), batch 2048, 5 epochs,
-fp16 on one Kaggle T4 (10.1 h). The checkpoint is the one with the lowest validation loss,
-at step 182,500 of 187,860.
+fp16 on one Kaggle T4: 10.1 GPU hours (the whole project used about 22.5, mostly for
+evaluation; see [TRAINING.md](TRAINING.md#gpu-hours-used)). The checkpoint is the one with
+the lowest validation loss, at step 182,500 of 187,860.
 
 On 51,200 positions from held-out games:
 
@@ -48,10 +53,14 @@ where human games are.
   teaching.
 - It imitates 2000+ rated humans: the policy proposes human moves, and the value is the
   outcome humans reach from a position, not a theoretical evaluation.
-- The network does not calculate. Tactics come from the search, which is slow in Python
-  (about 500 nodes per second on a laptop CPU, 1,500 on a T4).
-- Standard chess only (no Chess960). Positions unlike human games, such as a missing queen
-  in the starting setup, are judged poorly.
+- The network does not calculate. Tactics come from the search, which is slow in Python:
+  about 400 to 500 playouts per second on a laptop CPU, 1,300 on a T4. Strength grows by
+  about 94 Elo per doubling of the playouts.
+- Its rating is measured against limited-strength Stockfish, on Stockfish's UCI_Elo scale.
+  That is not a human rating and is not comparable with FIDE or Lichess ratings (see the
+  ladder below); a Lichess bot rating would be the real-world check.
+- No opening book, tablebases or pondering. Standard chess only (no Chess960). Positions
+  unlike human games, such as a missing queen in the starting setup, are judged poorly.
 
 ## Evaluation
 

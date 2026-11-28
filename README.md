@@ -57,7 +57,7 @@ option or the `CHESSNET_WEIGHTS` environment variable.
 uv run chessnet play                     # you play White
 uv run chessnet play --color black       # or random
 uv run chessnet play --movetime 3        # 3 seconds per engine move (default: 800 playouts)
-uv run chessnet play --mode policy       # instant moves from the network, no search
+uv run chessnet play --mode policy       # instant moves (policy-safe), no search
 ```
 
 Type moves in SAN (`Nf3`, `O-O`) or UCI (`g1f3`); `moves` lists the legal moves, `undo`
@@ -102,10 +102,16 @@ laptop CPU it searches about 500 nodes per second, so 800 playouts take about 1.
 | `Weights` | `checkpoints/session2/base-best.pt` | network checkpoint |
 | `Simulations` | 800 | playouts per move when the GUI sets no node or time limit |
 | `CPuct` | 2.0 | weight of the prior in PUCT exploration |
-| `Mode` | `mcts` | `mcts` (search) or `policy` (the network's top move, instant) |
+| `Mode` | `mcts` | `mcts` (search) or `policy` (policy-safe: instant, see below) |
 | `LeafBatch` | 32 | leaves per network call (fastest on the CPUs measured) |
 | `Device` | `auto` | `auto`, `cpu` or `cuda` |
 | `MoveOverhead` | 100 | milliseconds kept back per move for GUI and system lag |
+
+`Mode policy` plays **policy-safe**: the network's most likely move, except that it takes
+a mate in one when it has one, and, when the network rates its position better than level,
+avoids moves that stalemate or let either side claim a threefold repetition while it has
+other moves. Level or worse, a draw is welcome. The evaluation's `policy` player stays the
+raw network, for an honest baseline.
 
 The engine understands `go nodes`, `movetime`, `depth`, `wtime`/`btime`/`winc`/`binc`/
 `movestogo`, and `infinite` with `stop`. MCTS has no fixed depth, so `go depth N` runs
@@ -114,6 +120,39 @@ With a clock it thinks for `remaining / 30 + 0.8 x increment`,
 less the move overhead, and never more than half the remaining time. Scores are converted
 from the network's expected outcome `v` with Lichess's win-chance model,
 `cp = ln((1 + v) / (1 - v)) / 0.00368208` (`v = 0.18` is about one pawn).
+
+## Evaluate
+
+```bash
+uv run chessnet eval --suite quick              # about 10 minutes on a laptop CPU
+uv run chessnet eval --suite full --estimate    # times a few games, estimates the full suite
+uv run chessnet eval --suite full --workers 2 --compare checkpoints/session2/wide-best.pt \
+    --puzzles data/puzzles/lichess_db_puzzle.csv.zst
+uv run chessnet ladder --workers 2              # Stockfish UCI_Elo ladder and playout scaling
+```
+
+The quick suite plays the raw policy and policy-safe against a random mover and MCTS (400
+playouts) against the policy, and scores 500 Lichess puzzles. The full suite plays more games, adds MCTS (800
+playouts) against Stockfish at its lowest `UCI_Elo` and at `Skill Level` 0, optionally a
+second network against the first, and 2,000 puzzles. Games start from 50 balanced
+openings, each played with both colours. Results go to `eval/results/` (JSON and PGNs),
+and a summary table to [docs/MODEL_CARD.md](docs/MODEL_CARD.md).
+
+- **Stockfish** is optional; its matches are skipped without it. On Ubuntu:
+  `sudo apt install stockfish`.
+- **Puzzles:** 500 are committed in `tests/fixtures/puzzles/`. The full Lichess puzzle
+  database (CC0, 310 MB) is not:
+  `curl -L -o data/puzzles/lichess_db_puzzle.csv.zst https://database.lichess.org/lichess_db_puzzle.csv.zst`
+- The full suite takes hours on a laptop. The Kaggle kernel `kaggle/eval/` runs it, or
+  chosen parts of it, on the T4 x2 machine (or a CPU machine): set `CHESSNET_REF`, `ONLY`
+  and `MAX_WALL_TIME` in `kaggle/eval/eval.py`, then
+  `uv run kaggle kernels push -p kaggle/eval`.
+- Long runs cannot hang: a stuck game or engine is killed and counted as an error, a
+  heartbeat line appears every minute, each match is saved as soon as it ends, and
+  `--max-wall-time 6h` stops cleanly with what has finished. `--only <part>,...` runs
+  single matches or puzzle runs (such as `puzzles-mcts-800`) and merges them into earlier
+  results; `--games` and `--label` play them as labelled variants (such as a shorter run
+  on another machine), and `--merge-results` merges a results file from another machine.
 
 ## Contributing
 

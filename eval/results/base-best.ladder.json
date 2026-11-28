@@ -1,0 +1,770 @@
+{
+  "checkpoint": "base-best.pt",
+  "sha256": "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78",
+  "suite": "ladder",
+  "created": "2026-11-27T17:49:37+00:00",
+  "chessnet_version": "0.2.0.dev0",
+  "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2",
+  "device": "cuda",
+  "hardware": "2 x Tesla T4",
+  "workers": 4,
+  "openings": "50 balanced openings, each played with both colours",
+  "scale": "Stockfish 16's UCI_Elo scale, which it anchors to CCRL engine ratings (goldfish 1.13 = 2000, games at 60 s + 0.6 s): an engine rating, not a FIDE or Lichess one",
+  "plan": {
+    "levels": [
+      1500,
+      1700,
+      1900,
+      2100,
+      2300
+    ],
+    "games": 40,
+    "stop_below": 0.25,
+    "simulations": 800,
+    "scaling": [
+      50,
+      100,
+      200,
+      400,
+      800,
+      1600
+    ],
+    "scaling_games": 32,
+    "stockfish_movetime": 1.0
+  },
+  "ladder": [
+    {
+      "slug": "ladder-1500",
+      "name": "MCTS 800 vs Stockfish UCI_Elo 1500",
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-1500",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 1500,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 40,
+      "wins": 40,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        407.0,
+        null
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 40
+      },
+      "mean_plies": 68.0,
+      "player_seconds_per_move": 0.797,
+      "opponent_seconds_per_move": 0.949,
+      "wall_seconds": 621.3,
+      "pgn": "eval/results/base-best.ladder/ladder-1500.pgn",
+      "level": 1500,
+      "skill_level": 1.49,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2"
+    },
+    {
+      "slug": "ladder-1700",
+      "name": "MCTS 800 vs Stockfish UCI_Elo 1700",
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-1700",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 1700,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 40,
+      "wins": 40,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        407.0,
+        null
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 40
+      },
+      "mean_plies": 67.1,
+      "player_seconds_per_move": 0.799,
+      "opponent_seconds_per_move": 0.941,
+      "wall_seconds": 608.2,
+      "pgn": "eval/results/base-best.ladder/ladder-1700.pgn",
+      "level": 1700,
+      "skill_level": 2.84,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2"
+    },
+    {
+      "slug": "ladder-1900",
+      "name": "MCTS 800 vs Stockfish UCI_Elo 1900",
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-1900",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 1900,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 40,
+      "wins": 35,
+      "draws": 4,
+      "losses": 1,
+      "score": 0.925,
+      "elo": 436.4,
+      "elo_95": [
+        314.9,
+        803.3
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "threefold_repetition": 2,
+        "checkmate": 36,
+        "stalemate": 1,
+        "insufficient_material": 1
+      },
+      "mean_plies": 78.7,
+      "player_seconds_per_move": 0.783,
+      "opponent_seconds_per_move": 0.956,
+      "wall_seconds": 720.4,
+      "pgn": "eval/results/base-best.ladder/ladder-1900.pgn",
+      "level": 1900,
+      "skill_level": 3.78,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2"
+    },
+    {
+      "slug": "ladder-2100",
+      "name": "MCTS 800 vs Stockfish UCI_Elo 2100",
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-2100",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 2100,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 40,
+      "wins": 33,
+      "draws": 2,
+      "losses": 5,
+      "score": 0.85,
+      "elo": 301.3,
+      "elo_95": [
+        186.2,
+        531.1
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 38,
+        "stalemate": 1,
+        "threefold_repetition": 1
+      },
+      "mean_plies": 86.0,
+      "player_seconds_per_move": 0.805,
+      "opponent_seconds_per_move": 0.966,
+      "wall_seconds": 788.7,
+      "pgn": "eval/results/base-best.ladder/ladder-2100.pgn",
+      "level": 2100,
+      "skill_level": 4.58,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2"
+    },
+    {
+      "slug": "ladder-2300",
+      "name": "MCTS 800 vs Stockfish UCI_Elo 2300",
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-2300",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 2300,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 40,
+      "wins": 33,
+      "draws": 1,
+      "losses": 6,
+      "score": 0.8375,
+      "elo": 284.9,
+      "elo_95": [
+        169.1,
+        508.5
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 39,
+        "threefold_repetition": 1
+      },
+      "mean_plies": 89.5,
+      "player_seconds_per_move": 0.787,
+      "opponent_seconds_per_move": 0.952,
+      "wall_seconds": 809.2,
+      "pgn": "eval/results/base-best.ladder/ladder-2300.pgn",
+      "level": 2300,
+      "skill_level": 5.51,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2"
+    }
+  ],
+  "rating": {
+    "rating": 2493.0,
+    "low": 2402.3,
+    "high": 2595.1,
+    "games": 200,
+    "bracket": [
+      2300,
+      null
+    ]
+  },
+  "reference": 2300,
+  "scaling": [
+    {
+      "slug": "scaling-50",
+      "name": "MCTS 50 vs Stockfish UCI_Elo 2300",
+      "player": {
+        "name": "mcts-50",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 50,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-2300",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 2300,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 32,
+      "wins": 7,
+      "draws": 5,
+      "losses": 20,
+      "score": 0.2969,
+      "elo": -149.8,
+      "elo_95": [
+        -295.7,
+        -42.2
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 27,
+        "threefold_repetition": 3,
+        "stalemate": 1,
+        "insufficient_material": 1
+      },
+      "mean_plies": 86.2,
+      "player_seconds_per_move": 0.079,
+      "opponent_seconds_per_move": 0.971,
+      "wall_seconds": 396.1,
+      "pgn": "eval/results/base-best.ladder/scaling-50.pgn",
+      "level": 2300,
+      "skill_level": 5.51,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2",
+      "simulations": 50,
+      "rating": 2150.2,
+      "rating_95": [
+        2009.9,
+        2276.8
+      ]
+    },
+    {
+      "slug": "scaling-100",
+      "name": "MCTS 100 vs Stockfish UCI_Elo 2300",
+      "player": {
+        "name": "mcts-100",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 100,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-2300",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 2300,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 32,
+      "wins": 11,
+      "draws": 7,
+      "losses": 14,
+      "score": 0.4531,
+      "elo": -32.7,
+      "elo_95": [
+        -146.5,
+        74.3
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 25,
+        "threefold_repetition": 6,
+        "insufficient_material": 1
+      },
+      "mean_plies": 92.3,
+      "player_seconds_per_move": 0.126,
+      "opponent_seconds_per_move": 0.976,
+      "wall_seconds": 422.7,
+      "pgn": "eval/results/base-best.ladder/scaling-100.pgn",
+      "level": 2300,
+      "skill_level": 5.51,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2",
+      "simulations": 100,
+      "rating": 2267.3,
+      "rating_95": [
+        2143.9,
+        2388.1
+      ]
+    },
+    {
+      "slug": "scaling-200",
+      "name": "MCTS 200 vs Stockfish UCI_Elo 2300",
+      "player": {
+        "name": "mcts-200",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 200,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-2300",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 2300,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 32,
+      "wins": 7,
+      "draws": 9,
+      "losses": 16,
+      "score": 0.3594,
+      "elo": -100.4,
+      "elo_95": [
+        -219.0,
+        -1.4
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "threefold_repetition": 8,
+        "checkmate": 23,
+        "insufficient_material": 1
+      },
+      "mean_plies": 92.3,
+      "player_seconds_per_move": 0.216,
+      "opponent_seconds_per_move": 0.962,
+      "wall_seconds": 488.3,
+      "pgn": "eval/results/base-best.ladder/scaling-200.pgn",
+      "level": 2300,
+      "skill_level": 5.51,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2",
+      "simulations": 200,
+      "rating": 2199.6,
+      "rating_95": [
+        2068.4,
+        2322.1
+      ]
+    },
+    {
+      "slug": "scaling-400",
+      "name": "MCTS 400 vs Stockfish UCI_Elo 2300",
+      "player": {
+        "name": "mcts-400",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 400,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-2300",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 2300,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 32,
+      "wins": 15,
+      "draws": 7,
+      "losses": 10,
+      "score": 0.5781,
+      "elo": 54.7,
+      "elo_95": [
+        -50.8,
+        171.8
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "threefold_repetition": 4,
+        "checkmate": 25,
+        "insufficient_material": 3
+      },
+      "mean_plies": 111.7,
+      "player_seconds_per_move": 0.402,
+      "opponent_seconds_per_move": 0.98,
+      "wall_seconds": 643.9,
+      "pgn": "eval/results/base-best.ladder/scaling-400.pgn",
+      "level": 2300,
+      "skill_level": 5.51,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2",
+      "simulations": 400,
+      "rating": 2354.7,
+      "rating_95": [
+        2233.9,
+        2480.1
+      ]
+    },
+    {
+      "slug": "ladder-2300",
+      "name": "MCTS 800 vs Stockfish UCI_Elo 2300",
+      "player": {
+        "name": "mcts-800",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 800,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-2300",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 2300,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 40,
+      "wins": 33,
+      "draws": 1,
+      "losses": 6,
+      "score": 0.8375,
+      "elo": 284.9,
+      "elo_95": [
+        169.1,
+        508.5
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 39,
+        "threefold_repetition": 1
+      },
+      "mean_plies": 89.5,
+      "player_seconds_per_move": 0.787,
+      "opponent_seconds_per_move": 0.952,
+      "wall_seconds": 809.2,
+      "pgn": "eval/results/base-best.ladder/ladder-2300.pgn",
+      "level": 2300,
+      "skill_level": 5.51,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2",
+      "reused": "the ladder's match at this level",
+      "simulations": 800,
+      "rating": 2584.9,
+      "rating_95": [
+        2450.5,
+        2747.3
+      ]
+    },
+    {
+      "slug": "scaling-1600",
+      "name": "MCTS 1600 vs Stockfish UCI_Elo 2300",
+      "player": {
+        "name": "mcts-1600",
+        "kind": "mcts",
+        "weights": "/tmp/tools/weights/base-best.pt",
+        "simulations": 1600,
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "stockfish-elo-2300",
+        "kind": "uci",
+        "movetime": 1.0,
+        "leaf_batch": 32,
+        "command": [
+          "/tmp/tools/stockfish/stockfish-ubuntu-x86-64-avx2"
+        ],
+        "options": {
+          "UCI_LimitStrength": true,
+          "UCI_Elo": 2300,
+          "Threads": 1,
+          "Hash": 16
+        },
+        "timeout": 30.0
+      },
+      "games": 32,
+      "wins": 26,
+      "draws": 2,
+      "losses": 4,
+      "score": 0.8438,
+      "elo": 293.0,
+      "elo_95": [
+        169.0,
+        560.7
+      ],
+      "target": null,
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 30,
+        "stalemate": 1,
+        "threefold_repetition": 1
+      },
+      "mean_plies": 96.2,
+      "player_seconds_per_move": 1.543,
+      "opponent_seconds_per_move": 0.956,
+      "wall_seconds": 991.2,
+      "pgn": "eval/results/base-best.ladder/scaling-1600.pgn",
+      "level": 2300,
+      "skill_level": 5.51,
+      "device": "cuda",
+      "hardware": "2 x Tesla T4",
+      "workers": 4,
+      "date": "2026-11-27",
+      "git_commit": "9d55d22af4c4ac643cf1734d0d69c33e371ad4e2",
+      "simulations": 1600,
+      "rating": 2593.0,
+      "rating_95": [
+        2442.0,
+        2780.9
+      ]
+    }
+  ],
+  "not_climbed": [],
+  "not_run": [],
+  "notes": [],
+  "wall_seconds": 6491.8,
+  "scaling_fit": {
+    "elo_per_doubling": 94.2,
+    "low": 61.6,
+    "high": 129.3,
+    "curvature_p": 0.207,
+    "fit_p": 0.202,
+    "line": [
+      [
+        50,
+        2119.2
+      ],
+      [
+        100,
+        2213.4
+      ],
+      [
+        200,
+        2307.6
+      ],
+      [
+        400,
+        2401.8
+      ],
+      [
+        800,
+        2496.0
+      ],
+      [
+        1600,
+        2590.2
+      ]
+    ]
+  },
+  "chart": "eval/results/base-best.ladder.svg"
+}

@@ -1,0 +1,279 @@
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "1"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "rnbqk2r/ppp1ppbp/5np1/3p4/5P2/1P2PN2/P1PP2PP/RNBQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Bird"]
+
+1. Bb2 c6 2. Be2 b6 3. O-O Kf8 4. d3 Bh6 5. Nbd2 e5 6. Nxe5 b5 7. Ndf3 Ne8 8. Ng5 Ba6 9. Nexf7 Qa5 10. Bxh8 Qd8 11. Nxd8 Bc8 12. Nxh7+ Kg8 13. Nf6+ Nxf6 14. Bxf6 Be6 15. Nxe6 Bf8 16. Nxf8 Nd7 17. Nxd7 a5 18. Bg4 Kf7 19. e4 Ra6 20. e5 b4 21. e6+ Kg8 22. e7 Rb6 23. e8=Q+ Kh7 24. Qh8# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "2"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "rnbqk2r/ppp1ppbp/5np1/3p4/5P2/1P2PN2/P1PP2PP/RNBQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Bird"]
+
+1. d3 O-O 2. Nh4 Ne4 3. a4 Bxa1 4. b4 Nc3 5. Qe2 Nxe2 6. f5 Nxc1 7. g3 Bxf5 8. Ng2 Na2 9. b5 Bc3+ 10. Nxc3 Nxc3 11. Kd2 d4 12. a5 Nxb5 13. Kc1 dxe3 14. c4 Nd4 15. Kd1 e2+ 16. Kc1 exf1=Q+ 17. Kd2 Qxg2+ 18. Kc1 Qc2# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "3"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "rnb1k2r/ppppqppp/4pn2/8/1bPP4/5N2/PP1BPPPP/RN1QKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Bogo-Indian"]
+
+1. g3 Rg8 2. Bg2 Na6 3. O-O b6 4. Ne5 h6 5. Bxa8 b5 6. cxb5 h5 7. bxa6 d6 8. Nc6 g6 9. Nxe7 Rh8 10. Nxc8 g5 11. Bxb4 d5 12. Bc6+ Nd7 13. Bxd7+ Kd8 14. Be7+ Kxd7 15. Nxa7 Re8 16. Qa4+ Kxe7 17. Nc6+ Kd7 18. Ne5+ Kc8 19. Qxe8# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "4"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "rnb1k2r/ppppqppp/4pn2/8/1bPP4/5N2/PP1BPPPP/RN1QKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Bogo-Indian"]
+
+1. Bxb4 Qxb4+ 2. Nbd2 Qxb2 3. Nh4 Qxd4 4. Nhf3 Qc3 5. Qb1 Nc6 6. e4 O-O 7. Qc2 Qxc2 8. c5 Nxe4 9. Nd4 Qxd2# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "5"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "rn1qkbnr/pp3ppp/4p3/2ppPb2/3P4/5N2/PPP1BPPP/RNBQK2R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Advance"]
+
+1. Be3 Na6 2. c3 c4 3. O-O Qg5 4. Nxg5 Ba3 5. Nxa3 Bh3 6. Nxh3 Nb8 7. Nb5 f5 8. Nc7+ Kd8 9. Nxa8 b5 10. Bg5+ Nf6 11. exf6 gxf6 12. Bxf6+ Kc8 13. Bxh8 Kd7 14. Be5 f4 15. Nxf4 Kc6 16. Bxb8 b4 17. Nxe6 bxc3 18. bxc3 Kb5 19. Rb1+ Kc6 20. Qa4# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "6"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "rn1qkbnr/pp3ppp/4p3/2ppPb2/3P4/5N2/PPP1BPPP/RNBQK2R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Advance"]
+
+1. Kf1 Nc6 2. Ke1 cxd4 3. Nxd4 Nxd4 4. Bg5 Nxc2+ 5. Kf1 Qxg5 6. Bb5+ Kd8 7. Ba4 Nxa1 8. Kg1 Rc8 9. Qg4 Qxg4 10. Bd7 Rc1# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "7"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "rn1qkbnr/pp2pppp/2p3b1/8/3P4/6N1/PPP2PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Classical"]
+
+1. Nf3 e5 2. Nxe5 Bc5 3. dxc5 a5 4. Qxd8+ Kxd8 5. Nxg6 a4 6. Nxh8 Nd7 7. Nxf7+ Kc8 8. Nd6+ Kd8 9. Be3 g5 10. Bxg5+ Ndf6 11. Bc4 Ra5 12. Nxb7+ Ke7 13. Nxa5 h5 14. Nxc6+ Ke8 15. Bxf6 h4 16. Bxh4 a3 17. bxa3 Nf6 18. Bxf6 Kf8 19. h4 Ke8 20. h5 Kf8 21. h6 Ke8 22. h7 Kd7 23. h8=Q Kc7 24. Qg7+ Kc8 25. Be6# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "8"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "rn1qkbnr/pp2pppp/2p3b1/8/3P4/6N1/PPP2PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Classical"]
+
+1. Nf5 Bxf5 2. Bg5 Nf6 3. Nh3 Bxh3 4. Kd2 Qxd4+ 5. Kc1 Qxd1+ 6. Kxd1 Bg4+ 7. Kc1 Nbd7 8. Kb1 e6 9. Bxf6 Nxf6 10. Bc4 Bd6 11. Bd3 O-O-O 12. f4 Bxf4 13. Be2 Bxe2 14. Rg1 Rd1+ 15. Rxd1 Bxd1 16. h3 Rd8 17. g3 Bxg3 18. b3 Rd2 19. Kc1 Bf4 20. a3 Rxc2+ 21. Kxd1 Rh2 22. Rc1 Bxc1 23. Ke1 Bxa3 24. Kf1 Rxh3 25. Ke1 Rxb3 26. Kf2 Bd6 27. Ke2 a5 28. Kd2 a4 29. Ke2 a3 30. Ke1 a2 31. Ke2 a1=Q 32. Kf2 Qa2+ 33. Ke1 Rb1# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "9"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "rnbqkb1r/pp3ppp/4pn2/3p4/2PP4/2N5/PP3PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Panov"]
+
+1. Nf3 Be7 2. cxd5 b5 3. Bxb5+ Nbd7 4. dxe6 O-O 5. exd7 Qxd7 6. Bxd7 Bd6 7. Bxc8 Rd8 8. Bf5 Ne4 9. Bxe4 Rf8 10. O-O g6 11. Bxa8 Bc7 12. Bd5 Be5 13. dxe5 Ra8 14. Bxa8 Kg7 15. Bd5 Kh8 16. e6 f5 17. e7 g5 18. Qd4# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "10"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "rnbqkb1r/pp3ppp/4pn2/3p4/2PP4/2N5/PP3PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Panov"]
+
+1. Ne4 dxe4 2. Kd2 Qxd4+ 3. Bd3 Qxd3+ 4. Ke1 Qxd1+ 5. Kxd1 Nc6 6. Bd2 Bc5 7. h4 Bxf2 8. Kc2 e3 9. a3 exd2 10. c5 Bxg1 11. Kb1 d1=Q+ 12. Ka2 Qd5+ 13. Kb1 Bxc5 14. Rd1 Qxd1+ 15. Ka2 Qxa1+ 16. Kxa1 Bd4 17. g3 e5 18. h5 Nxh5 19. Ka2 Be6+ 20. b3 Nxg3 21. a4 Nb4+ 22. Ka3 Nc2+ 23. Ka2 Nb4+ 24. Kb1 Bf5+ 25. Kc1 Rc8+ 26. Kd1 Bg4+ 27. Ke1 Rc1+ 28. Kd2 Rd1# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "11"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "rn1qkbnr/pp3ppp/2p1p3/3p4/4P3/2N2Q1P/PPPP1PP1/R1B1KB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Two Knights"]
+
+1. d4 Qb6 2. exd5 Ke7 3. dxe6 Qxb2 4. Bxb2 Nh6 5. exf7 c5 6. Qxb7+ Kd8 7. Qxa8 Ng4 8. Qxb8+ Ke7 9. hxg4 a6 10. dxc5 Ke6 11. Bc4+ Ke7 12. Qd6# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "12"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "rn1qkbnr/pp3ppp/2p1p3/3p4/4P3/2N2Q1P/PPPP1PP1/R1B1KB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Two Knights"]
+
+1. Nd1 Nf6 2. a3 dxe4 3. Ra2 exf3 4. c4 fxg2 5. c5 gxh1=Q 6. d4 Qxd4 7. Bg5 Bxc5 8. Be3 Qdd5 9. Nc3 Bxe3 10. f3 Qd2# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "13"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQK2R w KQ - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Catalan"]
+
+1. O-O a6 2. Qc2 Ne8 3. Rd1 f5 4. b3 h6 5. Ba3 Kf7 6. Ne5+ Kg8 7. Ng6 dxc4 8. Bxe7 Qxe7 9. Nxe7+ Kf7 10. Nxc8 cxb3 11. axb3 Nc6 12. Bxc6 Kg8 13. Bxb7 Rxc8 14. Bxc8 e5 15. dxe5 g6 16. Rxa6 Ng7 17. Qxc7 g5 18. Rd8 f4 19. Rxf8+ Kh7 20. Bf5# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "14"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQK2R w KQ - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Catalan"]
+
+1. Nh4 dxc4 2. Na3 Bxa3 3. bxa3 c5 4. Nf3 Nc6 5. Kf1 cxd4 6. Qb3 cxb3 7. Nh4 bxa2 8. Rg1 e5 9. f3 Be6 10. Kf2 d3 11. Bf4 exf4 12. Rad1 Qb6+ 13. Ke1 Qxg1+ 14. Kd2 Qe3+ 15. Kc3 dxe2+ 16. Kb2 exd1=Q 17. gxf4 a1=Q# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "15"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "r1bqkb1r/ppp2ppp/2n5/3np3/8/2N2NP1/PP1PPP1P/R1BQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Four Knights"]
+
+1. Bg2 Rb8 2. O-O Ne3 3. fxe3 Bc5 4. d4 Bb6 5. d5 Bd7 6. dxc6 Qe7 7. cxd7+ Qxd7 8. Qxd7+ Kf8 9. Nxe5 Rg8 10. Qxf7# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "16"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "r1bqkb1r/ppp2ppp/2n5/3np3/8/2N2NP1/PP1PPP1P/R1BQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Four Knights"]
+
+1. Bg2 Be6 2. a4 f6 3. a5 a6 4. e3 Qd7 5. Qe2 Ndb4 6. Ng5 fxg5 7. Qxa6 Rxa6 8. Nd5 Bxd5 9. f4 Bxg2 10. Rg1 Bf3 11. b3 Nc2+ 12. Kf2 Nxa1 13. Re1 g4 14. Rh1 Bxh1 15. b4 Bxb4 16. d3 Qxd3 17. Bb2 Nc2 18. Ba3 Qxe3+ 19. Kf1 Qe1# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "17"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "rnbqkb1r/ppp2ppp/1n6/4p3/8/2N3P1/PP1PPPBP/R1BQK1NR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Reversed Sicilian"]
+
+1. Nf3 Qd6 2. O-O Be6 3. d4 Na4 4. Qxa4+ Qc6 5. Nxe5 Ba3 6. Nxc6 Rf8 7. Nxb8+ Bd7 8. Qxd7# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "18"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "rnbqkb1r/ppp2ppp/1n6/4p3/8/2N3P1/PP1PPPBP/R1BQK1NR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Reversed Sicilian"]
+
+1. e4 Nc6 2. Bf1 Be6 3. Qh5 Qd7 4. Qg4 Bxg4 5. b3 Nd4 6. Ba3 Nc2# 0-1
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "19"]
+[White "policy-safe"]
+[Black "random"]
+[Result "1-0"]
+[FEN "r1bqk1nr/pp1pppbp/2n3p1/2p5/2P5/2N3P1/PP1PPPBP/R1BQK1NR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Symmetrical"]
+
+1. Nf3 f5 2. O-O e6 3. d3 Ne5 4. Nxe5 Kf8 5. f4 Ke7 6. e4 Bf8 7. exf5 Nh6 8. fxg6 Bg7 9. gxh7 Rf8 10. Ng6+ Kf7 11. Nxf8 Nf5 12. Qh5+ Ke7 13. Ng6+ Kf6 14. Ne4+ Kf7 15. Ne5+ Kf8 16. Qf7# 1-0
+
+[Event "policy-safe vs random"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "20"]
+[White "random"]
+[Black "policy-safe"]
+[Result "0-1"]
+[FEN "r1bqk1nr/pp1pppbp/2n3p1/2p5/2P5/2N3P1/PP1PPPBP/R1BQK1NR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Symmetrical"]
+
+1. e4 d6 2. b4 cxb4 3. a3 bxc3 4. c5 cxd2+ 5. Qxd2 Bxa1 6. Kf1 dxc5 7. Qb4 cxb4 8. Ke1 Bc3+ 9. Kf1 Qd1# 0-1

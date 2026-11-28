@@ -238,7 +238,13 @@ refused** (`EncodingVersionError`), as is data built with another version.
 `Player.choose(board) -> Move` is the one interface:
 
 - `RandomPlayer`: a random legal move.
-- `PolicyPlayer`: the masked policy's most likely move, with no search.
+- `PolicyPlayer`: the masked policy's most likely move, with no search; the evaluation's
+  baseline for the raw network.
+- `PolicySafePlayer`: the policy with rules, in prior order. It takes a mate in one. When
+  the value head rates the side to move better (`v > 0`), it then plays the first move that
+  neither stalemates nor leaves a threefold repetition to claim (completed by the move, or
+  reachable by the opponent's reply). Level or worse, or if every move draws, it plays the
+  most likely move. UCI `Mode policy` and `chessnet play --mode policy` use it.
 - `MCTSPlayer(simulations | movetime)`: search with tree reuse between its moves;
   `last_result` keeps the statistics (value, principal variation, nodes, speed).
 
@@ -330,3 +336,107 @@ population the network learned from.
 plus `moves`, `undo` and `resign`. The engine plays with MCTS (800 playouts by default,
 or `--movetime`) or the policy alone, and shows its evaluation for White after each move.
 Draws by threefold repetition and the 50-move rule are claimed automatically.
+
+## Evaluation (`chessnet.eval`)
+
+### Arena
+
+`run_match` plays N games between two players described by `PlayerSpec`s (random, policy,
+MCTS with playouts or time per move, or an external UCI engine such as Stockfish):
+
+- **Openings:** game i starts from opening i // 2 of the book, with the player as White in
+  even games and as Black in odd ones. Deterministic players therefore never repeat a game.
+  The book (`chessnet/eval/data/openings.epd`) has 50 standard lines of 6 to 14 plies, each
+  within +-52 cp by Stockfish 16 at depth 20.
+- **Adjudication:** checkmate, stalemate, insufficient material, threefold repetition that
+  has happened (a merely available repetition does not end the game, so a winning side
+  is not drawn early), the 50-move rule, or 600 plies (a draw). An illegal move loses.
+- **Statistics:** wins, draws and losses from the player's side; score; the Elo
+  difference `-400 log10(1/score - 1)`. The 95% interval comes from the per-game variance
+  of the score, or from the Wilson interval when every game had the same result, so 100
+  wins in 100 games still give a finite lower bound (about +550).
+- **Parallel games:** with `--workers N`, N worker processes each build the players once
+  (networks, search trees, engine processes) and take games as they free up, under the
+  supervisor described below. Torch threads are shared out, and GPUs are assigned
+  round-robin.
+- **PGNs:** every game of a match, with the opening's FEN, the players, the result and the
+  termination.
+
+### Puzzles
+
+Lichess puzzle rows give a FEN, the moves and a rating. The player sees the position after
+the first move (the opponent's) and must find the solution's first move. Any checkmate
+counts when the solution checkmates, as on Lichess. Accuracy is reported for four rating
+buckets: up to 1000, 1001-1500, 1501-2000, and above 2000. Samples take equal numbers per
+bucket, uniformly among established puzzles (rating deviation at most 100, popularity at
+least 80, at least 200 plays), and are reproducible for a given file and seed. The
+committed fixture has 125 per bucket from the November 2026 database.
+
+### Suites
+
+| Suite | Matches | Puzzles |
+|-------|---------|---------|
+| quick | policy vs random (20 games); policy-safe vs random (20); MCTS 400 vs policy (20) | 500 (fixture): policy, MCTS 200 |
+| full | policy vs random (100); policy-safe vs random (100); MCTS 400 vs policy (100); MCTS 800 vs Stockfish at its lowest `UCI_Elo` (50) and at `Skill Level` 0 (50), 1 s per Stockfish move; with `--compare`, the second network vs base at 800 playouts each (50) and at 1 s per move each (50) | 2,000 sampled from the database: policy, MCTS 800 |
+
+`--estimate` plays two games of each match and ten puzzles of each run, and extrapolates.
+`--only <part>,...` runs just those matches or puzzle runs (`puzzles-policy`,
+`puzzles-mcts-800`) and merges them into the suite's existing results (for the same
+checkpoint). Each part records the hardware, date and commit it ran on, and the model card
+says so when the hardware differs from the rest of the suite. The results list the parts
+of the suite that have not run yet (`not_run`). With `--games N --label TEXT` the chosen
+matches are played as labelled variants, kept next to the planned ones: the laptop's
+20-game equal-time comparison is `--only compare-equal-time --games 20 --label "laptop CPU"
+--device cpu`. `--merge-results <file>` merges a results file of the same suite and
+checkpoint from another machine, with its PGNs, into ours.
+
+Matches in which a search has a time limit per move (the equal-time comparison) play one
+game per GPU, or one at a time on a CPU, whatever `--workers` says: parallel games would
+take each other's compute, and the time limit would buy fewer playouts.
+
+### Stockfish ladder and playout scaling
+
+`chessnet ladder` (`chessnet.eval.ladder`) rates MCTS on Stockfish's scale:
+
+- **Ladder:** MCTS 800 against Stockfish 16 with `UCI_LimitStrength` at UCI_Elo 1500, 1700,
+  1900, 2100 and 2300 (40 games each, 1 s per Stockfish move, the balanced openings with
+  both colours). It stops climbing after the first level scored below 25%.
+- **Rating:** the maximum-likelihood fit of the Elo model to every ladder game (a draw is
+  half a win), with a 95% likelihood-ratio interval. Stockfish 16 turns UCI_Elo into a
+  fractional skill level (1320 is level 0) fitted to CCRL engine ratings, so the result is
+  an engine rating on that scale, not a FIDE or Lichess rating.
+- **Scaling:** MCTS at 50, 100, 200, 400, 800 and 1,600 playouts (32 games each) against the
+  ladder level where MCTS 800 scored closest to 50%, where an Elo difference is measured
+  most precisely. A point's rating is that level plus its Elo difference; the 800 point is
+  the ladder's own match. A straight line in log2(playouts), fitted to every scaling game
+  by maximum likelihood, gives the Elo per doubling with a profile-likelihood interval; a
+  likelihood-ratio test of a curvature term says whether the curve flattens. The chart
+  (`<checkpoint>.ladder.svg`: the points with 95% intervals and the fitted line, light and
+  dark) and the tables go to the model card.
+- The same supervised workers, heartbeat, per-match saving and `--max-wall-time` as the
+  suites. `--import-results` brings a run from another machine, with its PGNs.
+TensorBoard scalars go to `eval/results/tb/`.
+
+### Supervised runs
+
+`chessnet eval` plays every game and puzzle in worker processes under a supervisor
+(`chessnet.eval.workers`), so that no engine, network or deadlock can stall a run:
+
+- **Limits:** a worker that plays no move for 5 minutes, or spends more than an hour on one
+  game or puzzle, is killed together with its engines (each worker leads its own process
+  group) and replaced. An external engine also has a limit per call: python-chess gives up
+  after the move time plus 30 s (`PlayerSpec.timeout`), and the worker restarts its
+  players. Either way the game is recorded as an error, with its reason, and left out of
+  the score; the model card says how many games did not finish.
+- **No endless retries:** a worker that cannot build its players hands its game back.
+  After 4 workers in a row die without finishing anything, the rest of the match fails
+  with the reason.
+- **Heartbeat:** every 60 s, `[match] heartbeat: 37/50 done, 4 running, 12.3 min`.
+- **Saving:** each match is written (JSON and PGN) as soon as it ends, so a crash or a
+  cancelled session loses at most the match in progress.
+- **Wall time:** `--max-wall-time 6h` stops the suite cleanly. The running match or puzzle
+  run is cut off and saved as incomplete, and the parts that never started are listed as
+  not run.
+- **Exit:** workers close their players themselves before exiting. python-chess drives each
+  engine from a non-daemon thread, and Python waits for those threads before it runs exit
+  handlers, so a worker that left an engine open would never exit.

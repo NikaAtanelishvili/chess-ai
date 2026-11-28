@@ -41,6 +41,30 @@ All notable changes to this project are documented here. The format follows
 - `chessnet play`: a game against the engine in the terminal.
 - `chessnet export-onnx`: export a checkpoint's network to ONNX.
 - MCTS: an external stop event, a node limit, progress callbacks, and the chosen move's value.
+- `chessnet eval --suite quick|full`: matches over 50 balanced openings with alternating
+  colours (W/D/L, score, Elo with a 95% interval, PGNs), against a random mover, the policy,
+  Stockfish at its weakest settings and a second network; Lichess puzzle accuracy by rating
+  bucket; `--estimate` for wall time; results in `eval/results/` and `docs/MODEL_CARD.md`.
+- A 500-puzzle Lichess sample in `tests/fixtures/puzzles/`, and the Kaggle kernel
+  `kaggle/eval/` for the full suite.
+- `PolicySafePlayer`: the policy plus rules (take a mate in one; when the value head rates
+  the position better than level, avoid moves that stalemate or allow a threefold-repetition
+  claim while others exist). UCI `Mode policy` and
+  `chessnet play --mode policy` now use it; the evaluation reports both it and the raw
+  policy against a random mover. `chessnet eval --only` adds matches and puzzle runs to
+  earlier results, which list the parts of the suite not run yet.
+- Supervised evaluation runs: a game or puzzle that makes no progress for 5 minutes, takes
+  more than an hour, or hits an external engine's call timeout is killed with its engines
+  and recorded as an error; a heartbeat line every minute; results saved after every match;
+  `chessnet eval --max-wall-time` for a clean stop, and `--heartbeat` to set the interval.
+- `chessnet ladder`: MCTS 800 against Stockfish at rising UCI_Elo levels until it scores
+  below 25%, a maximum-likelihood rating on Stockfish's UCI_Elo scale with a 95% interval,
+  then strength against playouts (50 to 1,600) against the level nearest 50%: Elo per
+  doubling from a line fitted to every game, a test for flattening, and an SVG chart for
+  the model card. The Kaggle evaluation kernel runs it (`TASK = "ladder"`).
+- `chessnet eval --games/--label` (labelled variants of chosen matches, such as a 20-game
+  run on a laptop CPU) and `--merge-results` (results from another machine, with PGNs).
+  Matches with a time limit per move play one game per GPU, or one at a time on a CPU.
 
 ### Changed
 
@@ -52,6 +76,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- A full evaluation could hang forever: worker processes holding an external engine never
+  exited, so the run stalled after its first Stockfish match. Workers now close their
+  engines before exiting.
 - Training on the CPU could differ from run to run, and a resumed run from the
   uninterrupted one: the first multithreaded call of MKL's vector math (Adam's square root)
   could compute part of its output at reduced accuracy. Training now calls MKL's vector

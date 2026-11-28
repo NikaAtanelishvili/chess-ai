@@ -560,6 +560,84 @@ stays available for a fixed-node comparison in evaluation.
 - **Robustness:** errors (bad weights, illegal moves in `position`, malformed `go`) become
   `info string` lines, and the engine keeps running.
 
+## 2026-11-27: Evaluation design
+
+**Decision.**
+- **Openings:** 50 balanced main lines (Stockfish 16, depth 20, within +-52 cp), each
+  played with both colours. Without them, two deterministic players would replay one game.
+- **Draws** end a game only when a repetition has happened or the 50-move rule applies.
+  python-chess's `outcome(claim_draw=True)` also counts a repetition that one legal move
+  could reach, which would end games a winning side is still pressing. This matches the
+  search's own terminal rules.
+- **Stockfish** gets 1 s per move, near the conditions its `UCI_Elo` is calibrated for,
+  with one thread and 16 MB hash. Our MCTS plays a fixed number of playouts, as specified.
+- **Elo intervals:** normal approximation of the score's per-game variance; Wilson's
+  interval when all games had one result, which keeps a sweep's lower bound finite.
+- **Puzzles:** first move only, with any mate accepted when the solution mates. Equal
+  samples per rating bucket from well-established puzzles, so each bucket's accuracy has
+  the same precision.
+- **Where it runs:** the full suite takes hours on a laptop, so a Kaggle kernel runs it with
+  4 parallel games. Results (JSON and PGNs) are committed under `eval/results/`, so the
+  model card's numbers can be checked.
+
+## 2026-11-27: Policy-safe player (owner decision)
+
+**Context.** In the quick suite the raw policy scored 90% against a random mover, below the
+98% target: 3 of 20 games were stalemates and one a threefold repetition, never a loss.
+Without search the policy cannot tell that stalemating a lone king throws the win away.
+**Decision.**
+- The `policy` player stays the raw network, so the baseline measures the network honestly.
+- `policy-safe` adds three rules: take a mate in one; otherwise skip moves that stalemate or
+  leave a threefold repetition to claim (completed by the move, or reachable by the
+  opponent's reply), unless every move does. It is no search: one ply of rules, applied in
+  prior order.
+- Both play the random mover in the suites. UCI `Mode policy` and `chessnet play --mode
+  policy` use policy-safe, since a player wants the win.
+- The Kaggle full suite was already running, so policy-safe's 100 games against the random
+  mover were played on the laptop and merged into its results with `--only`.
+- Refined the same day (owner decision): the draw rules apply only when the value head
+  rates the side to move better (`v > 0`). Level or worse, a draw is welcome, so moves that
+  stalemate or repeat are allowed. A mate in one is always taken. The results against the
+  random mover were replayed with the refined player.
+
+## 2026-11-27: Hang-proof evaluation runs
+
+**Context.** The first full suite on Kaggle (2 x T4) finished three matches in 20 minutes
+and then printed nothing for 8.5 hours, until it was stopped by hand. python-chess runs
+each engine's event loop in a non-daemon thread. The worker processes (a
+`ProcessPoolExecutor`) closed their players in an `atexit` handler, but Python joins
+non-daemon threads before it runs `atexit` handlers, so a worker holding a Stockfish
+process never exited, and the pool's shutdown after the first Stockfish match waited for
+it forever. That match's results were still in memory; they were recovered from the log,
+but its PGN was lost.
+**Decision.**
+- Workers close their players in a `finally` block, before the interpreter waits for
+  threads. A regression test plays a match against an external engine in two workers.
+- A small supervisor replaces the process pool. Each worker has its own pipes, so killing
+  one cannot corrupt a shared queue, and leads its own process group, so killing it kills
+  its engines. Limits: 5 minutes without a move, 1 hour per game or puzzle, the suite's
+  `--max-wall-time`, and the engine call timeout of python-chess (move time + 30 s).
+- A game that hits a limit is recorded with its reason and left out of the score, rather
+  than retried: a retry could hang the same way, and the count of failures is reported.
+- Retries of workers are bounded: after 4 in a row die without finishing anything, the
+  rest of the run fails with the reason.
+- A heartbeat line every 60 s, and results saved after every match.
+- The evaluation kernel always runs with a wall-time limit (`MAX_WALL_TIME`, below the
+  12-h session limit). The owner prefers the laptop or a Kaggle CPU kernel, and the GPU
+  only when CPU time would be unreasonable, with an estimate first.
+- Owner decision: the parts of the full suite still missing after the hang (Stockfish at
+  Skill Level 0, wide vs base at equal playouts and at equal time, the MCTS 800 puzzles) run
+  on the T4 x2 machine with `--max-wall-time 3h`, plus the policy's puzzle run again, so
+  that both puzzle rows score one download of the database. The equal-time comparison then
+  measures the GPU, so a 20-game equal-time comparison on the laptop CPU, the hardware the
+  engine is played on, is recorded as its own labelled match.
+- Matches with a time limit per move play one game per device (GPU, or the CPU): parallel
+  games would share the compute and the time limit would buy fewer playouts.
+**Alternatives.** Making python-chess's thread a daemon (not configurable); `os._exit` at
+the end of each worker (skips closing the engines, which keep running); a timeout around
+the pool's shutdown alone (a stuck engine in the middle of a game would still hang, and the
+results would still be lost).
+
 ## 2026-11-27: Deterministic training on the CPU (MKL's vector math)
 
 **Context.** The nightly kill-and-resume test failed now and then: a resumed run's losses
@@ -581,3 +659,29 @@ one-thread call.
 **Alternatives.** A looser tolerance (it would hide real differences, which Adam
 amplifies); training on one thread (slower); a warm-up in the tests only (the race breaks a
 real resume on the CPU too).
+
+## 2026-11-27: Stockfish ladder and playout scaling (owner request)
+
+**Context.** The full suite's Stockfish matches are floors: MCTS 800 won all 100 games at
+Stockfish's weakest setting. Stockfish 16's source converts `UCI_Elo` into a fractional
+skill level, `e = (elo - 1320) / 1870`, `level = clamp(((37.2473e - 40.8525)e + 22.2943)e -
+0.311438, 0, 19)`, anchored to CCRL ratings (goldfish 1.13 = 2000, fitted to games at 60 s +
+0.6 s). So UCI_Elo 1320 is level 0.0, the same opponent as `Skill Level 0`; the games differ
+only because its weakened move choice draws from a clock-seeded random generator.
+**Decision.**
+- A ladder at UCI_Elo 1500 to 2300 in steps of 200 (skill levels 1.5 to 5.5), 40 games per
+  level, climbing until a level scores below 25%: above that, more levels add little.
+- The rating is a maximum-likelihood fit to all ladder games with a likelihood-ratio
+  interval, not an average of per-level estimates: levels near 50% weigh most, and a sweep
+  at a low level still bounds the rating.
+- Ratings are labelled as Stockfish 16's UCI_Elo scale (an engine scale anchored to CCRL),
+  never as FIDE or Lichess ratings.
+- The scaling curve plays against the ladder level nearest 50% for MCTS 800, where scores
+  measure Elo best, rather than against MCTS 400: self-play inflates gains, and an external
+  reference puts the curve on the ladder's scale. The 800 point reuses the ladder match.
+- Elo per doubling comes from one straight line in log2(playouts) fitted to every scaling
+  game (maximum likelihood, profile-likelihood interval), not from differences between
+  neighbouring points, which are too noisy at 32 games each; a curvature term tested by
+  likelihood ratio says whether gains flatten.
+- The chart is an SVG written from the results (no plotting dependency), so it can be
+  rebuilt with the tables.

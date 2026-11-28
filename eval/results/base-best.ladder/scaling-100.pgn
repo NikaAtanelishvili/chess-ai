@@ -1,0 +1,447 @@
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "1"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "1-0"]
+[FEN "rnbqk2r/ppp1ppbp/5np1/3p4/5P2/1P2PN2/P1PP2PP/RNBQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Bird"]
+
+1. Bb2 Bd7 2. Be2 Bf5 3. O-O O-O 4. d3 Ng4 5. Bxg7 Nxe3 6. Qc1 Nxf1 7. Bxf8 Ng3 8. hxg3 Kxf8 9. Nbd2 Qd6 10. Qb2 Kg8 11. Qe5 Qc5+ 12. d4 Qc3 13. Re1 Qa5 14. Qxe7 Nc6 15. Qc5 Qb6 16. Qxb6 cxb6 17. c3 b5 18. Bxb5 Kf8 19. Bxc6 bxc6 20. Ne5 Re8 21. Kf2 h5 22. Nxc6 Rc8 23. Ne5 Rxc3 24. Ndf3 f6 25. Nh4 fxe5 26. Nxf5 Rc8 27. Nd6 Rc2+ 28. Re2 Rc7 29. fxe5 a6 30. Ke3 Rc3+ 31. Kf4 Ke7 32. Kg5 Rd3 33. Kxg6 h4 34. gxh4 Rc3 35. h5 Rg3+ 36. Kf5 Rg8 37. g4 a5 38. g5 Rh8 39. h6 Rd8 40. g6 a4 41. bxa4 Rf8+ 42. Kg5 Kd7 43. g7 Rf1 44. g8=Q Rg1+ 45. Kf6 Kc6 46. Qc8+ Kb6 47. Qb7+ Ka5 48. Qb5# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "2"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "0-1"]
+[FEN "rnbqk2r/ppp1ppbp/5np1/3p4/5P2/1P2PN2/P1PP2PP/RNBQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Bird"]
+
+1. c3 O-O 2. Be2 c5 3. d4 Nc6 4. Bb2 Ne4 5. O-O Bf5 6. Nbd2 Rc8 7. Kh1 cxd4 8. exd4 Qa5 9. Nxe4 Bxe4 10. a4 Rfd8 11. Nd2 Bf5 12. g4 Be4+ 13. Nxe4 dxe4 14. Rc1 e5 15. b4 Qc7 16. f5 exd4 17. fxg6 hxg6 18. cxd4 Bxd4 19. Rxc6 Qxc6 20. Bxd4 e3+ 21. Kg1 Qe4 22. Qb3 Rxd4 23. Qxf7+ Kh8 24. Qf6+ Kg8 25. Qf7+ Kh8 26. Qf6+ Kg8 27. Bf3 Qd3 28. Bd5+ Rxd5 29. Qf7+ Kh8 30. Qf6+ Kg8 31. Qe6+ Kh8 32. Qxc8+ Rd8 33. Rf8+ Rxf8 34. Qxf8+ Kh7 35. Kg2 Qe4+ 36. Qf3 Qc2+ 37. Kh3 e2 38. Qxb7+ Kh6 39. Qf3 e1=Q 40. Qf4+ Kg7 41. Qc7+ Qxc7 42. Kg2 Qe2+ 43. Kh1 Qcxh2# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "3"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "1-0"]
+[FEN "rnb1k2r/ppppqppp/4pn2/8/1bPP4/5N2/PP1BPPPP/RN1QKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Bogo-Indian"]
+
+1. g3 b6 2. Bg2 Bxd2+ 3. Nbxd2 Bb7 4. O-O d6 5. Qc2 c5 6. e4 cxd4 7. Nxd4 a6 8. b4 h6 9. a4 O-O 10. Rfe1 Nbd7 11. Rac1 a5 12. b5 Rac8 13. f4 Rc7 14. e5 dxe5 15. fxe5 Ng4 16. Bxb7 Rxb7 17. Qe4 Ndxe5 18. h3 Qa3 19. Qxb7 Qxg3+ 20. Qg2 Qf4 21. Re4 Ne3 22. Rxf4 Nxg2 23. Kxg2 Rc8 24. Nc6 Nxc6 25. bxc6 e5 26. Re4 Re8 27. c7 f5 28. Ree1 h5 29. Nf3 Rc8 30. Rxe5 Kf7 31. Rxf5+ Kg8 32. Rd5 g6 33. Rd8+ Kg7 34. Rxc8 Kf7 35. Rd8 Ke6 36. c8=Q+ Ke7 37. Qd7+ Kf6 38. Rf8# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "4"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "0-1"]
+[FEN "rnb1k2r/ppppqppp/4pn2/8/1bPP4/5N2/PP1BPPPP/RN1QKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Bogo-Indian"]
+
+1. Qc2 O-O 2. Nc3 d6 3. e3 e5 4. Be2 e4 5. Nxe4 Nxe4 6. Bxb4 c5 7. Bd3 cxb4 8. Bxe4 f5 9. Bd5+ Kh8 10. O-O Nc6 11. Qd2 a5 12. Ne1 f4 13. b3 fxe3 14. Qxe3 Qf6 15. Rd1 Bg4 16. f3 Rae8 17. Qd2 Bf5 18. Rf2 Re7 19. Be4 Bxe4 20. fxe4 Qxf2+ 21. Qxf2 Rxf2 22. Kxf2 Rxe4 23. Kf3 Rxd4 24. Rxd4 Nxd4+ 25. Ke4 Ne2 26. Nd3 Nc3+ 27. Kf5 Nxa2 28. h3 Nc3 29. Ke6 Ne4 30. Nc1 Kg8 31. Kd7 Kf7 32. g4 Kf6 33. Kc7 Nc5 34. h4 Ke5 35. Kd8 Kd4 36. h5 Kc3 37. Ne2+ Kxb3 38. Ke8 Kxc4 39. g5 b3 40. Nd4 b2 41. Nc2 b1=Q 42. Na3+ Kd5 43. Nxb1 Ke5 44. Na3 Kf5 45. g6 hxg6 46. hxg6 Kxg6 47. Nc2 a4 48. Nb4 a3 49. Kd8 Kf5 50. Ke7 g5 51. Kxd6 Ne4+ 52. Kc7 g4 53. Kb8 g3 54. Kc7 g2 55. Nd5 g1=Q 56. Ne7+ Ke6 57. Ng6 Qxg6 58. Kb8 a2 59. Kc7 a1=Q 60. Kxb7 Qb2+ 61. Kc7 Qf7+ 62. Kd8 Qb8# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "5"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "0-1"]
+[FEN "rn1qkbnr/pp3ppp/4p3/2ppPb2/3P4/5N2/PPP1BPPP/RNBQK2R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Advance"]
+
+1. Be3 Qb6 2. Nc3 Qxb2 3. Nb5 Kd7 4. O-O c4 5. Rb1 Qxc2 6. Qe1 Qxb1 7. Qa5 b6 8. Qa4 Qc2 9. Qxc2 Bxc2 10. Ng5 Nh6 11. Rc1 Bg6 12. f4 a6 13. Nc3 Nc6 14. g4 Be7 15. h4 Ba3 16. Rf1 Nxg4 17. Bxg4 Ne7 18. h5 Bd3 19. Rf2 b5 20. Nxf7 Raf8 21. Nxh8 Bf5 22. Bxf5 Nxf5 23. h6 gxh6 24. Rf3 Rg8+ 25. Kf2 Rxh8 26. Rh3 Be7 27. Ne2 a5 28. Bd2 b4 29. Rh1 Ra8 30. Kf3 a4 31. Rb1 Rb8 32. Kg4 Ng7 33. Ng3 b3 34. axb3 cxb3 35. f5 h5+ 36. Nxh5 exf5+ 37. Kf3 Nxh5 38. Rh1 b2 39. Rb1 a3 40. Bc3 Rb3 41. e6+ Kxe6 42. Re1+ Kf6 43. Re3 b1=Q 44. Be1 Rxe3+ 45. Kxe3 Qxe1+ 46. Kd3 Qd1+ 47. Kc3 Qe2 48. Kb3 Qb2+ 49. Ka4 a2 50. Ka5 f4 51. Ka6 a1=R# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "6"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1-0"]
+[FEN "rn1qkbnr/pp3ppp/4p3/2ppPb2/3P4/5N2/PPP1BPPP/RNBQK2R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Advance"]
+
+1. Bb5+ Nc6 2. Nc3 Qb6 3. a4 a6 4. dxc5 Bxc5 5. Bxc6+ bxc6 6. O-O Ne7 7. a5 Qc7 8. Bg5 Ng6 9. Na4 Ba7 10. c4 O-O 11. Nd4 Be4 12. Re1 Qxe5 13. Be3 Rac8 14. f3 Bf5 15. Nxf5 Bxe3+ 16. Nxe3 d4 17. Nf1 Qxa5 18. Qxd4 Rfd8 19. Qc3 Qg5 20. g3 h5 21. b4 h4 22. Ra3 hxg3 23. hxg3 Nf4 24. Qe5 Nh3+ 25. Kh2 Qh6 26. Nc5 Ng5+ 27. Kg1 Nh3+ 28. Kg2 Ng5 29. Kg1 Nh3+ 30. Kg2 Ng5 31. Qc3 Qh3+ 32. Kg1 Qf5 33. Qe3 Nh3+ 34. Kg2 Ng5 35. f4 Qh3+ 36. Kg1 Nh7 37. Ra2 Nf6 38. Rd2 Ng4 39. Qe2 Rxd2 40. Qxd2 Rb8 41. Nd7 Rd8 42. Nf6+ gxf6 43. Qxd8+ Kg7 44. Qd1 f5 45. Re2 Nf6 46. Rb2 Ne4 47. c5 Nxg3 48. Rh2 Qxf1+ 49. Qxf1 Nxf1 50. Kxf1 f6 51. Ra2 e5 52. Rxa6 exf4 53. b5 cxb5 54. Ra7+ Kg6 55. Ke2 b4 56. c6 b3 57. c7 b2 58. c8=Q b1=Q 59. Qg8+ Kh5 60. Rh7# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "7"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "1-0"]
+[FEN "rn1qkbnr/pp2pppp/2p3b1/8/3P4/6N1/PPP2PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Classical"]
+
+1. Nf3 Nf6 2. h4 e6 3. h5 Be4 4. Nxe4 Nxe4 5. Bd3 Qa5+ 6. c3 Nxc3 7. bxc3 Qxc3+ 8. Ke2 Qxa1 9. Qb3 Bb4 10. Qxb4 Nd7 11. Ba3 Qxa2+ 12. Ke3 c5 13. dxc5 O-O 14. h6 Rfc8 15. hxg7 Nf6 16. Bb2 e5 17. Bxe5 Nd5+ 18. Kd4 h6 19. Rxh6 f6 20. Rh8+ Kxg7 21. Qxb7+ Nc7 22. Rh7+ Kf8 23. Bd6+ Kg8 24. Rxc7 Qa1+ 25. Kd5 Qe5+ 26. Nxe5 f5 27. Rg7+ Kh8 28. Rh7+ Kg8 29. Qg7# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "8"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "0-1"]
+[FEN "rn1qkbnr/pp2pppp/2p3b1/8/3P4/6N1/PPP2PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Classical"]
+
+1. h4 h6 2. h5 Bh7 3. Bf4 e6 4. Nf3 Nf6 5. Bd3 Bxd3 6. Qxd3 Bd6 7. Bxd6 Qxd6 8. O-O-O Nbd7 9. Rhe1 O-O-O 10. c4 Qf4+ 11. Kb1 Ng4 12. Qe2 Ndf6 13. Ne5 Nxe5 14. dxe5 Ng4 15. Ne4 Nxe5 16. Nd6+ Rxd6 17. Rxd6 Nxc4 18. Rd3 Rd8 19. Rxd8+ Kxd8 20. Qd3+ Ke7 21. Rd1 Nd6 22. Qd4 Qxd4 23. Rxd4 e5 24. Rd1 f5 25. Rc1 Ke6 26. Rd1 Ne4 27. f3 Nf6 28. g4 fxg4 29. fxg4 Nxg4 30. Rg1 Kf5 31. Rf1+ Kg5 32. Kc1 Kxh5 33. Rf7 g5 34. a4 Ne3 35. Kd2 Nc4+ 36. Kc3 Nd6 37. Re7 e4 38. Rd7 Nf5 39. Rxb7 g4 40. Rxa7 g3 41. Rf7 Kg4 42. Rf8 g2 43. Rd8 Kf3 44. Rd1 e3 45. Rb1 e2 46. a5 Kf2 47. a6 e1=Q+ 48. Rxe1 Kxe1 49. b4 g1=Q 50. Kb3 Qa7 51. Ka2 Qxa6+ 52. Kb1 Qc4 53. b5 Qxb5+ 54. Kc2 c5 55. Kc1 Qc4+ 56. Kb2 Nd4 57. Kb1 Qc2+ 58. Ka1 Nb3# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "9"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "0-1"]
+[FEN "rnbqkb1r/pp3ppp/4pn2/3p4/2PP4/2N5/PP3PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Panov"]
+
+1. Nf3 Be7 2. c5 Nc6 3. Bb5 O-O 4. O-O Nd7 5. Bf4 g5 6. Bg3 a6 7. Bxc6 bxc6 8. Re1 a5 9. Ne5 Ra6 10. Qh5 Nxe5 11. Bxe5 f6 12. Bg3 Qd7 13. f4 gxf4 14. Bxf4 Qe8 15. Qg4+ Kh8 16. Bh6 Rf7 17. Rxe6 f5 18. Qe2 Bxe6 19. Qxe6 Ra8 20. Re1 f4 21. Qe5+ Kg8 22. Bxf4 Qf8 23. Bg3 Bf6 24. Qe6 Bxd4+ 25. Kh1 Qc8 26. Qh6 Bg7 27. Qh5 a4 28. h3 Qf5 29. Qe2 a3 30. Nd1 Qe4 31. Qxe4 dxe4 32. b3 Bd4 33. Rxe4 Rf1+ 34. Kh2 Bg1+ 35. Kh1 Rxd1 36. Re1 Rd2 37. Kxg1 Rxa2 38. Be5 Rd2 39. Bc3 Rd3 40. Ba1 Rad8 41. b4 Rd1 42. Rxd1 Rxd1+ 43. Kf2 Rxa1 44. b5 cxb5 45. c6 Rc1 46. c7 a2 47. c8=Q+ Rxc8 48. Kg3 a1=Q 49. Kh2 Rc4 50. Kg3 Qe5+ 51. Kf2 Qd4+ 52. Kg3 Qe5+ 53. Kf2 Qd4+ 54. Kg3 Qf6 55. Kh2 Qf4+ 56. Kg1 Rc2 57. Kh1 h6 58. Kg1 Rc4 59. g3 Qd2 60. g4 Qb2 61. h4 Qd2 62. g5 Qb2 63. gxh6 Qd2 64. h7+ Kxh7 65. h5 Rc1# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "10"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1/2-1/2"]
+[FEN "rnbqkb1r/pp3ppp/4pn2/3p4/2PP4/2N5/PP3PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "threefold_repetition"]
+[Opening "Caro-Kann, Panov"]
+
+1. Bf4 Nc6 2. c5 Be7 3. Rc1 O-O 4. Nf3 Ne4 5. Bb5 f5 6. O-O Bf6 7. Re1 Bd7 8. Ne2 g5 9. Bxc6 Bxc6 10. Be5 g4 11. Bxf6 Qxf6 12. Nd2 f4 13. f3 gxf3 14. Nxf3 Kh8 15. Qd3 Rg8 16. Rf1 Raf8 17. b3 a6 18. Ne5 Bb5 19. Rc4 dxc4 20. Qxe4 cxb3 21. axb3 Bxe2 22. Qxe2 Qf5 23. b4 Rg7 24. Qe1 Rfg8 25. Rf2 h5 26. Nf3 Qd5 27. Kh1 h4 28. Rf1 h3 29. Qh4+ Rh7 30. Qf6+ Rhg7 31. Qh4+ Rh7 32. Qf6+ Rgg7 33. Qf8+ Rg8 34. Qf6+ 1/2-1/2
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "11"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "0-1"]
+[FEN "rn1qkbnr/pp3ppp/2p1p3/3p4/4P3/2N2Q1P/PPPP1PP1/R1B1KB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Caro-Kann, Two Knights"]
+
+1. d4 Qb6 2. Bd3 Nf6 3. O-O Qxd4 4. exd5 Nxd5 5. Nxd5 Qxd5 6. Be4 Qd8 7. Rd1 Qc8 8. Bf4 Nd7 9. Rd2 Nf6 10. Rad1 Bb4 11. c3 Be7 12. Bc2 O-O 13. Be5 Rd8 14. Rxd8+ Bxd8 15. Qd3 g6 16. Qf3 Nh5 17. g4 Ng7 18. Qf4 Ne8 19. Qd4 Bc7 20. Bh8 c5 21. Qxc5 Bh2+ 22. Kxh2 Qxc5 23. Bd4 Qb5 24. b3 Qc6 25. c4 Qc7+ 26. Kg2 Qc6+ 27. f3 Qc7 28. Be4 Rd8 29. Rd2 f5 30. gxf5 exf5 31. Bd5+ Rxd5 32. cxd5 b6 33. Re2 Nd6 34. Be5 g5 35. f4 Qd7 36. fxg5 Nf7 37. Bf6 Qxd5+ 38. Kf2 Nd6 39. Re7 Ne4+ 40. Ke3 Qd2+ 41. Kf3 Qf2# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "12"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1/2-1/2"]
+[FEN "rn1qkbnr/pp3ppp/2p1p3/3p4/4P3/2N2Q1P/PPPP1PP1/R1B1KB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "insufficient_material"]
+[Opening "Caro-Kann, Two Knights"]
+
+1. d4 Nf6 2. Bd2 dxe4 3. Qf4 Qxd4 4. Qc7 Qd7 5. Qe5 Bd6 6. Qd4 O-O 7. Nxe4 Nxe4 8. Qxe4 Na6 9. Bxa6 bxa6 10. Rd1 Qc7 11. Qa4 Rab8 12. Bc3 Be5 13. Ba5 Qb7 14. b3 Qb5 15. Qxb5 axb5 16. O-O b4 17. g4 Rb5 18. Bd8 Rd5 19. Bh4 h6 20. Rde1 Bc3 21. Re4 g5 22. Bg3 Rfd8 23. f4 Rd2 24. Rc1 Rd1+ 25. Rxd1 Rxd1+ 26. Kf2 Rd2+ 27. Re2 Rd1 28. fxg5 hxg5 29. Kf3 Ra1 30. Bd6 Rxa2 31. Be7 f6 32. Rxe6 Kf7 33. Re2 a5 34. Bd6 a4 35. bxa4 Rxa4 36. Kg2 Ra2 37. Kf3 b3 38. cxb3 Rxe2 39. Kxe2 Ke6 40. Ba3 Kd5 41. Ke3 c5 42. Ke2 c4 43. bxc4+ Kxc4 44. Kf2 Kd5 45. Ke3 Be5 46. Bb4 Kc4 47. Ba3 Kd5 48. Kf3 Ke6 49. Ke4 Bc3 50. Ke3 Be5 51. Bb4 Kd5 52. Kf3 Kc4 53. Be7 Kd3 54. Bc5 Kc4 55. Bb6 Kd3 56. Bf2 Kd2 57. h4 gxh4 58. Bxh4 Kd3 59. Kg2 Ke4 60. Kf2 Kf4 61. Ke1 Kxg4 62. Bxf6 1/2-1/2
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "13"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "0-1"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQK2R w KQ - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Catalan"]
+
+1. O-O a5 2. Qc2 a4 3. Nbd2 c5 4. dxc5 Qc7 5. cxd5 Nxd5 6. Ne4 a3 7. bxa3 f5 8. Neg5 h6 9. Nh3 Bxc5 10. Bb2 Bxf2+ 11. Rxf2 Qxc2 12. Be5 Nc6 13. Bd6 Qc3 14. Raf1 Rd8 15. Bb4 Ncxb4 16. axb4 Ne3 17. Re1 Qxb4 18. Nf4 Ng4 19. Rff1 g5 20. Nd3 Qa5 21. h3 Qb6+ 22. Kh1 Ne3 23. Rg1 Qd6 24. Nfe5 Bd7 25. Bf3 Be8 26. Bxb7 Ra5 27. Rc1 Rb5 28. Bc6 Rxe5 29. Nxe5 Qxe5 30. Bf3 h5 31. g4 hxg4 32. hxg4 Qh8# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "14"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1/2-1/2"]
+[FEN "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQK2R w KQ - 0 1"]
+[SetUp "1"]
+[Termination "threefold_repetition"]
+[Opening "Catalan"]
+
+1. Qd3 b6 2. Qc2 Bb7 3. a3 Nbd7 4. O-O c5 5. cxd5 Nxd5 6. dxc5 Nxc5 7. Rd1 Rc8 8. h3 Qc7 9. b4 Ne4 10. Nd4 Qxc2 11. Nxc2 Rxc2 12. Bxe4 Rxe2 13. Bxd5 Bxd5 14. Nc3 Re5 15. Nxd5 Rxd5 16. Bf4 Rfd8 17. Rxd5 Rxd5 18. Rc1 g5 19. Be3 Rd7 20. Rc8+ Kg7 21. Kf1 h6 22. Rc1 Kg6 23. Ke2 f5 24. Bd2 Bf6 25. a4 h5 26. Rc8 g4 27. h4 e5 28. Rc6 Kf7 29. Be3 Be7 30. a5 bxa5 31. bxa5 Bd6 32. Ra6 Bb8 33. f4 gxf3+ 34. Kxf3 Rd3 35. Ke2 Ra3 36. Bxa7 Bxa7 37. Rxa7+ Ke6 38. Ra8 Kd5 39. Rg8 Ke4 40. Rg5 Ra2+ 41. Kf1 Rxa5 42. Kf2 Ra2+ 43. Kg1 f4 44. gxf4 exf4 45. Rg8 Kf3 46. Rg7 Ra1+ 47. Kh2 Ra2+ 48. Kh3 Ra1 49. Kh2 Ra2+ 50. Kh3 Ra1 51. Rg3+ Kf2 52. Rg2+ Kf3 53. Kh2 Ke3 54. Rb2 f3 55. Rb3+ Kf4 56. Rb4+ Ke3 57. Rb3+ Kf4 58. Rb4+ Ke3 59. Rb3+ 1/2-1/2
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "15"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "1/2-1/2"]
+[FEN "r1bqkb1r/ppp2ppp/2n5/3np3/8/2N2NP1/PP1PPP1P/R1BQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "threefold_repetition"]
+[Opening "English, Four Knights"]
+
+1. Bg2 Nb6 2. O-O Be6 3. d3 Qd7 4. Be3 Rd8 5. Rc1 Be7 6. Ne4 Bd5 7. Nc5 Bxc5 8. Bxc5 h5 9. h4 Rh6 10. Qd2 f6 11. b3 Rh8 12. Rfd1 Bxf3 13. Bxf3 Qe6 14. Bxb6 axb6 15. Qc3 Rd7 16. Bxc6 Qxc6 17. Qxc6 bxc6 18. Rxc6 Kd8 19. Rdc1 Rf8 20. a4 Re8 21. b4 e4 22. dxe4 Rxe4 23. a5 bxa5 24. bxa5 Rxe2 25. a6 Ra2 26. R1c2 Rd1+ 27. Kg2 Rda1 28. Rxc7 Rxc2 29. Rxc2 Kd7 30. Rc5 Rxa6 31. Rxh5 Ra7 32. Rh7 Ke8 33. h5 Ra5 34. Rxg7 Rxh5 35. g4 Rb5 36. Kg3 Rb3+ 37. f3 Kf8 38. Ra7 Rb4 39. f4 Rb3+ 40. Kh4 Rb1 41. Kh5 Rf1 42. f5 Rg1 43. Kg6 Rxg4+ 44. Kxf6 Kg8 45. Ra8+ Kh7 46. Ra7+ Kg8 47. Ra8+ Kh7 48. Ra7+ Kh8 49. Ra8+ Kh7 1/2-1/2
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "16"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "0-1"]
+[FEN "r1bqkb1r/ppp2ppp/2n5/3np3/8/2N2NP1/PP1PPP1P/R1BQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Four Knights"]
+
+1. Bg2 Nb6 2. O-O Be7 3. d3 O-O 4. b3 Be6 5. Bb2 f6 6. d4 exd4 7. Ne4 f5 8. Nxd4 Nxd4 9. Ng5 Bxg5 10. Bxd4 c6 11. e4 fxe4 12. Bxe4 Bd5 13. Bxh7+ Kxh7 14. h4 Bf6 15. Bc5 Bxa1 16. Qh5+ Kg8 17. Rxa1 Qf6 18. Rb1 Qf3 19. Qxd5+ Nxd5 20. Ra1 Rfe8 21. a4 Re2 22. Rf1 Rae8 23. h5 Re1 24. Be7 Rxf1+ 25. Kh2 Rh1# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "17"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "0-1"]
+[FEN "rnbqkb1r/ppp2ppp/1n6/4p3/8/2N3P1/PP1PPPBP/R1BQK1NR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Reversed Sicilian"]
+
+1. Nf3 Nc6 2. O-O Bf5 3. d3 Be7 4. Be3 Qd7 5. Rc1 f6 6. Ne4 Bh3 7. Nc5 Bxc5 8. Bxc5 h5 9. Nh4 g5 10. Ng6 Rg8 11. Nf8 Rxf8 12. Bxf8 Bxg2 13. Kxg2 Kxf8 14. e3 Qf7 15. a3 Kg7 16. b4 a6 17. Qf3 Nd5 18. Rc5 Nde7 19. Rfc1 g4 20. Qe4 f5 21. Qc4 Qxc4 22. R1xc4 Kf7 23. a4 Kf6 24. b5 axb5 25. axb5 Nd8 26. Rxc7 b6 27. h3 Ra5 28. hxg4 hxg4 29. Rd7 Ne6 30. Rb4 Kf7 31. Rb7 Ra2 32. Rxb6 Nd5 33. Rb7+ Kf6 34. Rc4 Nxe3+ 35. Kg1 Ra1+ 36. Kh2 Nxc4 37. dxc4 Nd4 38. Rb6+ Kg5 39. Rb8 Nf3+ 40. Kg2 Kg6 41. Rg8+ Kf6 42. Rf8+ Kg6 43. Rg8+ Kf6 44. Rf8+ Kg7 45. Rxf5 Rg1# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "18"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1/2-1/2"]
+[FEN "rnbqkb1r/ppp2ppp/1n6/4p3/8/2N3P1/PP1PPPBP/R1BQK1NR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "threefold_repetition"]
+[Opening "English, Reversed Sicilian"]
+
+1. a3 Nc6 2. d3 Be7 3. Be3 O-O 4. Rc1 Be6 5. Nf3 f5 6. O-O f4 7. Bd2 fxg3 8. hxg3 Qe8 9. Ne4 Qh5 10. Be3 Bh3 11. Bxh3 Qxh3 12. Qb3+ Kh8 13. Neg5 Bxg5 14. Nxg5 Qh5 15. Nf3 Rxf3 16. exf3 Qxf3 17. Qd1 Qf5 18. Bxb6 axb6 19. Qe2 Nd4 20. Qe3 c6 21. f3 Rf8 22. Kg2 h6 23. a4 c5 24. Rf2 Rf6 25. Re1 Re6 26. Qe4 Qg5 27. Qh4 Qf5 28. f4 exf4 29. Rxe6 f3+ 30. Kg1 Qxe6 31. Qe4 Qh3 32. Qe8+ Kh7 33. Qe5 Ne2+ 34. Rxe2 fxe2 35. Qe4+ Kg8 36. Qe8+ Kh7 37. Qe4+ Kg8 38. Qe8+ Kh7 39. Qe4+ 1/2-1/2
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "19"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "1/2-1/2"]
+[FEN "r1bqk1nr/pp1pppbp/2n3p1/2p5/2P5/2N3P1/PP1PPPBP/R1BQK1NR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "threefold_repetition"]
+[Opening "English, Symmetrical"]
+
+1. Nf3 d6 2. O-O e6 3. e3 Nge7 4. d4 cxd4 5. exd4 O-O 6. d5 Ne5 7. Nxe5 Bxe5 8. Bh6 Re8 9. dxe6 Bxe6 10. Nd5 Nxd5 11. cxd5 Bd7 12. Qd2 Rc8 13. Rac1 Qb6 14. b3 a5 15. Be3 Qa6 16. Rxc8 Rxc8 17. Rc1 Rxc1+ 18. Qxc1 Qd3 19. Bf1 Qxd5 20. Bg2 Qb5 21. Qc7 a4 22. Qxb7 Kg7 23. Qxb5 Bxb5 24. Bd5 Bc3 25. Bc4 Bd7 26. Kf1 Kf8 27. Ke2 Bb4 28. Kd3 Ke8 29. Kd4 Bc5+ 30. Kd3 Bb4 31. Kd4 Ke7 32. Bg5+ Ke8 33. Be3 1/2-1/2
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "20"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1-0"]
+[FEN "r1bqk1nr/pp1pppbp/2n3p1/2p5/2P5/2N3P1/PP1PPPBP/R1BQK1NR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "English, Symmetrical"]
+
+1. d3 Nf6 2. h3 O-O 3. e4 d6 4. Rb1 a6 5. Be3 Rb8 6. Nge2 b5 7. cxb5 axb5 8. a4 b4 9. Nb5 Ba6 10. Ra1 Nd7 11. e5 Ncxe5 12. f4 Bxb5 13. axb5 Rxb5 14. O-O Nc6 15. Bxc6 Rb6 16. Qa4 Nb8 17. Bf3 Bxb2 18. Rab1 Bg7 19. g4 Ra6 20. Qd1 Nc6 21. f5 Ne5 22. Bd5 Ra3 23. Rb3 Qa5 24. Nf4 Ra1 25. Qe2 Rxf1+ 26. Qxf1 Qa2 27. Rxb4 cxb4 28. Bxa2 Ra8 29. Qe2 Ra3 30. Bd5 b3 31. Bxb3 Rxb3 32. Qa2 Rb8 33. Nd5 Bf8 34. d4 Nf3+ 35. Kf2 Nh4 36. f6 exf6 37. Kf1 Kg7 38. Ke2 Ng2 39. Bc1 Re8+ 40. Kf1 Nh4 41. Kf2 Re4 42. Bd2 Rxd4 43. Nc7 d5 44. Ne8+ Kg8 45. Nxf6+ Kg7 46. Ne8+ Kg8 47. Nf6+ Kg7 48. Nd7 Bd6 49. Bc3 Kh6 50. Bxd4 f5 51. Qe2 f4 52. g5+ Kxg5 53. Qg4+ Kh6 54. Qxh4# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "21"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "1/2-1/2"]
+[FEN "r1bq1rk1/pppp1ppp/2n2n2/1B2p3/1b2P3/2N2N2/PPPP1PPP/R1BQ1RK1 w - - 0 1"]
+[SetUp "1"]
+[Termination "threefold_repetition"]
+[Opening "Four Knights, Spanish"]
+
+1. d3 Bxc3 2. bxc3 Re8 3. Bg5 a5 4. a4 h6 5. Bh4 Na7 6. Bc4 Nc6 7. Re1 Rb8 8. d4 b6 9. d5 Ne7 10. Nxe5 Nc6 11. Nxc6 dxc6 12. e5 cxd5 13. exf6 Rxe1+ 14. Qxe1 g5 15. Qe7 Be6 16. Qxd8+ Rxd8 17. Bg3 dxc4 18. Bxc7 Rd2 19. Bxb6 Rd5 20. Bd4 Kh7 21. Rb1 Bf5 22. Rb5 Rxb5 23. axb5 Kg6 24. b6 Be4 25. f3 Bd5 26. Kf2 h5 27. Ke3 a4 28. Bc5 Kxf6 29. Kd4 Bc6 30. Kxc4 Ke6 31. Kb4 f5 32. c4 Kd7 33. Be3 g4 34. fxg4 fxg4 35. g3 Ke6 36. c5 Kd7 37. c4 Ke6 38. Bf4 Ba8 39. Kxa4 Bc6+ 40. Ka5 Kd7 41. Ka6 Kc8 42. Ka7 Bg2 43. Ka6 Bc6 44. Ka7 Bb7 45. c6 Bxc6 46. c5 Bh1 47. b7+ Bxb7 48. Kb6 Bg2 49. c6 Bf3 50. c7 Bh1 51. Kc5 Be4 52. Kd6 Bc2 53. Ke7 Be4 54. Kf6 Bc6 55. Kg5 Be8 56. Kf6 Bd7 57. Kg5 Be8 58. Kf6 Kd7 59. Kg5 Bf7 60. Kf6 Be8 61. Kg5 Kc8 1/2-1/2
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "22"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1-0"]
+[FEN "r1bq1rk1/pppp1ppp/2n2n2/1B2p3/1b2P3/2N2N2/PPPP1PPP/R1BQ1RK1 w - - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Four Knights, Spanish"]
+
+1. d3 d6 2. Bg5 Bxc3 3. bxc3 h6 4. Bh4 Bg4 5. h3 Bh5 6. g4 Bg6 7. Qe2 a6 8. Bc4 b5 9. Bd5 Qd7 10. Bxf6 gxf6 11. Nh4 Kg7 12. Ng2 Rab8 13. Bb3 a5 14. f4 exf4 15. Rxf4 a4 16. Bd5 Ne5 17. a3 c6 18. Ba2 d5 19. Raf1 Qd6 20. Nh4 dxe4 21. Rxe4 Bxe4 22. Qxe4 Qxa3 23. Nf5+ Kh8 24. Qf4 Qc5+ 25. Kh1 Ng6 26. Qxh6+ Kg8 27. Qg7# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "23"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "0-1"]
+[FEN "r1b1kbnr/pp3ppp/1qn1p3/2ppP3/3P4/2P2N2/PP3PPP/RNBQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "French, Advance"]
+
+1. Bd3 Bd7 2. O-O cxd4 3. Re1 Nge7 4. h4 h6 5. h5 g5 6. hxg6 fxg6 7. cxd4 Nb4 8. Nc3 g5 9. Bb1 O-O-O 10. a3 g4 11. Nh4 Nbc6 12. Be3 Rg8 13. b4 Kb8 14. Na4 Qc7 15. Nc5 Nf5 16. Nxf5 Bxc5 17. Nxh6 Bb6 18. Nxg8 Rxg8 19. g3 Rf8 20. Qxg4 Nxe5 21. dxe5 Qc3 22. Bg6 Bxe3 23. fxe3 Qb2 24. Qe2 Qxe5 25. Qg2 Rg8 26. Rac1 Rxg6 27. Rf1 a6 28. Rf8+ Ka7 29. Rf3 Bc6 30. Qf2 Qd6 31. e4+ d4 32. Re1 Rg8 33. Kg2 e5 34. Rf6 Qc7 35. Rf7 Qd6 36. Rf6 Qc7 37. Rf7 Qb8 38. Qf3 Re8 39. Rc1 Qd6 40. Rf6 Qd7 41. Rcxc6 bxc6 42. Rf7 Re7 43. Rxe7 Qxe7 44. g4 Kb6 45. Qf5 Qd6 46. g5 d3 47. Qf2+ Kc7 48. Qd2 a5 49. Kf3 Qd7 50. bxa5 Qh3+ 51. Kf2 Qh2+ 52. Ke3 Qg3# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "24"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1-0"]
+[FEN "r1b1kbnr/pp3ppp/1qn1p3/2ppP3/3P4/2P2N2/PP3PPP/RNBQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "French, Advance"]
+
+1. Be2 Bd7 2. a3 cxd4 3. cxd4 Nge7 4. Nc3 Nf5 5. Na4 Qa5+ 6. Nc3 Qb6 7. Be3 Nxe3 8. fxe3 Be7 9. O-O O-O 10. Qc2 Rac8 11. Bd3 h6 12. Qe2 Na5 13. Rab1 Nc4 14. Kh1 Qb3 15. Rfc1 a6 16. g4 f6 17. Rg1 fxe5 18. g5 e4 19. gxh6 Rxf3 20. Bxc4 Qxc4 21. Rxg7+ Kh8 22. Qg2 Bf6 23. Qg6 Rf1+ 24. Kg2 Qe2+ 25. Nxe2 Rxb1 26. Rh7# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "25"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "1-0"]
+[FEN "r1bqkb1r/pppn1ppp/4pn2/8/3PN3/5N2/PPP2PPP/R1BQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "French, Rubinstein"]
+
+1. Bd3 Nxe4 2. Bxe4 h6 3. O-O Bd6 4. c4 Nf6 5. Bc2 O-O 6. Qd3 b6 7. Ne5 Bb7 8. Ng4 Re8 9. Nxf6+ Qxf6 10. Qh7+ Kf8 11. Be3 g5 12. c5 bxc5 13. dxc5 Bf4 14. Bxf4 gxf4 15. Be4 Bxe4 16. Qxe4 e5 17. Rad1 Kg7 18. Rd7 a5 19. Rxc7 Qg6 20. Qxg6+ Kxg6 21. Rd1 Reb8 22. b3 a4 23. Rc6+ Kg7 24. Rb6 axb3 25. axb3 Rd8 26. Rbd6 Rdb8 27. c6 Rxb3 28. c7 Rc8 29. Rc6 e4 30. h3 Rb7 31. Rd7 Rb1+ 32. Kh2 Ra1 33. Rd8 Raa8 34. Rxc8 Rxc8 35. Kg1 h5 36. Kf1 Kf8 37. Ke2 Ke8 38. Rc4 Kd7 39. Rxe4 f3+ 40. Kxf3 Rxc7 41. Re5 Rc6 42. Rxh5 Rc4 43. Re5 Rc8 44. h4 Rc3+ 45. Re3 Rxe3+ 46. Kxe3 f5 47. Kf4 Ke7 48. Kxf5 Kf7 49. g4 Kg8 50. g5 Kf8 51. h5 Ke8 52. h6 Kd8 53. h7 Kc8 54. h8=Q+ Kc7 55. g6 Kb7 56. g7 Kc7 57. g8=Q Kb7 58. Qc4 Kb6 59. Qb8+ Ka5 60. Qcb5# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "26"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "0-1"]
+[FEN "r1bqkb1r/pppn1ppp/4pn2/8/3PN3/5N2/PPP2PPP/R1BQKB1R w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "French, Rubinstein"]
+
+1. Ng3 c5 2. Be2 cxd4 3. Qxd4 Bc5 4. Qc4 O-O 5. O-O b6 6. Ne4 Bb7 7. Nxc5 Nxc5 8. Qd4 Qxd4 9. Nxd4 Rfd8 10. c3 e5 11. Nb3 Nd3 12. Bxd3 Rxd3 13. Re1 Re8 14. Be3 Red8 15. Bg5 h6 16. Bxf6 gxf6 17. g3 Kg7 18. Re3 Rd1+ 19. Re1 Rxa1 20. Rxa1 Bf3 21. Kf1 Kg6 22. Ke1 Kf5 23. c4 Kg4 24. Rc1 Kh3 25. Nd2 Bg4 26. Rc3 Kxh2 27. b4 Kg2 28. c5 bxc5 29. Rc4 Be6 30. bxc5 Bxc4 31. Nxc4 Rc8 32. a3 Rxc5 33. Na5 Rxa5 34. f4 Rxa3 35. fxe5 fxe5 36. Kd2 Kxg3 37. Ke1 Ra2 38. Kf1 Kf3 39. Kg1 e4 40. Kf1 Ra1# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "27"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "0-1"]
+[FEN "rnb1kbnr/pp3ppp/4p3/2pq4/3P4/8/PPPN1PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "French, Tarrasch"]
+
+1. Ngf3 cxd4 2. Bc4 Qa5 3. O-O Be7 4. Nxd4 Nc6 5. Nxc6 bxc6 6. Qf3 Bb7 7. Nb3 Qb6 8. Be3 Qb4 9. Bd3 c5 10. Qg3 Kf8 11. a3 Qb6 12. Rad1 h5 13. h4 Nh6 14. Bg5 Rc8 15. Bxe7+ Kxe7 16. Bc4 Rhe8 17. Qxg7 Rg8 18. Qxh6 Rxg2+ 19. Kh1 Rxf2+ 20. Kg1 Rg2+ 21. Kh1 Rf2+ 22. Kg1 Rg2+ 23. Kh1 Rd2+ 24. Kg1 Rg8+ 25. Qg5+ Rxg5+ 26. hxg5 Rg2+ 27. Kh1 Rxc2+ 28. Kg1 Rg2+ 29. Kh1 Rg4+ 30. Kh2 Qc7+ 31. Kh3 Rh4+ 32. Kxh4 Qh2# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "28"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1-0"]
+[FEN "rnb1kbnr/pp3ppp/4p3/2pq4/3P4/8/PPPN1PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "French, Tarrasch"]
+
+1. Qf3 Nf6 2. Ne2 Nc6 3. Qxd5 Nxd5 4. c3 cxd4 5. Nxd4 Nxd4 6. cxd4 Nb4 7. Kd1 Bd7 8. a3 Nd5 9. Nc4 Be7 10. Be3 O-O 11. Bd3 Rac8 12. Ke2 Bb5 13. Rhc1 Rfd8 14. Rab1 Bf6 15. Nd2 Bxd3+ 16. Kxd3 Kf8 17. Rxc8 Rxc8 18. Nc4 Ke7 19. Bd2 b5 20. Na5 Kd7 21. Nb3 Be7 22. Rh1 Nb6 23. Na5 Nc4 24. Bc3 Nxa5 25. Bxa5 Bf6 26. b3 Be7 27. Ra1 f5 28. Bb4 Bf6 29. f3 a6 30. Bd2 Rc6 31. Bb4 e5 32. a4 exd4 33. Bd2 Re6 34. axb5 axb5 35. Ra8 Rc6 36. h3 Re6 37. Ra1 Kc6 38. b4 Kd5 39. Ra7 h6 40. Rb7 Kc6 41. Rb8 Rd6 42. Rc8+ Kb7 43. Rc5 Kb6 44. Rxf5 Kc6 45. Rc5+ Kb6 46. Rf5 Kc6 47. Rc5+ Kb6 48. Rc8 Kb7 49. Rf8 Rc6 50. g4 Re6 51. Rg8 Kc6 52. h4 Kd5 53. g5 hxg5 54. hxg5 Be5 55. f4 Bd6 56. Rxg7 Re8 57. Rb7 Kc6 58. Rh7 Kd5 59. Rb7 Kc6 60. Rf7 Kd5 61. Rf5+ Kc6 62. Kxd4 Re2 63. Bc3 Rf2 64. Ke4 Rc2 65. Bd4 Rc4 66. Kd3 Rxb4 67. g6 Rb3+ 68. Ke4 Rg3 69. Rg5 Rxg5 70. fxg5 Bf8 71. g7 Bxg7 72. Bxg7 Kd6 73. Bd4 Ke6 74. Bb2 Kf7 75. Kf5 Kg8 76. g6 b4 77. Ke6 b3 78. Ba1 b2 79. Bxb2 Kf8 80. g7+ Kg8 81. Bc3 Kh7 82. Kf7 Kh6 83. Bf6 Kh5 84. g8=Q Kh6 85. Qh8# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "29"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "1-0"]
+[FEN "rnbqk2r/pp2nppp/4p3/2ppP3/3P4/P1P5/2P2PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "French, Winawer"]
+
+1. Qg4 Qa5 2. Bd2 Nf5 3. Bd3 cxd4 4. cxd4 h5 5. Qf4 Qc7 6. Nf3 Qd7 7. O-O a5 8. Bxf5 exf5 9. Rfe1 Qe7 10. c4 Be6 11. cxd5 Bxd5 12. Qxf5 Qe6 13. Qf4 Qg4 14. h3 Qxf4 15. Bxf4 O-O 16. Ng5 Na6 17. Ne4 Bxe4 18. Rxe4 Rad8 19. Rb1 Rd7 20. Be3 a4 21. e6 fxe6 22. Rxe6 Rc8 23. Reb6 Rc3 24. Rxb7 Rxb7 25. Rxb7 Rxa3 26. d5 Rd3 27. Ra7 Rd1+ 28. Kh2 Nb4 29. Rxa4 Nxd5 30. Bd4 Rd3 31. Be5 Nb6 32. Ra7 Rd7 33. Rxd7 Nxd7 34. Bd4 Kf7 35. Kg3 g6 36. Kf4 Ke7 37. Kg5 Kf7 38. f4 Ke6 39. Kxg6 Kd5 40. Bg7 Kc4 41. Kxh5 Kb5 42. Kg6 Nc5 43. f5 Kb6 44. f6 Nd3 45. f7 Nf4+ 46. Kf5 Nd5 47. f8=Q Kc6 48. Qe8+ Kc7 49. Be5+ Kb7 50. Qd7+ Nc7 51. Qxc7+ Ka6 52. Qb8 Ka5 53. Ke6 Ka6 54. Kd6 Ka5 55. Kc5 Ka6 56. Qb6# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "30"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "1-0"]
+[FEN "rnbqk2r/pp2nppp/4p3/2ppP3/3P4/P1P5/2P2PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "French, Winawer"]
+
+1. h4 Nbc6 2. Qg4 Qa5 3. Bd2 Qa4 4. Qxg7 Rg8 5. Qxh7 cxd4 6. Rh3 Bd7 7. Nf3 O-O-O 8. Bg5 dxc3 9. Qd3 Rde8 10. h5 Nf5 11. Bf6 Rg4 12. h6 Re4+ 13. Kd1 Ncd4 14. h7 Bb5 15. Qxc3+ Kb8 16. Nd2 Rc8 17. h8=Q Be2+ 18. Bxe2 Rxh8 19. Rxh8+ Qe8 20. Rxe8# 1-0
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "31"]
+[White "mcts-100"]
+[Black "stockfish-elo-2300"]
+[Result "0-1"]
+[FEN "rnbqk2r/ppp1ppbp/6p1/8/3PP3/2P5/P4PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Gruenfeld, Exchange"]
+
+1. Nf3 c5 2. Be3 O-O 3. Be2 Qc7 4. O-O Rd8 5. Rc1 b6 6. d5 Bg4 7. c4 Bxf3 8. Bxf3 e6 9. Qc2 Qd6 10. Rfd1 Nd7 11. g3 Bd4 12. Bxd4 cxd4 13. Rxd4 h5 14. Rcd1 e5 15. R4d2 Rac8 16. Qa4 Nc5 17. Qxa7 Ra8 18. Qxa8 Rxa8 19. h4 Na4 20. Rc2 Kh8 21. Rdc1 Qa3 22. Kg2 Kg7 23. Rd1 Rh8 24. Rdd2 Kh7 25. d6 Kg7 26. d7 Rd8 27. Rd5 Qe7 28. Rcd2 Kf8 29. Bd1 Nc5 30. f3 Rxd7 31. a4 Ra7 32. Rd8+ Kg7 33. R8d5 Qc7 34. Rd6 Ne6 35. Rd7 Qb8 36. R7d5 Qc7 37. Bb3 Nc5 38. Bd1 Ne6 39. Bb3 Nd4 40. Bd1 Qxc4 41. Rxe5 Qc3 42. Rf2 Qd3 43. Rd5 Qxd1 44. g4 hxg4 45. fxg4 Qxg4+ 46. Kf1 Qd1+ 47. Kg2 Qg4+ 48. Kf1 Qd1+ 49. Kg2 Rc7 50. h5 Qg4+ 51. Kf1 Rc1# 0-1
+
+[Event "MCTS 100 vs Stockfish UCI_Elo 2300"]
+[Site "chessnet arena"]
+[Date "2026.11.27"]
+[Round "32"]
+[White "stockfish-elo-2300"]
+[Black "mcts-100"]
+[Result "0-1"]
+[FEN "rnbqk2r/ppp1ppbp/6p1/8/3PP3/2P5/P4PPP/R1BQKBNR w KQkq - 0 1"]
+[SetUp "1"]
+[Termination "checkmate"]
+[Opening "Gruenfeld, Exchange"]
+
+1. Qa4+ Bd7 2. Qb4 b6 3. Qb3 O-O 4. Nf3 c5 5. h3 cxd4 6. cxd4 Nc6 7. Be3 Na5 8. Qb4 Rc8 9. Bd3 Nc6 10. Qd2 Na5 11. Rc1 Rxc1+ 12. Qxc1 Qc8 13. O-O Qxc1 14. Rxc1 Rc8 15. Kf1 Rxc1+ 16. Bxc1 Nc6 17. Bb2 Nb4 18. Bb1 Bb5+ 19. Kg1 Bd3 20. Nd2 Bxb1 21. Nxb1 Nxa2 22. Kf1 Nb4 23. Nd2 Nd3 24. Bc3 b5 25. e5 b4 26. Ba1 a5 27. g3 a4 28. f4 b3 29. Nc4 Nb4 30. Bb2 Nd3 31. Bc3 Bf8 32. Ke2 Nc1+ 33. Kd2 Na2 34. Bb2 e6 35. Ba3 Bxa3 36. Nxa3 Kf8 37. Nb5 Ke7 38. h4 Kd7 39. Nc3 Nxc3 40. Kxc3 Kc6 41. Kd3 a3 42. Ke4 b2 43. Ke3 b1=Q 44. h5 a2 45. h6 a1=Q 46. d5+ Kxd5 47. g4 Qe4+ 48. Kf2 Qae1# 0-1

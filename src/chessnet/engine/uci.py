@@ -99,7 +99,7 @@ class Options:
     weights: str
     simulations: int = 800  # playouts per move when "go" gives no limit
     c_puct: float = 2.0
-    mode: str = "mcts"  # "mcts" or "policy" (the network's top move, no search)
+    mode: str = "mcts"  # "mcts", or "policy": policy-safe, the network's move with safety rules
     leaf_batch: int = 32  # the fastest on the CPUs measured (docs/ARCHITECTURE.md)
     device: str = "auto"
     move_overhead: int = round(MOVE_OVERHEAD * 1000)  # milliseconds
@@ -353,8 +353,10 @@ class UCIEngine:
         if evaluator is None:
             return None
         if self.options.mode == "policy":
+            from chessnet.engine.player import safe_policy_move
+
             [evaluation] = evaluator.evaluate([board])
-            move = max(evaluation.priors, key=evaluation.priors.__getitem__)
+            move = safe_policy_move(board, evaluation.priors, value=evaluation.value)
             cp = value_to_cp(evaluation.value)
             self.send(f"info depth 1 score cp {cp} nodes 1 pv {move.uci()}")
             return move

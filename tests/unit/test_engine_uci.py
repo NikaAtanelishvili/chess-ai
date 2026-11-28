@@ -356,3 +356,17 @@ def test_depth_to_nodes_grows_with_depth() -> None:
     assert all(a < b for a, b in itertools.pairwise(budgets) if b < 1_000_000)
     assert budgets == sorted(budgets)
     assert depth_to_nodes(10_000) == 1_000_000  # capped
+
+
+@pytest.mark.parametrize(
+    ("fen", "mate"),
+    [
+        ("6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", "d1d8"),
+        ("3r2k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1", "d8d1"),
+    ],
+)
+def test_policy_mode_plays_policy_safe(weights: Path, fen: str, mate: str) -> None:
+    """Mode policy takes a mate in one, whatever the (random, tiny) network prefers."""
+    session = Session(weights)
+    session.send("setoption name Mode value policy", f"position fen {fen}", "go")
+    assert session.best_move() == mate

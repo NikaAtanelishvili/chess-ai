@@ -1,0 +1,208 @@
+{
+  "checkpoint": "base-best.pt",
+  "sha256": "370248af31086c8de72b9df0ef03a41a426e446a1fe31d6714fd0fe2306deb78",
+  "suite": "quick",
+  "created": "2026-11-27T01:39:16+00:00",
+  "chessnet_version": "0.2.0.dev0",
+  "git_commit": "be8ada1457503be7f93006b3e2a2a038ed74b2af-dirty",
+  "device": "cpu",
+  "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+  "workers": 1,
+  "openings": "50 balanced openings, each played with both colours",
+  "notes": [],
+  "matches": [
+    {
+      "name": "policy vs random",
+      "player": {
+        "name": "policy",
+        "kind": "policy",
+        "weights": "/home/nika/Desktop/chess-ai/checkpoints/session2/base-best.pt",
+        "leaf_batch": 32
+      },
+      "opponent": {
+        "name": "random",
+        "kind": "random",
+        "leaf_batch": 32,
+        "seed": 0
+      },
+      "games": 20,
+      "wins": 16,
+      "draws": 4,
+      "losses": 0,
+      "score": 0.9,
+      "elo": 381.7,
+      "elo_95": [
+        254.6,
+        761.2
+      ],
+      "target": "score >= 98%",
+      "terminations": {
+        "checkmate": 16,
+        "stalemate": 3,
+        "threefold_repetition": 1
+      },
+      "mean_plies": 34.0,
+      "player_seconds_per_move": 0.006,
+      "opponent_seconds_per_move": 0.0,
+      "wall_seconds": 2.3,
+      "pgn": "eval/results/base-best.quick/policy-vs-random.pgn"
+    },
+    {
+      "slug": "policy-safe-vs-random",
+      "name": "policy-safe vs random",
+      "player": {
+        "name": "policy-safe",
+        "kind": "policy-safe",
+        "weights": "checkpoints/session2/base-best.pt",
+        "leaf_batch": 32,
+        "timeout": 30.0
+      },
+      "opponent": {
+        "name": "random",
+        "kind": "random",
+        "leaf_batch": 32,
+        "seed": 0,
+        "timeout": 30.0
+      },
+      "games": 20,
+      "wins": 20,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        286.6,
+        null
+      ],
+      "target": "score >= 98%",
+      "incomplete": false,
+      "errors": 0,
+      "failures": [],
+      "terminations": {
+        "checkmate": 20
+      },
+      "mean_plies": 32.6,
+      "player_seconds_per_move": 0.008,
+      "opponent_seconds_per_move": 0.0,
+      "wall_seconds": 4.6,
+      "pgn": "eval/results/base-best.quick/policy-safe-vs-random.pgn",
+      "device": "cpu",
+      "hardware": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+      "workers": 1,
+      "date": "2026-11-27",
+      "git_commit": "c5f1a7cd5f7e866afbb0b9a32cd2d71b0c991397-dirty"
+    },
+    {
+      "name": "MCTS 400 vs policy",
+      "player": {
+        "name": "mcts-400",
+        "kind": "mcts",
+        "weights": "/home/nika/Desktop/chess-ai/checkpoints/session2/base-best.pt",
+        "simulations": 400,
+        "leaf_batch": 32
+      },
+      "opponent": {
+        "name": "policy",
+        "kind": "policy",
+        "weights": "/home/nika/Desktop/chess-ai/checkpoints/session2/base-best.pt",
+        "leaf_batch": 32
+      },
+      "games": 20,
+      "wins": 20,
+      "draws": 0,
+      "losses": 0,
+      "score": 1.0,
+      "elo": null,
+      "elo_95": [
+        286.6,
+        null
+      ],
+      "target": "score > 55%",
+      "terminations": {
+        "checkmate": 20
+      },
+      "mean_plies": 61.8,
+      "player_seconds_per_move": 0.677,
+      "opponent_seconds_per_move": 0.0,
+      "wall_seconds": 422.1,
+      "pgn": "eval/results/base-best.quick/mcts400-vs-policy.pgn"
+    }
+  ],
+  "puzzles": [
+    {
+      "player": {
+        "name": "policy",
+        "kind": "policy",
+        "weights": "/home/nika/Desktop/chess-ai/checkpoints/session2/base-best.pt",
+        "leaf_batch": 32
+      },
+      "source": "500 from lichess_puzzles_500.csv",
+      "puzzles": 500,
+      "solved": 331,
+      "accuracy": 0.662,
+      "buckets": {
+        "<=1000": {
+          "puzzles": 125,
+          "solved": 106,
+          "accuracy": 0.848
+        },
+        "1001-1500": {
+          "puzzles": 125,
+          "solved": 92,
+          "accuracy": 0.736
+        },
+        "1501-2000": {
+          "puzzles": 125,
+          "solved": 78,
+          "accuracy": 0.624
+        },
+        ">2000": {
+          "puzzles": 125,
+          "solved": 55,
+          "accuracy": 0.44
+        }
+      },
+      "seconds_per_puzzle": 0.006,
+      "wall_seconds": 2.8
+    },
+    {
+      "player": {
+        "name": "mcts-200",
+        "kind": "mcts",
+        "weights": "/home/nika/Desktop/chess-ai/checkpoints/session2/base-best.pt",
+        "simulations": 200,
+        "leaf_batch": 32
+      },
+      "source": "500 from lichess_puzzles_500.csv",
+      "puzzles": 500,
+      "solved": 428,
+      "accuracy": 0.856,
+      "buckets": {
+        "<=1000": {
+          "puzzles": 125,
+          "solved": 124,
+          "accuracy": 0.992
+        },
+        "1001-1500": {
+          "puzzles": 125,
+          "solved": 114,
+          "accuracy": 0.912
+        },
+        "1501-2000": {
+          "puzzles": 125,
+          "solved": 103,
+          "accuracy": 0.824
+        },
+        ">2000": {
+          "puzzles": 125,
+          "solved": 87,
+          "accuracy": 0.696
+        }
+      },
+      "seconds_per_puzzle": 0.312,
+      "wall_seconds": 156.2
+    }
+  ],
+  "wall_seconds": 583.5,
+  "not_run": []
+}
